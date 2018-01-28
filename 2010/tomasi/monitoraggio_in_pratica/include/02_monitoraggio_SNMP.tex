@@ -1,0 +1,332 @@
+\section{Monitoraggio SNMP}
+
+\subsection{SNMP MIB II}
+\begin{itemize}
+\item MIB II (RFC 1213) definisce i tipi di oggetto per i protocolli internet IP, ICMP, UDP, TCP, SNMP (e altre definizioni). In pratica modella la gestione dello stack TCP/IP.
+\item In tutto definisce 170 tipi di oggetto.
+\item Qualche definizione risulta essere troppo semplice e minimale (tabella di routing, tabella delle interfacce).
+\item Qualche definizione presuppone indirizzi a 4-byte e quindi devono essere ridefinite per l'IP versione 6 (IPv6) dove gli indirizzi sono a 16-byte.
+\end{itemize}
+
+\subsubsection{Scopi}
+\begin{itemize}
+\item Definisce semplici errori e configurazioni per gestire i protocolli internet.
+\item Veramente pochi e semplici oggetti di controllo.
+\item Si cerca di evitare le ridondanze nel MIB.
+\item L'implementazione del MIB non dovrebbe interferire con le normali attività della rete.
+\item Non ci sono tipi di oggetti dipendenti dall'implementazione.
+\end{itemize}
+
+\subsubsection{Gruppo ``system''}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/MIB_II_gruppo_system.eps}
+  \caption{MIB II: gruppo ``system''}
+\end{figure}
+
+\begin{itemize}
+\item La variabile {\tt sysUpTime.0} è veramente importante dato che serve a determinare le discontinuità del servizio:
+  \begin{itemize}
+  \item se $sysUpTime.0_{t1} > sysUpTime.0_{t2}$ dove $t2 > t1$ allora l'agent è stato reinizializzato e le applicazioni di gestione si affidano a valori precedenti.
+  \end{itemize}
+\item {\tt sysService} riporta informazioni circa i servizi forniti dal sistema (si veda figura \ref{MIB_II_gruppo_syste_variabile_sysService}).
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics{figure/MIB_II_gruppo_system_variabile_sysService.eps}
+    \caption{MIB II: gruppo ``system'', variabile sysService}
+    \label{MIB_II_gruppo_syste_variabile_sysService}
+  \end{figure}
+\item {\tt sysObjectId.0} ha il formato {\tt enterprises.<prodotto>.<id>+} ed è usato per identificare il prodotto e il modello. Per esempio {\tt enterprises.9.1.208} identifica il Cisco (.9) 2600 router (.1.208).
+\item {\tt sysDescr.0} fornisce una precisa descrizione del dispositivo (ad esempio ``Cisco Internetwork Operating System Software IOS (tm) C2600 Software (C2600-I-M), Version 12.2(23), RELEASE SOFTWARE (fc2) Copyright (c) 1986-2004 by cisco Systems, Inc.'').
+\item In breve il gruppo ``system'' è importante per:
+  \begin{itemize}
+  \item Mappare i dispositivi (via {\tt sysObjectId.0}, {\tt sysDescr.0} e {\tt sysLocation.0}\footnote{Specifica dove si trova fisicamente il dispositivo}).
+  \item Controllare il contatore del dispositivo ({\tt sysUpTime.0}).
+  \item Riportare i problemi all'amministratore ({\tt sysContact.0}).
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Gruppo ``interface''}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/MIB_II_gruppo_interface.eps}
+  \caption{MIB II: gruppo ``interface''}
+\end{figure}
+
+Informazioni sulle interfacce. Esiste una riga per ogni interfaccia ``attiva''. Se un'interfaccia viene ``spenta'' in un secondo momento, la sua riga rimane vuota (le righe successive non vengono spostate per chiudere il buco), quindi la variabile {\tt ifIndex} può presentare dei ``buchi''.
+\begin{itemize}
+\item {\tt sysAdminStatus}: il corrente stato amministrativo dell'interfaccia. Può essere: {\tt up(1)}, {\tt down(2)}, {\tt test(3)}. Un valore diverso da {\tt up} significa che l'interfaccia non è fisicamente presente oppure c'è ma non è disponibile al sistema operativo (ad esempio il driver non è stato caricato).
+\item {\tt ifOperStatus}: il corrente stato operazionale dell'interfaccia. Può essere: {\tt up(1)}, {\tt down(2)}, {\tt test(3)}. Simile a {\tt ifconfig <device> up/down}.
+\item {\tt ifOutQLen}: la lunghezza della coda dei pacchetti in uscita (misurata in pacchetti). \`E usata per conoscere qualcosa in più a proposito della velocità di trasmissione e del throughput (se il buffer è pieno allora il destinatario non è veloce come il mittente).
+\item {\tt ifLastChange}: contiene il valore del {\tt sysUpTime} al momento in cui l'interfaccia è entrata nello stato operazionale corrente. Usata per determinare quando un'interfaccia ha cambiato il suo stato operazionale (vedi {\tt ifOperStatus}).
+
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics{figure/MIB_II_gruppo_interface_diagramma_dei_casi_d_uso.eps}
+    \caption{MIB II: gruppo ``interface'': diagramma dei casi d'uso}
+    \label{gruppo_interface_diagramma_dei_casi_d_uso}
+  \end{figure}
+
+  Il diagramma dei casi d'uso (figura \ref{gruppo_interface_diagramma_dei_casi_d_uso}) mostra le dipendenze tra le variabili:
+  \begin{itemize}
+  \item Il numero di pacchetti consegnati dall'interfaccia di rete al protocollo di livello superiore si calcola come:\\
+    ${\tt ifInUcastPkts}\footnote{Il numero di pacchetti che non sono né \glstext{multicast} né \glstext{broadcast}.} + {\tt ifInNUcastPkts}\footnote{Il numero di pacchetti che sono o \glstext{multicast} o \glstext{broadcast}.}$
+  \item Il numero di pacchetti ricevuti dalla rete si calcola come:\\
+    $({\tt ifInUcastPkts} + {\tt ifInNUcastPkts}) + {\tt ifInDiscards}\footnote{Il numero di pacchetti scartati benché non sono affetti da errore ed hanno un protocollo conosciuto (un esempio sono i pacchetti scartati per lasciare spazio nel buffer).} + {\tt ifInUnknownProtos}\footnote{Il numero di pacchetti scartati perché, o non si conosce il protocollo, oppure non è gestito.} + {\tt ifInErrors}\footnote{Il numero di pacchetti scartati perché affetti da errore.}$
+  \end{itemize}
+\end{itemize}
+
+Uso del gruppo ``interface'':
+\begin{itemize}
+\item \`E la base del monitoraggio basato su SNMP.
+\item Molti strumenti periodicamente prelevano i valori delle interfaccia (per lo più {\tt ifInOctets}\footnote{Il numero di ``ottetti'' (byte) ricevuti dall'interfaccia.}\\
+  e {\tt ifOutOctets}\footnote{Il numero di ``ottetti'' (byte) inviati dall'interfaccia.}).
+\item I valori sono aggregati e non divisi per protocollo di destinazione, \gls{AS}. Questa è la maggiore limitazione se si vuole fare un monitoraggio più mirato. La ragione è che i contatori SNMP sono semplicemente i contatori del kernel ``esposti'' via SNMP.
+\item Errori delle interfacce possono essere usati per scovare dei problemi di comunicazione, specialmente con i link \gls{WAN}.
+\item Le statistiche sulla dimensione dei pacchetti non vengono riportate, ma comunque si posso calcolare semplici statistiche usando il numero totale di ottetti e di pacchetti.
+\item Molti produttori (ad esempio Cisco, Juniper) riportano delle informazioni a proposito sia delle interfacce fisiche che di quelle logiche (anche conosciute come sottointerfacce). Altri (ad esempio Extreme) hanno delle entry nella tabella ma i contatori sono sempre a zero.
+\item Usando i contatori dell'interfaccia è possibile produrre un resoconto a proposito di:
+  \begin{itemize}
+  \item VLAN (Virtual LAN).
+  \item PVC (Private Virtual Circuit) sui link Frame Relay\footnote{Il Frame Relay è una tecnica di trasmissione a commutazione di pacchetti (una tecnica di accesso multiplo a ripartizione nel tempo, usata per condividere un canale di comunicazione tra più stazioni in modo non deterministico).}.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Come calcolare la percentuale di utilizzo della larghezza di banda con SNMP}
+$\%utilizzo\ della\ larghezza\ di\ banda = \frac{(\Delta ifInOctets + \Delta ifOutOctets)\times 8}{(\Delta tempo) \times IfSpeed} \times 100$
+\bigskip
+\\
+$\%utilizzo\ in\ input = \frac{(\Delta ifInOctets) \times 8}{(\Delta tempo) \times IfSpeed} \times 100$
+\bigskip
+\\
+$\%utilizzo\ in\ output = \frac{(\Delta ifOutOctets) \times 8}{(\Delta tempo) \times IfSpeed} \times 100$
+\bigskip\\
+Si noti che tutte le variabili necessarie si trovano nel gruppo {\tt interface}, mentre il $\Delta tempo$ viene ottenuto con la variabile {\tt sysUpTime.0}.
+\subsubsection{Usare il gruppo ``arp''}
+\begin{itemize}
+\item Usato per accedere alla tabella \gls{ARP} dei dispositivi remoti.
+\item Può essere usato per identificare gli attacchi di \glstext{ARP poisoning} oppure host mal configurati (ad esempio se ci sono indirizzi IP duplicati).
+\item Esempio:
+  {\footnotesize
+\begin{verbatim}
+    RFC1213-MIB::atIfIndex.4.1.172.22.6.168 = INTEGER: 4
+    RFC1213-MIB::atIfIndex.4.1.172.22.7.255 = INTEGER: 4
+    RFC1213-MIB::atPhysAddress.4.1.172.22.6.168 = Hex-STRING: 00 40 F4 67 49 08
+    RFC1213-MIB::atPhysAddress.4.1.172.22.7.255 = Hex-STRING: FF FF FF FF FF FF
+    RFC1213-MIB::atNetAddress.4.1.172.22.6.168 = Network Address: AC:16:06:A8
+    RFC1213-MIB::atNetAddress.4.1.172.22.7.255 = Network Address: AC:16:07:FF
+\end{verbatim}
+  }
+\end{itemize}
+
+\subsection{Il MIB Bridge}
+\begin{itemize}
+\item Usato per controllare lo stato degli switch L2/L3. Non si commetta l'errore comune di credere che viene usato solo sui bridge\footnote{I bridge, gli switch e gli hub lavorano a livello 2 (Data Link) mentre a livello 3 (Network) troviamo i router. L'hub smista i pacchetti a tutte le interfacce con cui è collegato, un bridge o uno switch invece sanno indirizzare il pacchetto ad una specifica interfaccia. La differenza sostanziale tra un bridge e uno switch sta nel fatto che quest'ultimo ha molte più porte.}
+\item \`E qualcosa di complementare al MIB II, dato che fornisce informazioni sugli host connessi alle porte dello switch.
+\item Gli usi comuni del MIB bridge sono:
+  \begin{itemize}
+  \item Conoscere l'indirizzo MAC di un host connesso alla porta X/unità Y dello switch\footnote{I grandi switch sono divisi per unità poste una sopra l'altra, ogni unità ha un insieme di porte.}\\
+    {\tt dot1dTpFdbTable\footnote{\`E la tabella che contiene le informazioni a proposito degli host per i quali il bridge ha inviato o filtrato informazioni.}.dot1dTpFdbAddress\footnote{L'indirizzo MAC.}} (nota: il MIB II ha l'indirizzo MAC della porta dello switch).
+  \item L'associazione porta/indirizzo MAC è la base per determinare dove si trova fisicamente un host. Infatti le porte dello switch sono generalmente connessehttp://42cows.org/ilfatto20101102.pdf alle prese della parete, e questo è un buon metodo per sapere chi c'è e dov'è ($utente \rightarrow computer \rightarrow porta\ dello\ switch \rightarrow stanza/scrivania$).
+  \item Tiene traccia del ``precedente'' indirizzo MAC (e del tempo) connesso ad una porta, in questo modo è possibile tracciare gli utenti che si spostano da una stanza ad un altra.
+  \item Può essere usato per trovare le porte che hanno più indirizzi MAC associati (un trunk) e quindi trovare gli utenti che hanno più indirizzi MAC (ad esempio gli utenti che hanno avviato una macchina virtuale come VMware, oppure gli utenti che hanno un virus/worm), oppure le porte che sono direttamente connesse ad un altro switch.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Esempio: prelevare indirizzi MAC e le porte fisiche}
+\begin{enumerate}
+\item Del bridge con indirizzo IP 14.32.6.17 si prelevano tutte le VLAN, vtpVlanState (.1.3.6.1.4.1.9.9.46.1.3.1.1.2 ):
+{\footnotesize
+\begin{verbatim}
+# snmpwalk -c public 14.32.6.17 vtpVlanState
+CISCO-VTP-MIB::vtpVlanState.1.1 = INTEGER: operational(1)
+CISCO-VTP-MIB::vtpVlanState.1.2 = INTEGER: operational(1)
+CISCO-VTP-MIB::vtpVlanState.1.6 = INTEGER: operational(1)
+CISCO-VTP-MIB::vtpVlanState.1.7 = INTEGER: operational(1)
+CISCO-VTP-MIB::vtpVlanState.1.8 = INTEGER: operational(1)
+...
+\end{verbatim}
+}
+\item Per ogni VLAN si prende la tabella degli indirizzi MAC (si noti la forma {\tt <read\_community>@<vlan\_number>}), dot1dTpFdbAddress (.1.3.6.1.2.1.17.4.3.1.1). Nell'esempio che segue, la VLAN 2 non ha niente nella sua tabella:
+{\footnotesize
+\begin{verbatim}
+# snmpwalk -c public@1 14.32.6.17 dot1dTpFdbAddress
+.1.3.6.1.2.1.17.4.3.1.1.0.208.211.106.71.251 = Hex-STRING: 00 D0 D3 6A 47 FB
+
+# snmpwalk -c public@2 14.32.6.17 dot1dTpFdbAddress
+
+# snmpwalk -c public@6 14.32.6.17 dot1dTpFdbAddress
+.1.3.6.1.2.1.17.4.3.1.1.0.2.185.144.76.102 = Hex-STRING: 00 02 B9 90 4C 66
+.1.3.6.1.2.1.17.4.3.1.1.0.2.253.106.170.243 = Hex-STRING: 00 02 FD 6A AA F3
+.1.3.6.1.2.1.17.4.3.1.1.0.224.30.159.10.210 = Hex-STRING: 00 E0 1E 9F 0A D2
+
+... e così via per tutte le VLAN scoperte al primo passaggio.
+\end{verbatim}
+}
+\item Per ogni VLAN si preleva il numero di porta del bridge, dot1dTpFdbPort (.1.3.6.1.2.1.17.4.3.1.2):
+{\footnotesize
+\begin{verbatim}
+# snmpwalk -c public@1 14.32.6.17 dot1dTpFdbPort
+.1.3.6.1.2.1.17.4.3.1.2.0.208.211.106.71.251 = INTEGER: 113
+
+# snmpwalk -c public@2 14.32.6.17 dot1dTpFdbPort
+
+# snmpwalk -c public@6 14.32.6.17 dot1dTpFdbPort
+.1.3.6.1.2.1.17.4.3.1.2.0.2.185.144.76.102 = INTEGER: 113
+.1.3.6.1.2.1.17.4.3.1.2.0.2.253.106.170.243 = INTEGER: 113
+.1.3.6.1.2.1.17.4.3.1.2.0.224.30.159.10.210 = INTEGER: 65
+
+... e così via per tutte le VLAN scoperte al primo passaggio.
+\end{verbatim}
+}
+\item Si prendono gli ifIndex delle porte del bridge, dot1dBasePortIfIndex (.1.3.6.1.2.1.17.1.4.1.2):
+{\footnotesize
+\begin{verbatim}
+# snmpwalk -c public@1 14.32.6.17 dot1dBasePortIfIndex
+.1.3.6.1.2.1.17.1.4.1.2.68 = INTEGER: 12
+.1.3.6.1.2.1.17.1.4.1.2.69 = INTEGER: 13
+.1.3.6.1.2.1.17.1.4.1.2.70 = INTEGER: 14
+...
+.1.3.6.1.2.1.17.1.4.1.2.113 = INTEGER: 57
+...
+
+... e così via per tutte le VLAN scoperte al primo passaggio.
+\end{verbatim}
+}
+\item Quindi si attraversa ifName (.1.3.6.1.2.1.31.1.1.1.1) in modo che gli ifIndex ottenuti nel passaggio precedente possano essere associati al relativo nome della porta:
+{\footnotesize
+\begin{verbatim}
+# snmpwalk -On -c public 14.32.6.17 ifName
+.1.3.6.1.2.1.31.1.1.1.1.1 = STRING: sc0
+.1.3.6.1.2.1.31.1.1.1.1.2 = STRING: sl0
+.1.3.6.1.2.1.31.1.1.1.1.3 = STRING: me1
+...
+.1.3.6.1.2.1.31.1.1.1.1.57 = STRING: 2/49
+...
+\end{verbatim}
+}
+\end{enumerate}
+
+Le informazioni raccolte possono essere usate, ad esempio:
+\begin{enumerate}
+\item Dal passo 2, c'è un indirizzo MAC:\\
+  {\footnotesize {\tt .1.3.6.1.2.1.17.4.3.1.1.0.208.211.106.71.251 = Hex-STRING: 00 D0 D3 6A 47 FB}}
+\item Il passo 3 ci dice che l'indirizzo MAC ({\tt 00 D0 D3 6A 47 FB}) si trova alla porta del bridge {\tt 113}:\\
+  {\footnotesize {\tt .1.3.6.1.2.1.17.4.3.1.2.0.208.211.106.71.251 = INTEGER: 113}}
+\item Dal passo 4, la porta {\tt 113} del bridge ha un ifIndex numero {\tt 57}:\\
+  {\footnotesize {\tt .1.3.6.1.2.1.17.1.4.1.2.113 = INTEGER: 57}}
+\item Dal passo 5, l'ifIndex {\tt 57} corrisponde alla porta fisica {\tt 2/49}:\\
+  {\footnotesize {\tt .1.3.6.1.2.1.31.1.1.1.1.57 = STRING: 2/49}}
+\end{enumerate}
+
+\subsubsection{Note a margine: SNMP verso contatori \glsentrytext{CLI}}
+\begin{itemize}
+\item \`E una comune convinzione tra le community degli amministratori di rete pensare che SNMP e i contatori \gls{CLI} siano due modi diversi di vedere la stessa cosa\footnote{In questo contesto i contatori CLI sono dei contatori forniti dai device attraverso altre vie che non usano SNMP, ad esempio anche attraverso un'interfaccia HTML. La differenza sostanziale tra i contatori CLI e i contatori SNMP e che gli ultimi hanno il formato dell'output ben specifico, mentre i primi no, dipende da produttore a produttore.}.
+\item Molti amministratori preferisco di più i contatori \gls{CLI} perché:
+  \begin{itemize}
+  \item Hanno un formato direttamente consultabile dall'uomo
+    \begin{itemize}
+    \item 0 pacchetti in input, 0 pacchetti in output
+    \end{itemize}
+  \item Molte implementazioni forniscono comandi per cancellare/resettare i contatori
+    \begin{itemize}
+    \item clear interface ethernet 3
+    \end{itemize}
+  \end{itemize}
+\item Nota: la definizione di cosa conta un contatore dipende dalla documentazione del prodotto.
+\item
+  {\footnotesize
+\begin{verbatim}
+c4500#sh int e1
+Ethernet1 is up, line protocol is down
+Last clearing of "show interface" counters never
+Output queue 0/40, 0 drops; input queue 0/75, 0 drops
+0 packets input, 0 bytes, 0 no buffer
+     Received 0 broadcasts, 0 runts, 0 giants
+     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored, 0 abort
+     0 input packets with dribble condition detected
+     187352 packets output, 11347294 bytes, 0 underruns
+     187352 output errors, 0 collisions, 3 interface resets
+\end{verbatim}
+  }
+\item Note:
+  \begin{itemize}
+  \item I contatori \gls{CLI} rimangono la via basilare per la gestione degli elementi.
+  \item Il formato/apparenza dei contatori cambiano da produttore a produttore (spesso anche con lo stesso prodotto, ad esempio Cisco IOS verso CatOS verso PIX).
+  \item Nota: IOS, CatOS e PIX sono rispettivamente router, switch e firewall OS usati dalle apparecchiature Cisco.
+  \end{itemize}
+\item I contatori SNMP invece:
+  \begin{itemize}
+  \item Offrono la possibilità di confrontare le apparecchiature:
+    \begin{itemize}
+    \item Sono contatori definiti da uno standard
+      \begin{itemize}
+      \item Come definita da IETF\footnote{Internet Engineering Task Force}, IEEE\footnote{Institute of Electrical and Electronics Engineering}, qualche produttore, etc\ldots
+      \item Non dipendono dai tipi di elementi di rete o dai produttori.
+      \end{itemize}
+    \item Sono unici a livello globale, con nomi difficili da pronunciare
+      \begin{itemize}
+      \item {\tt 1.3.6.1.2.1.17.2.4 dot1dStpTopChanges}
+      \end{itemize}
+    \end{itemize}
+  \item Hanno una dimensione ben specifica
+    \begin{itemize}
+    \item Larghezza a 32 o a 64 bit (i 64 bit sono disponibili in SNMP v2c o v3).
+    \end{itemize}
+  \item I contatori non necessariamente partono da zero
+    \begin{itemize}
+    \item I produttori sono liberi di fare quello che vogliono.
+    \end{itemize}
+  \item Non sono pensati per essere consultati direttamente dall'uomo.
+  \item
+    {\footnotesize
+\begin{verbatim}
+dot1dTpPortInFrames OBJECT-TYPE
+              SYNTAX Counter
+              ACCESS read-only
+              STATUS mandatory
+              DESCRIPTION
+                    "The number of frames that have been received by
+                    this port from its segment. Note that a frame
+                    received on the interface corresponding to this
+                    port is only counted by this object if and only if
+                    it is for a protocol being processed by the local
+                    bridging function, including bridge management
+                    frames."
+              REFERENCE
+                    "IEEE 802.1D-1990: Section 6.6.1.1.3"
+\end{verbatim}
+    }
+  \item Nota: i buoni contatori generalmente derivano da una specificazione del protocollo sottostante.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Cos'altro si può fare con SNMP?}
+\begin{itemize}
+\item Individuare ed eliminare le connessioni TCP pendenti.
+\item Manipolare la tabella \gls{ARP}.
+\item Prelevare la temperatura ambientale.
+\item Controllare l'utilizzo della CPU.
+\item Monitorare gli alimentatori e/o i gruppi di continuità.
+\item Trovare gli utenti che usano \gls{P2P} (utilizzando la tabella NAT\footnote{Network Address Translation.}).
+\item Visualizzare la topologia della rete (ad esempio con CDP\footnote{Cisco Discovery Protocol.}).
+\end{itemize}
+
+% LocalWords:  SNMP MIB RFC ICMP UDP TCP stack routing l'IP IPv system' l'agent
+% LocalWords:  sysUpTime sysService sysObjectId Cisco router sysDescr Operating
+% LocalWords:  Internetwork System IOS tm Version fc cisco Systems Inc spenta'
+% LocalWords:  sysLocation sysContact interface' ifIndex buchi' sysAdminStatus
+% LocalWords:  ifOperStatus ifconfig device ifOutQLen throughput ifLastChange
+% LocalWords:  ifInUcastPkts multicast broadcast ifInNUcastPkts ifInDiscards AS
+% LocalWords:  ifInUnknownProtos ifInErrors ifInOctets ottetti' ifOutOctets WAN
+% LocalWords:  esposti' Wide Juniper sottointerfacce Extreme entry VLAN Virtual
+% LocalWords:  PVC Circuit Relay IfSpeed interface arp' ARP Address Resolution
+% LocalWords:  Protocol arp poisoning L'ARP spoofing attacker switched lan the
+% LocalWords:  middle cache host switch hub L'hub MAC unit dot dTpFdbTable worm
+% LocalWords:  dTpFdbAddress precedente' trunk VMware vtpVlanState read number
+% LocalWords:  dTpFdbPort dBasePortIfIndex ifName Hex STRING FB INTEGER Command
+% LocalWords:  l'ifIndex Line community clear ethernet CatOS PIX firewall OS of
+% LocalWords:  IETF Force IEEE Institute Electrical and Electronics NAT CDP
+% LocalWords:  dStpTopChanges Translation Discovery

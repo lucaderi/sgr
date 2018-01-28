@@ -1,0 +1,10 @@
+Nella cartella del programma e' necessario avere un file "sites.txt" in cui inserire
+tutte le keyword per le quali lanciare le notifiche di alert. E' inoltre facoltativo
+avere un file "token.txt" con il token del bot di telegram, altrimenti verra' usato il
+token che abbiamo messo a disposizione.
+
+E' inoltre necessario aggiungere al Telegram il bot che abbiamo creato, l'url e'
+https://telegram.me/NetAnalyticsBot
+
+Per lanciare il programma eseguire `bundle exec ruby net_analytics.rb <interface>`.
+Ctrl+C per terminare.

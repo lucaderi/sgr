@@ -1,0 +1,36 @@
+***************************
+malSniffer
+Author: Luigi Malomo
+
+BUILD:
+	command: make
+	cleanup: make clean
+	required libs: pcap, rrdtool
+
+	The program should compile on both Mac OS 10.5 and Linux (tested on Ubuntu 9.04)
+
+
+USAGE:
+       malSniffer [-v] [-b] [-f] [-i <interface>] [-r [<rrdfile>]] [-p <pcap_file>]
+       -v : verbose mode
+       -b : if supported enable bidirectional monitoring mode (MAC address based)
+       -f : enable flow aggregation (flows are emitted on stdout)
+       -i <interface> : capture from specified device
+       -r <rrdfile> : store statistics on specified file (if doesn't exist will be created)
+       	              if -b option is set the program attempts to create two files: "in_<rrdfile>" and "out_<rrdfile>"
+       -p <pcap_file> : [BENCHMARK PURPOSE ONLY] capture offline from specified file (can be used only with -f and -v options)
+
+
+EXAMPLE:
+	sudo ./malSniffer -v -b -r data.rrd -f
+
+	The command launch the program that lets the user choose which interface to capture on.
+	Then creates two rrd files: in_data.rrd and out_data.rrd.
+	Periodically (every 10 seconds) the program updates the databases witch collected data and
+	(every 60 seconds) emits the flows printing them on stdout.
+
+
+ADDONS:
+	graph.sh
+	
+	Execute the script to generate graphs from rrd files.

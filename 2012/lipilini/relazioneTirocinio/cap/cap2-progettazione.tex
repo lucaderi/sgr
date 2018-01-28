@@ -1,0 +1,123 @@
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\chapter{Progettazione}
+
+\section{Le motivazioni del progetto}
+
+Dall'introduzione sono emersi due aspetti centrali e imprescindibili per i firewall di nuova generazione, che saranno trattati in dettaglio nel proseguo di questo capitolo.
+
+Il primo è la necessità di esaminare i pacchetti approfonditamente (DPI), senza soffermarsi all'header, poiché non è possibile in alcun modo fare un mappatura 1 a 1 delle porte coi servizi trasportati, sia per la continua espansione di quest'ultimi, che per la facilità nella manipolazione dei pacchetti.
+
+Il secondo riguarda lo shaping, ovvero la gestione, attraverso politiche prestabilite, delle (limitate) risorse di rete, dato che sempre più device (cellulari, tablet, PC, \dots) possono accedervi, e potenzialmente monopolizzare la banda per servizi secondari a discapito di quelli primari.
+
+Allo stato attuale, i due aspetti sono fondamentalmente disgiunti. Purtroppo, mantenerli separati ha notevoli implicazioni nelle veloci reti moderne, che, al contrario, richiedono grande collaborazione e integrazione tra DPI e shaping, al fine di garantire la miglior esperienza utente possibile.
+
+Per quanto l'aspetto modulare sia una caratteristica desiderabile, averla tra tool completamente diversi e a sé stanti, che invece dovrebbero formare un unico sistema, non la è affatto.
+
+Gli amministratori di rete sono quindi praticamente costretti a scegliere i costosi prodotti proprietari al fine di ottenere firewall aggiornati e performanti, adatti alle reti attuali. Le poche alternative open source, capaci di funzionare su hardware non dedicato e quindi meno costosi (ad esempio una workstation), spesso non forniscono l'integrazione di funzionalità ormai base come il DPI e lo shaping.
+
+Per cercare di creare un sistema in grado di combinare i due aspetti, gli amministratori di rete sono costretti a provare a far interagire programmi di diversa natura. Ci sono quindi evidenti problemi derivati dalla comunicazione e dalle configurazioni da mantenere coerenti tra vari processi. Soprattutto queste ultime sono difficilmente gestibili in grosse realtà, dove spesso ci si trova a dover aggiornare un grande e complicato sistema.
+
+Queste difficoltà sfociano nell'impossibilità di avere un controllo totale sul traffico, sia perché avere questa distribuzione di funzionalità forzata fa sì che i vari controlli siano più facilmente superabili (magari a causa proprio di una cattiva interoperabilità), sia a causa di un degradamento delle performance, richieste sempre più elevate dalla sempre crescente velocità delle reti.
+
+Ne consegue il bisogno di accentrare in un unico software tutte le componenti necessarie a svolgere le funzioni di DPI e shaping, pur mantenendo l'aspetto buono della modularizzazione.
+
+La voglia di modernizzare il mondo dei firewall, portandolo al passo con le reti attuali, ha fatto sì che questo progetto integrasse assieme tutti questi aspetti, al fine di portare, nel palcoscenico dei software di rete odierno, una grande novità.
+
+Data la scarsità, o meglio, assenza, di prodotti simili nel mondo open source, si è deciso di colmare questo vuoto, fornendo quindi a tutti la possibilità di utilizzare al meglio le proprie risorse di rete, senza aver la necessità di star dietro alle sempre nuove tecnologie che quotidianamente vengono messe in commercio.
+
+Ci si prefigge quindi l'obiettivo di creare un firewall a livello applicativo di nuova concezione, facilmente portabile e configurabile, capace di adattarsi perfettamente all'hardware sottostante (seppur di un semplice PC) per sfruttare al meglio la potenza di calcolo, così da offrire sul mercato un nuovo e valido strumento per gli amministratori di rete.
+
+Quest'ultimi avranno anche la possibilità di scrivere le proprie funzioni per il riconoscimento dei protocolli applicativi, garantendo quindi un altissimo grado di personalizzazione.
+
+Grazie alla tecnologia attuale, gli apparati di rete sono in grado di gestire traffico a velocità intorno al Gigabit/s, quindi il firewall viene concepito e realizzato per rispondere a questa esigenza.
+
+Anche per questioni legate alla sicurezza, il sistema opera in modo del tutto trasparente, cioè come se fosse invisibile sia ai device interni che esterni.
+
+\emph{L7-Bridge}, rispondendo a tutte queste prerogative, costituisce la prima concreta alternativa open source per il mondo firewall di ultima generazione.
+
+\section{Principali problemi affrontati}
+
+\subsection{Il Deep Packet Inspection}
+
+Un componente fondamentale della nuova concezione di un firewall sta in un motore di analisi approfondita dei pacchetti \cite{dpi} (in inglese \emph{Deep Packet Inspection}, in sigla DPI), dato che i numeri di porta non identificano più i servizi Internet. Inoltre sempre più spesso il traffico viene criptato per favorire l'aspetto della sicurezza nella comunicazione.
+
+Tale motore permette di non soffermarsi all'intestazione di un pacchetto in transito, ma di analizzarne approfonditamente anche il contenuto (\emph{payload}) al fine di capire cosa realmente sta trasportando. Questo avviene sia a livello di singolo pacchetto, dove interviene ovviamente la conoscenza del protocollo stesso (per esempio si sa che una risposta del protocollo di trasferimento file, FTP, inizia sempre con un codice di tre numeri seguiti da una breve stringa di spiegazione di quel codice), che dell'intero flusso di dati. Infatti spesso c'è bisogno di una sorta di memoria dei precedenti pacchetti transitati sia a fini statistici e di monitoraggio della rete, che al fine di stabilirne il servizio trasportato.
+
+Si capisce quindi come sia necessario mantenere in memoria una struttura dati per contenere tali informazioni e che ne permetta un rapido accesso al fine di non rallentare le operazioni di ispezione del pacchetto.
+
+Spesso, congiuntamente all'analisi, è anche possibile estrarre altre varie informazioni sul traffico (\emph{metadati}).
+
+I metadati possono essere utilizzati al fine di tracciare dei veri e propri profili d'uso sia a livello della rete nel complesso che a livello dei singoli utenti.
+
+Questo meccanismo è sfruttato anche dagli ISP (Internet Service Provider, ovvero in italiano, il fornitore dei servizi Internet) a fini commerciali. Se tale pratica sia o meno corretta dipende, oltre che dal buonsenso, anche dalla legislazione di ogni stato.
+
+Infine, il DPI consente anche di riconoscere certi attacchi informatici come quelli dovuti a virus e worms, garantendo quindi un certo grado di sicurezza, altro aspetto fondamentale di un buon firewall.
+
+Ci sono però degli svantaggi nell'usare questa tecnologia.
+
+Dal punto di vista computazionale, si nota sicuramente come tutto ciò voglia dire spendere svariate operazioni per ogni pacchetto al fine di riconoscerne il protocollo applicativo e su reti ad alta velocità (Gigabit Ethernet per esempio) questo potrebbe voler dire perdere dei dati, in quanto sulla scheda continuano ad arrivare pacchetti che verrebbero poi scartati dalla scheda stessa per quelli più nuovi al termine dello spazio disponibile nel buffer temporaneo di memorizzazione.
+
+Dal punto di vista dell'utente invece, questi meccanismi potrebbero essere visti come un attentato alla sua privacy.
+
+Ad ogni modo, se utilizzato per giusti scopi, il DPI promette di essere il futuro per ogni firewall che si rispetti e un campo di ricerca in costante evoluzione, al pari dei servizi Internet.
+
+Nel mercato mondiale, vi sono diversi prodotti software che svolgono questi compiti. Alcuni si appoggiano all'uso delle espressioni regolari, altri all'uso di funzioni C, per ispezionare i pacchetti.
+
+L'utilizzo di espressioni regolari permette una semplice e intuitiva scrittura di nuovi pattern per riconoscere il protocollo applicativo del pacchetto, mentre le funzioni C permettono migliori performance dal punto di vista computazionale, a discapito della potenza espressiva. Inoltre, altro aspetto da non trascurare, le espressioni regolari sono più soggette ad effettuare errori nel match del servizio, creando quindi delle possibilità concrete di falsi positivi e negativi, caratteristica poco apprezzabile.
+
+Al fine di colmare questi gap nei confronti delle funzioni C, sono stati compiuti, negli ultimi anni diversi, diversi studi \cite{redpi0,redpi1,redpi2,redpi3}. Congiungendo i vari risultati, si potrebbero ottenere ottime performance, con controlli paralleli di più espressioni e minor occupazione di memoria, accompagnate da un netto abbassamento delle probabilità di errori nel match.
+
+I software migliori e più aggiornati risultano essere quelli a pagamento (piuttosto cara ogni licenza), ma essendo closed source c'è bisogno di attendere gli aggiornamenti voluti dai proprietari del software, che potrebbero non essere in linea con le esigenze dell'utente. La controparte open source invece, oltre che essere spesso inefficiente, è anche poco aggiornata e aggiornabile.
+
+Oltre a prodotti software, ci sono soluzioni integrate in appositi apparati di rete. Essendo tecnologie all'avanguardia sono però piuttosto costose, e per ottenere aggiornamenti bisogna attendere quelli della casa produttrice.
+
+In teoria questa soluzione è preferibile nei confronti di quelle software da far girare su comuni PC, in quanto, sfruttando unità specializzate, possono ottenere performance migliori, subordinate però, oltre che alla frequenza nell'aggiornamento, anche all'avanzamento delle tecnologie.
+
+\subsection{Il Quality of Service}
+
+Il Quality of Service \cite{qos} (Qualità del Servizio) e lo Shaping \cite{ts} (letteralmente, sagomatura) sono altri due aspetti fondamentali nell'attribuzione prioritaria delle risorse di rete, che, come detto, sono limitate.
+
+Il tutto si traduce nell'assegnare una priorità ai flussi di comunicazione, e quindi, in accordo con esse, di ritardare certi pacchetti per favorire l'invio di altri, facendo in modo da destinare una maggior o minor quantità di risorse di rete.
+
+Ovviamente tali risorse sono attribuite in base a quelle effettivamente disponibili, ma anche secondo le preferenze dell'utente o amministratore di rete che sia, configurando opportunamente il sistema che effettua lo shaping.
+
+\clearpage
+Da un punto di vista pratico, una volta che il traffico arriva al sistema, ad esso viene assegnato un grado di priorità, che manterrà per tutta la durata della comunicazione. I pacchetti che compongono il flusso non vengono immediatamente trasmessi all'altro capo, ma piuttosto vengono trattenuti per un certo periodo di tempo, al fine di dare precedenza a quelli a priorità maggiore.
+
+Tutto ciò è dunque molto importante, oltre che per ottimizzare l'uso della rete nel suo complesso, anche per garantire a determinati utenti le migliori prestazioni possibili per certi servizi, sia sulla base di semplici preferenze che di accordi economici.
+
+Lo svantaggio di questa tecnica è l'introduzione di un ulteriore livello di ritardo dal punto di vista computazionale, seppur fisiologico. I pacchetti candidati alla trasmissione devono essere memorizzati per tutto il tempo necessario in un buffer dell'applicazione che non può essere illimitato, quindi ancora una volta ci si potrebbe ritrovare a perdere dei pacchetti.
+
+Nonostante tutto, attribuire a determinati servizi delle risorse minime da poter utilizzare per garantire l'usabilità dei sistemi da parte degli utenti, è una prerogativa troppo importante per essere ignorata.
+
+Può essere effettuato sia su IP e porte, che sul protocollo applicativo realmente trasportato.
+
+Nel primo caso il compito si esegue esaminando l'header del pacchetto e quindi praticamente a costo zero (c'è solo la decodifica del pacchetto). Nel secondo, invece, c'è anche la necessità di appoggiarsi ad un motore d'analisi DPI come quelli precedentemente discussi.
+
+Esistono fondamentalmente due algoritmi per modellare il traffico. Uno è il \emph{leaky bucket} \cite{lba} e l'altro è il \emph{token bucket} \cite{tba}.
+
+Seppur siano preposti allo stesso scopo, hanno caratteristiche diverse nel comportamento, infatti, mentre il primo impone un limite rigido sulla velocità di trasmissione dati, il secondo consente qualche picco ma il tasso medio di trasmissione risulta essere quello desiderato.
+
+In questo caso è possibile utilizzare soprattutto soluzioni software, commerciali e open source.
+
+I prodotti commerciali soffrono di tutte le varie pecche dei software closed source (alto prezzo e aggiornamento imposto).
+
+I prodotti open source per Windows sono basati su algoritmi di shaping del tipo di quelli suddetti. Nel mondo di Linux invece abbiamo diversi approcci per risolvere questo problema, oltre a quello puramente algoritmico, il che li rende decisamente più interessanti.
+
+Il più comune è quello che si basa su varie manipolazioni del \emph{traffic control} del kernel di Linux \cite{lntc} (un'esaustiva e aggiornata guida di come sia possibile utilizzarlo a fini di \emph{traffic shaping} si trova qui \cite{lartc}).
+
+La prima cosa che salta allo sguardo è come questi meccanismi siano tutt'altro che semplici ed intuitivi, e la forte dipendenza dal kernel di Linux. Questo aspetto fa sì che si debbano adeguare sempre e costantemente alle varie modifiche che subiscono frequentemente i kernel, cosa che può diventare piuttosto inaccettabile.
+
+Risulta quindi evidente come tali software siano destinati a non avere grande futuro, a meno di costanti revisioni.
+
+Un altro approccio consiste nell'interporsi tra le  normali system calls chiamate dal programma (quali poll, select, recv, send, \dots) ritardandone eventualmente la reale esecuzione. Questo è fatto attraverso l'uso di LD\_PRELOAD sui sistemi Unix-like, che garantisce la precedenza di caricamento a certe librerie, a discapito di quelle standard come \emph{libc.so}.
+
+Tramite questo accorgimento, piuttosto semplice, è possibile quindi limitare la banda di un'applicazione.
+
+La terza possibilità è rappresentata dai \emph{packet scheduler}.
+
+Questi possono essere implementati sia a livello utente che in kernel space.
+
+Il compito dello scheduler è quello di dare un ordine per la spedizione ai vari pacchetti privilegiando quelli che rispettano determinati parametri, in modo da garantire una certa qualità di servizio.
+
+Esistono vari tipi di politiche di scheduling, ognuna con le proprie caratteristiche. Una panoramica piuttosto esaustiva è contenuta in \cite{ps}.

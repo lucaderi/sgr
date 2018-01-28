@@ -1,0 +1,15 @@
+References
+----------
+http://0pointer.de/lennart/projects/fixsrcip/
+
+deri@centos ipstack]$ ./udp-client 127.0.0.1
+[DNASTACK] socket
+[DNASTACK] socket: created socket 0
+Interface # 0 -> lo: IP 127.0.0.1
+Interface # 1 -> eth0: IP 192.168.1.163
+[DNASTACK] sendto
+sendto(127.0.0.1:32000) returned Error
+
+----------
+(C) 2012 - ntop.org
+

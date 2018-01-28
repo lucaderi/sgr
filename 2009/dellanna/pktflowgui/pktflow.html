@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<title>Packet Flow GUI v1.1.0</title>
+<link type="text/css" rel="stylesheet" href="style.css" />
+<noscript>
+<!--
+    We have the "refresh" meta-tag in case the user's browser does
+    not correctly support JavaScript or has JavaScript disabled.
+
+    Notice that this is nested within a "noscript" block.
+-->
+<meta http-equiv="refresh" content="5" />
+
+</noscript>
+<script type="text/javascript">
+	var sURL = unescape(window.location.pathname);
+	
+	flag=true;
+	
+	function doLoad()
+	{
+	    
+		// the timeout value should be the same as in the "refresh" meta-tag
+	     setTimeout( "refresh()", 5*1000 );
+	}
+	
+	function refresh()
+	{
+		
+	    
+		//  L'argomento nella funzione location.reload determina
+	    //  se il browser deve recuperare il documento dal
+	    //  web-server.
+	    // 
+	    if(flag==true) window.location.reload( false );
+	}
+	
+	function startLoad(){
+		
+		//la funzione ricomincia il refresh automatico della pagina solo se precedentemente interrotto
+		if(flag==false){
+			flag=true;
+			//refresh
+			window.location.reload( false );
+		}
+	}
+	
+	function stopLoad(){
+		
+		//la funzione interrompe il refresh automatico della pagina
+		flag=false;
+	}
+</script>
+</head>
+
+<body onload="doLoad()">
+<h1>PACKET FLOW WEB GUI</h1>
+<span class="value">Network interface flow stats at:</span><br />
+<script type="text/javascript">
+    // inseriamo il timestamp corrente
+    document.write('<span class="value">' + (new Date).toLocaleString() + '</span> <br />');
+</script>
+<img src="graphs/graph_hour.png" />  <img src="graphs/graph_day.png" />
+<p/>
+<form>
+<button type="button" onclick="startLoad();">Start refresh!</button>
+<button type="button" onclick="stopLoad();">Stop refresh!</button>
+</form>
+<iframe src="./flows/flows.xml">
+  Contenuto alternativo per i browser che non leggono gli iframe.
+</iframe>
+</body>
+</html>

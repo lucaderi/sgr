@@ -1,0 +1,1 @@
+(dst host not facebook.com) && (ether host not 10:13:31:C3:B2:02)

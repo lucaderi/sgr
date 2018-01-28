@@ -1,0 +1,77 @@
+%% Glossario %%
+
+% ARP
+\newacronym[description={Per inviare un pacchetto IP ad un host della stessa sottorete, è necessario incapsularlo in un pacchetto di livello datalink, che dovrà avere come indirizzo destinazione il MAC address dell'host a cui lo si vuole inviare. ARP viene utilizzato per ottenere questo indirizzo.
+\glspar
+L'host che vuole conoscere il MAC address di un altro host, di cui conosce l'indirizzo IP, invia in broadcast una richiesta ARP (ARP-request) contenente il proprio MAC address e l'indirizzo IP dell'host di cui vuole conoscere il MAC address. Se nella sottorete esiste un host che ha proprio l'indirizzo IP settato nell'ARP-request, allora provvederà ad inviare una risposta (ARP-reply) al MAC address del richiedente, contenente il proprio MAC address}]{ARP}{ARP}{Address Resolution Protocol}
+
+% ARP poisoning
+\newglossaryentry{ARP poisoning}{name=ARP poisoning, description={Detto anche ARP spoofing, è una tecnica di hacking che consente ad un attacker, in una switched lan, di concretizzare un attacco di tipo man in the middle verso tutte le macchine che si trovano nello stesso segmento di rete. L'ARP poisoning è oggi la principale tecnica di attacco alle lan commutate. Consiste nell'inviare intenzionalmente e in modo forzato risposte ARP contenenti dati inesatti o, meglio, non corrispondenti a quelli reali. In questo modo la tabella ARP (ARP entry cache) di un host conterrà dati alterati (da qui i termini poisoning, letteralmente avvelenamento e spoofing, raggiro). Molto spesso lo scopo di questo tipo di attacco è quello di redirigere, in una rete commutata, i pacchetti destinati ad un host verso un altro al fine di leggere il contenuto di questi per catturare le password che in alcuni protocolli viaggiano in chiaro}}
+
+% AS
+\newacronym[description={In riferimento ai protocolli di routing, è un gruppo di router e reti sotto il controllo di una singola e ben definita autorità amministrativa. Un'autorità amministrativa si contraddistingue sia in base a elementi informatici (specifiche policy di routing), sia per motivi amministrativi. Esempio di sistema autonomo può essere quello che contraddistingue gli utenti di un unico provider oppure, più in piccolo, quello che costituisce la rete interna di un'azienda.
+\glspar
+All'interno di un sistema autonomo i singoli router comunicano tra loro, per scambiarsi informazioni relative alla creazione delle tabella di routing, attraverso un protocollo \glsentrytext{IGP}. L'interscambio di informazioni tra router appartenenti a sistemi autonomi differenti avviene attraverso un protocollo \glsentrytext{BGP}}]{AS}{AS}{Automous System}
+
+% ASN
+\newacronym[description={Ad ogni \glsentrytext{AS} viene assegnato un ASN in modo da essere usato per il routing \glsentrytext{BGP}. Gli ASN sono importanti perché ognuno di essi identifica una specifica rete di internet}]{ASN}{ASN}{Automous System Number}
+
+% ATM
+\newacronym[description={Modalità di trasporto asincrona che trasferisce il traffico multiplo (come voce, video o dati) in cellule di lunghezza fissa di 53 byte (piuttosto che in "pacchetti" di lunghezza variabile come accade nelle tecnologie Ethernet e \glsentrytext{FDDI}). La modalità ATM permette di raggiungere velocità elevate e diventa particolarmente diffusa nelle dorsali di rete a traffico intenso. Le apparecchiature di rete di nuova generazione permettono di supportare le trasmissioni WAN anche in ATM, rendendola interessante anche per grandi organizzazioni geograficamente distribuite}]{ATM}{ATM}{Asynchronous Transfer Mode}
+
+% BGP
+\newacronym[description={\`E un protocollo di rete usato per connettere tra loro più router che appartengono a \glsentrytext{AS} distinti e che vengono chiamati router gateway. \`E quindi un protocollo di routing inter-AS, nonostante possa essere utilizzato anche tra router appartenenti allo stesso AS (nel qual caso è indicato con il nome di iBGP, Interior Border Gateway Protocol), o tra router connessi tramite un ulteriore AS che li separa}]{BGP}{BGP}{Border Gateway Protocol}
+
+% Broadcast
+\newglossaryentry{broadcast}{name=Broadcast, text=broadcast, description={Nelle reti di calcolatori, un pacchetto inviato ad un indirizzo di tipo broadcast verrà consegnato a tutti i computer collegati alla rete (ad esempio, tutti quelli su un segmento di rete ethernet, o tutti quelli di una sottorete IP). Si veda anche Multicast e Unicast}}
+
+% CLI
+\newacronym[description={\`E la modalità di interazione tra utente ed elaboratore che avviene inviando comandi tramite tastiera e ricevendo risposte alle elaborazioni tramite testo scritto. Questo tipo di approccio deriva dalla modalità di interazione con i primi calcolatori che avveniva attraverso terminali testuali non in grado di compiere alcuna elaborazione e connessi ad un elaboratore centrale}]{CLI}{CLI}{Command Line Interface}
+
+% DHCP
+\newacronym[description={\`E un protocollo che permette agli amministratori di rete di gestire centralmente ed in modo automatico l'assegnamento dell'indirizzo IP di ogni dispositivo connesso ad una rete (che deve risultare unico)}]{DHCP}{DHCP}{Dynamic Host Configuration Protocol}
+
+% DoS
+\newacronym[description={Tradotto come ``negazione del servizio'', è un tipo di attacco internet in cui si cerca di portare il funzionamento di un sistema informatico che fornisce un servizio, ad esempio un sito web, al limite delle prestazioni, lavorando su uno dei parametri d'ingresso, fino a renderlo non più in grado di erogare il servizio}]{DoS}{DoS}{Denial of Service}
+
+% FDDI
+\newacronym[description={Tecnologia LAN basata su una rete con topologia ad anello da 100 Mbps che utilizza cavi a fibre ottiche che coprono distanze fino a 2 Km. Generalmente è riservata alle dorsali di rete di grandi organizzazioni}, nonumberlist]{FDDI}{FDDI}{Fiber Distributed Data Interface}
+
+% IGP
+\newacronym[description={Protocollo di routing usato all'interno di un \glsentrytext{AS}. I più comuni IGP usati sono RIP (Routing Information Protocol), OSPF (Open Shortest Path First) e IS-IS}, nonumberlist]{IGP}{IGP}{Interior Gateway Protocol}
+
+% ISP
+\newacronym[description={Società che gestisce gli accessi ad Internet. Collegando il proprio computer (via modem o router) al server dell'ISP, si entra in Internet. Gli ISP offrono spesso altri servizi aggiuntivi, come la posta elettronica, l'hosting e l'housing, soluzioni di E-commerce e di supporto ai propri clienti}]{ISP}{ISP}{Internet Service Provider}
+
+% LAN
+\newacronym[description={Rete o gruppo di segmenti di rete confinati in un edificio o un campus, che collega computer e periferiche (es. stampanti, fax, scanner) installate nella stessa sede (es. stesso palazzo, anche a piani diversi) oppure in sedi vicine (es. due palazzi adiacenti). Le LAN operano di solito ad alta velocità, per esempio Ethernet ha una velocità di trasferimento dati di 10 Mbps o di 100 Mbps nel caso della Fast Ethernet. Si veda anche \glsentrytext{WAN}}]{LAN}{LAN}{Local Area Network}
+
+% Multicast
+\newglossaryentry{multicast}{name=Multicast, text=multicast, description={Nelle reti di calcolatori, un pacchetto inviato ad un gruppo multicast verrà consegnato a tutti i computer appartenenti a quel gruppo. Si veda anche Broadcast e Unicast}}
+
+% QoS
+\newacronym[description={Meccanismo di controllo delle risorse limitate. QoS è capace di fornire differenti priorità a differenti applicazioni, utenti o flussi di dati, oppure di garantire un certo livello di performance ad un flusso di dati. Ad esempio potrebbero essere garantiti una determinata velocità di bit, un determinato ritardo, una certa probabilità di scarto di pacchetti. Le garanzie di QoS sono importanti soprattutto se la capacità della rete insufficiente, specialmente per le applicazioni multimediali a tempo reale in streaming, applicazioni come ad esempio giochi online o televisione via IP (IP-TV), infatti questo tipo di applicazioni sono sensibili al ritardo e spesso necessitano di una velocità fissa di bit}]{QoS}{QoS}{Quality of Service}
+
+% P2P
+\newacronym[description={Rete paritaria: una rete di computer o qualsiasi rete informatica che non possiede nodi gerarchizzati come client o server fissi (clienti e serventi), ma un numero di nodi equivalenti (in inglese peer) che fungono sia da cliente che da servente verso altri nodi della rete.
+\glspar
+Questo modello di rete è l'antitesi dell'architettura client-server. Mediante questa configurazione qualsiasi nodo è in grado di avviare o completare una transazione. I nodi equivalenti possono differire nella configurazione locale, nella velocità di elaborazione, nella ampiezza di banda e nella quantità di dati memorizzati. L'esempio classico di P2P è la rete per la condivisione di file (File sharing)}]{P2P}{P2P}{Peer-to-peer}
+
+% RTT
+\newacronym[description={Detto Round Trip Delay, è il tempo impiegato da un pacchetto di dimensione trascurabile per viaggiare da un host della rete ad un altro e tornare indietro (tipicamente, un'andata client-server ed il ritorno server-client)}]{RTT}{RTT}{Round Trip Time}
+
+% SLA
+\newacronym[description={Strumenti contrattuali attraverso i quali si definiscono le metriche di servizio che devono essere rispettate da un fornitore di servizi. In un mercato competitivo che opera quindi in regime di libera concorrenza, gli SLA sono diventati uno strumento comune per misurare efficacemente i servizi. In questo contesto la definizione di uno SLA consiste in un contratto tangibile tra due parti che, se da un lato assicura la fornitura dei servizi a livelli pre-negoziati, dall'altro comporta il pagamento di penalità in caso di mancato raggiungimento di tali livelli.
+\glspar
+La definizione dello SLA è basata sulla determinazione da parte del cliente del livello di servizio ideale a garanzia del suo business}]{SLA}{SLA}{Service Level Agreement}
+
+% Tos
+\newacronym[description={\`E un campo (un byte) dell'header IPv4 usato in vari modi e specificato in modi diversi da 5 RFC, (RFC 791, RFC 1122, RFC 1349, RFC 2474, e RFC 3168).
+\glspar
+L'intenzione originaria del ToS era quella di permettere ad un host di specificare come un datagram doveva essere gestito quando attraversava la rete. Ad esempio, un host avrebbe potuto settare il ToS per indicare un basso ritardo, laddove un altro host lo avrebbe potuto settare per indicare la sua preferenza verso una maggiore affidabilità. In pratica però l'uso del ToS non è stato largamente impiegato. La sua moderna definizione lo vede diviso in 6 bit denominati Differentiated Service Code Point (DSCP) e 2 bit denominati Explicit Congestion Notification}]{ToS}{ToS}{Type of Service}
+
+% Unicast
+\newglossaryentry{unicast}{name=Unicast, text=unicast, description={Nelle reti di calcolatori, un pacchetto unicast è un pacchetto inviato ad un solo computer. Si veda anche Broadcast e Multicast}}
+
+% WAN
+\newacronym[description={Rete a larga area o a lunga tratta, che si può estendere per una lunghezza massima di 100km. Si tratta di una rete di comunicazione dati, che impiega linee telefoniche dedicate o satelliti. Si veda anche \glsentrytext{LAN}}]{WAN}{WAN}{Wide Area Network}

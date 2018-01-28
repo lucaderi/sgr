@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta charset="utf-8">
+	<title>Network Flows</title>
+	<link rel='stylesheet' id='sankey-css'  href='sankey.css' type='text/css' media='all' />
+</head>
+<body>
+
+<h1>Network Flows</h1>
+<div class="loader"><img with="100" height="100" src="loading.gif"></div>
+<table border="0">
+	<tr>
+		<td id="chart"></td>
+		<td>
+			<form action="/cgi-bin/sankey.py" autocomplete="off" method=post id="update-graph" />
+				<input type="hidden" name="zoom" value="0"/>
+				<fieldset id="tophost">
+					<legend>Top Host</legend>
+					Show first <em>n</em> host:<br/>
+					<input type="text" name="maxhost" value="16"/>
+				</fieldset>
+				<fieldset id="host">
+					<legend>Search by host address</legend>
+					<input type="text" name="source" id="searchip" value="" onkeyup="searchSel()"/>
+					<select id="hostselect">
+						<option name="" value="">Show all host</option>
+					</select>
+				</fieldset>
+				<fieldset id="layer4">
+					<legend>Layer 4</legend>
+					<ul id="layer4">
+					</ul>
+					Layer 4 all:
+					<input type="button" value="off" onclick="layer_4_off()" />
+					<input type="button" value="on" onclick="layer_4_on()" />
+				</fieldset>
+				<fieldset id="layer7">
+					<legend>Layer 7</legend>
+					<ul id="layer7">
+					</ul>					
+					Layer 7 all:
+					<input type="button" value="off" onclick="layer_7_off()" />
+					<input type="button" value="on" onclick="layer_7_on()" />
+				</fieldset>
+				<fieldset>
+					<input type="submit" value="Update" />
+					<input type="reset" value="Reset" />
+				</fieldset>
+			</form>
+		</td>
+	</tr>
+</table>
+<div class="time"></time>
+
+<script src="d3.js"></script>
+<script src="jquery.js"></script>
+<!-- <script src="http://code.jquery.com/jquery-latest.js"></script> -->
+<script src="sankey.js"></script>
+<script>
+	$('.loader').show();
+
+	var margin = {top: 10, right: 1, bottom: 6, left: 1},
+		width = 960 - margin.left - margin.right,
+		height = 600 - margin.top - margin.bottom;
+
+	var form = $("#update-graph");
+	var url = form.attr('action');
+	var maxhostobj = form.find('input[name="maxhost"]');
+	var maxhost = maxhostobj.val();
+	var maxhostdef = 16
+	var zoom = form.find('input[name="zoom"]').val();
+	var source, target
+	var refresh_time = 300000 /* 5 minuti */
+	var stop_timer = false
+	var auto_refresh = setInterval(function (){ form.trigger('submit'); }, refresh_time);
+	
+	var direction = function(d){if (d == 0) return " → "; else return " ← "; }
+
+	var formatNumber = d3.format(",.0f"),
+		format = function(d, unit) { return formatNumber(d) + " " + unit; }
+		color = d3.scale.category20();
+
+	var svg = d3.select("#chart").append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+		.attr("class", "graph")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	var sankey = d3.sankey()
+		.nodeWidth(15)
+		.nodePadding(10)
+		.size([width, height]);
+
+	var path = sankey.link();
+
+	function isNumberPositive(n){
+		return !isNaN(parseFloat(n)) && isFinite(n) && n>0;
+	}
+
+	if (!isNumberPositive(maxhost)){
+		maxhost = maxhostdef;
+		maxhostobj.val(maxhostdef);
+	}
+
+	getdata({ "maxhost":maxhost, "zoom":0 });
+
+	form
+		.submit(function(event){
+			$('.loader').show();
+			var data
+			
+			/* stop form from submitting normally */
+			event.preventDefault(); 
+			
+			/* get some values from elements on the page: */
+			maxhost = maxhostobj.val();
+			if (!isNumberPositive(maxhost)){
+				maxhost = maxhostdef;
+				maxhostobj.val(maxhostdef);
+			}
+			zoom = form.find('input[name="zoom"]').val();
+			
+			if (zoom == 0){
+				if (!validatel4()){ $('.loader').hide(); return; }
+				if (!validatel7()){ $('.loader').hide(); return; }
+				data = { "maxhost":maxhost, "zoom":zoom, "layer4": [], "layer7": [], "hostselected": [] }
+				$('li.checkl4 input:checked').each(function(){ data['layer4'].push($(this).val()); });
+				$('li.checkl7 input:checked').each(function(){ data['layer7'].push($(this).val()); });
+				$("select option:selected").each(function(){ data['hostselected'].push($(this).val()); });
+			}
+			else {
+				if (!validatel7()){ $('.loader').hide(); return; }
+				data = { "maxhost":maxhost, "zoom":zoom, "source":source, "target":target, "layer7": [] }
+				$('li.checkl7 input:checked').each(function(){ data['layer7'].push($(this).val()); });
+			}
+			getdata(data);
+		})
+		.bind("reset",
+			function(){
+				$('.loader').show();
+				$('fieldset#tophost').show();
+				$('fieldset#host').show();
+				$('fieldset#layer4').show();
+				$('ul#layer7').height("12em");
+				getdata({ "maxhost":maxhostdef, "zoom":0 })
+			 }
+		);
+
+	function getdata(formdata){
+		$.post(url, formdata, function(flows){ draw(flows); doform(flows.metadata); }, "json")	
+			.error(function() { alert("Error on retriving json data."); })
+	}
+
+	/* (ri)disegna il grafico */
+	function draw(flows){
+		svg.select(".nodes").remove();
+		svg.select(".links").remove();
+		$(".checkl4").remove();
+		$(".checkl7").remove();
+		$(".hostlist").remove();
+
+		form.find('input[name="zoom"]').val(flows.metadata.zoom);
+		if (flows.metadata.zoom == 1){
+			source = flows.metadata.source;
+			target = flows.metadata.target;
+		}
+
+		sankey
+			.nodes(flows.nodes)
+			.links(flows.links)
+			.layout(32);
+
+		var colorlink = function(d){
+			if (flows.metadata.zoom==0)
+				if (d.direction == 0) return color(d.source.name);
+				else return color(d.target.name);
+			else
+				return color(d.layer7);
+		}
+
+		/* Archi */
+		var link = svg.append("g").attr("class", "links").selectAll(".link")
+				.data(flows.links)
+			.enter().append("path")
+				.on("click", clicklink)
+				.attr("class", "link")
+				.attr("d", path)
+				.style("stroke-width", function(d) { return Math.max(1, d.dy); })
+				.style("stroke", function(d){ return d.color = colorlink(d); })
+				.sort(function(a, b) { return b.dy - a.dy; });
+		
+		link.append("title")
+			.text(function(d){
+				if (flows.metadata.zoom==0)
+					return d.source.name + direction(d.direction) + d.target.name + "\n"
+							+ format(d.value, flows.metadata.unit);
+				else
+					return flows.metadata.source + direction(d.direction) + flows.metadata.target + "\n["
+							+ d.layer4 + " - " + d.layer7 + "]: " + format(d.value, flows.metadata.unit);
+			}
+		);
+
+		var node = svg.append("g").attr("class", "nodes").selectAll(".node")
+				.data(flows.nodes)
+			.enter().append("g")
+				.attr("class", "node")
+				.style("cursor", function(d){
+					if ((flows.metadata.zoom == 1) && (d.name != flows.metadata.source) && (d.name != flows.metadata.target))
+						return "default"
+					else		
+						return "pointer"
+				})
+				.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+			.call(d3.behavior.drag()
+				.origin(function(d) { return d; })
+				.on("dragstart", function(){ this.parentNode.appendChild(this); })
+				.on("drag", dragmove))
+				.on("click", function(d){
+					if ((flows.metadata.zoom == 1) && (d.name != flows.metadata.source) && (d.name != flows.metadata.target))
+						return
+					else		
+						return  clickhost(d);
+				});
+
+		/* Nodi */
+		node.append("rect")	
+				.attr("height", function(d) { return d.dy; })
+				.attr("width", sankey.nodeWidth())
+				.style("fill", function(d) { return d.color = color(d.name); })
+				.style("stroke", function(d) { return d3.rgb(d.color).darker(2); })				
+			.append("title")
+				.text(function(d) { return d.name + "\n" + format(d.value, flows.metadata.unit); });
+
+		node.append("text")
+				.attr("x", -6)
+				.attr("y", function(d) { return d.dy / 2; })
+				.text(function(d) { return d.name; })
+				.attr("dy", ".35em")
+				.attr("text-anchor", "end")
+				.attr("transform", null)
+			.filter(function(d) { return d.x < width / 2; })
+				.attr("x", 6 + sankey.nodeWidth())
+				.attr("text-anchor", "start");
+
+		function dragmove(d) {
+			d3.select(this)
+				.attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
+			sankey.relayout();
+			link.attr("d", path);
+		}
+
+		function clicklink(d){
+			$('.loader').show();
+			var data
+
+			maxhost = maxhostobj.val();
+			if (!isNumberPositive(maxhost)){
+				maxhost = maxhostdef;
+				maxhostobj.val(maxhostdef);
+			}
+
+			if (flows.metadata.zoom == 0){
+				if (!validatel7()){ $('.loader').hide(); return; }
+				data = { "maxhost":maxhost, "zoom":1, "source":d.source.name, "target":d.target.name, "layer7": [] }
+				$('li.checkl7 input:checked').each(function(){ data['layer7'].push($(this).val()); });
+				$('fieldset#layer4').hide();
+				$('fieldset#host').hide();
+				$('fieldset#tophost').hide();
+				$('ul#layer7').height("42.6em");
+				getdata(data);
+			}
+			else form.trigger('reset');
+		}
+
+		function clickhost(d){
+			$('.loader').show();
+			var data
+
+			maxhost = maxhostobj.val();
+			if (!isNumberPositive(maxhost)){
+				maxhost = maxhostdef;
+				maxhostobj.val(maxhostdef);
+			}
+
+			if (flows.metadata.zoom == 0){
+				if (!validatel4()){ $('.loader').hide(); return; }
+				if (!validatel7()){ $('.loader').hide(); return; }
+				data = { "maxhost":maxhost, "zoom":0, "layer4": [], "layer7": [], "hostselected[]": d.name }
+				$('li.checkl4 input:checked').each(function(){ data['layer4'].push($(this).val()); });
+				$('li.checkl7 input:checked').each(function(){ data['layer7'].push($(this).val()); });
+			}
+			else{
+				data = { "maxhost":maxhost, "zoom":0 }
+				$('ul#layer7').height("12em");
+				$('fieldset#tophost').show();
+				$('fieldset#host').show();
+			}
+			$("#hostselect").val(d.name);
+			getdata(data);
+		}
+	}
+	
+	/* (ri)disegna e riempie i campi del form in base ai nuovi dati ricevuti */
+	function doform(metadata){
+		var hostlist = $("select#hostselect");
+		var listlayer4 = $("ul#layer4");
+		var listlayer7 = $("ul#layer7");
+
+		if (metadata.zoom == 1){
+
+			$.each(metadata.layer7, function(i, layer7){
+				if (jQuery.inArray(layer7, metadata.layer7selected) > -1){
+					listlayer7.append(
+					'<li class="checkl7">\n' +
+						'<label style="color:'+color(layer7)+'">' +
+							'<input type="checkbox" name="'+layer7+'" value="'+layer7+'" checked=true>'+layer7+'</label>' +
+					'</li>');
+				}
+				else {
+					listlayer7.append(
+					'<li class="checkl7">\n' +
+						'<label><input type="checkbox" name="'+layer7+'" value="'+layer7+'">'+layer7+'</label>' +
+					'</li>');
+				}
+			})
+
+		}
+		else {
+
+			$.each(metadata.layer4, function(i, layer4){
+				if (jQuery.inArray(layer4, metadata.layer4selected) > -1){
+					listlayer4.append(
+					'<li class="checkl4">\n' +
+						'<label><input type="checkbox" name="'+layer4+'" value="'+layer4+'" checked=true>'+layer4+'</label>' +
+					'</li>');
+				}
+				else {
+					listlayer4.append(
+					'<li class="checkl4">\n' +
+						'<label><input type="checkbox" name="'+layer4+'" value="'+layer4+'">'+layer4+'</label>' +
+					'</li>');
+				}
+			})
+			$.each(metadata.layer7, function(i, layer7){
+				if (jQuery.inArray(layer7, metadata.layer7selected) > -1){
+					listlayer7.append(
+						'<li class="checkl7">\n' +
+							'<label><input type="checkbox" name="'+layer7+'" value="'+layer7+'" checked=true>'+layer7+'</label>' +
+						'</li>');
+				}
+				else {
+					listlayer7.append(
+						'<li class="checkl7">\n' +
+							'<label><input type="checkbox" name="'+layer7+'" value="'+layer7+'">'+layer7+'</label>' +
+						'</li>');
+				}
+			})
+
+			$.each(metadata.hostlist, function(i, host){
+				hostlist.append('<option class="hostlist" name="'+host+'" value="'+host+'">'+host+'</option>');
+			})
+			if (metadata.hostselected) $("#hostselect").val(metadata.hostselected);
+		}
+
+		$("li.checkl4 input:checkbox").change(function(){
+			var checked = $("li.checkl4 input:checked").length > 0;
+			if (checked && stop_timer){
+				auto_refresh = setInterval(function (){ form.trigger('submit'); }, refresh_time);
+				stop_timer = false
+			}
+		});
+
+		$("li.checkl7 input:checkbox").change(function(){
+			var checked = $("li.checkl7 input:checked").length > 0;
+			if (checked && stop_timer){
+				auto_refresh = setInterval(function (){ form.trigger('submit'); }, refresh_time);
+				stop_timer = false
+			}
+		});
+
+		$(".time").text("python: "+metadata.time);
+		$('.loader').hide();
+	}
+
+	function searchSel(){
+		var input=document.getElementById('searchip').value.toLowerCase();
+		var output=document.getElementById('hostselect').options;
+
+		for (var i=0; i<output.length; i++){
+			if (output[i].value.indexOf(input)==0) output[i].selected=true;
+			if (document.forms[0].searchip.value=='') output[0].selected=true;
+		}
+	}
+
+	function validatel4(){
+		var checked = $("li.checkl4 input:checked").length > 0;
+		if (!checked){
+			alert("Please select at least one Layer 4 protocol");
+			return false;
+		}
+		return true;
+	}
+
+	function validatel7(){
+		var checked = $("li.checkl7 input:checked").length > 0;
+		if (!checked){
+			alert("Please select at least one Layer 7 protocol");
+			return false;
+		}
+		return true;
+	}
+
+	maxhostobj.change(function(){
+		maxhost = maxhostobj.val();
+		if (!isNumberPositive(maxhost)){
+			maxhost = maxhostdef;
+			maxhostobj.val(maxhostdef);
+		}
+	});
+
+	function layer_4_off(){
+		$('li.checkl4 input:checked').attr('checked', false);
+		clearTimeout(auto_refresh);
+		stop_timer = true;
+	}
+
+	function layer_4_on(){
+		$('li.checkl4 input').attr('checked', true);
+		auto_refresh = setInterval(function (){ form.trigger('submit'); }, refresh_time);
+		stop_timer = false
+	}
+
+	function layer_7_off(){
+		$('li.checkl7 input:checked').attr('checked', false);
+		clearTimeout(auto_refresh);
+		stop_timer = true;
+	}
+
+	function layer_7_on(){
+		$('li.checkl7 input').attr('checked', true);
+		auto_refresh = setInterval(function (){ form.trigger('submit'); }, refresh_time);
+		stop_timer = false	
+	}
+</script>
+</body>
+</html>

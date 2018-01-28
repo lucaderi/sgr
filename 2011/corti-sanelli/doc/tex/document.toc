@@ -1,0 +1,13 @@
+\select@language {italian}
+\contentsline {section}{\numberline {1}Introduzione}{2}
+\contentsline {section}{\numberline {2}Dettagli implementativi e scelte prese}{2}
+\contentsline {subsection}{\numberline {2.1}Architettura generale dell'applicativo}{2}
+\contentsline {subsection}{\numberline {2.2}Ricezione di trap SNMP}{3}
+\contentsline {subsubsection}{\numberline {2.2.1}Ricerca di OID tra i MIB file}{3}
+\contentsline {subsection}{\numberline {2.3}Interfacciamento con Twitter}{3}
+\contentsline {subsubsection}{\numberline {2.3.1}Gestione dell'autenticazione}{4}
+\contentsline {subsection}{\numberline {2.4}Logfile e Config file}{4}
+\contentsline {section}{\numberline {3}Possibili sviluppi futuri}{4}
+\contentsline {section}{\numberline {4}Installazione del software}{5}
+\contentsline {section}{\numberline {5}Documentazione allegata}{5}
+\contentsline {section}{\numberline {6}Licenza d'uso}{5}

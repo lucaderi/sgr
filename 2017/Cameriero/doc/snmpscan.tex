@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage{listings}
+\usepackage[colorlinks = true,
+            linkcolor = blue,
+            urlcolor  = blue,
+            citecolor = blue,
+            anchorcolor = blue]{hyperref}
+
+\lstset{
+    aboveskip=\bigskipamount,
+    belowskip=\bigskipamount,
+    basicstyle=\ttfamily,
+}
+
+\title{
+    SNMPScan\\
+    \large{Progetto Gestione di Reti anno 2016/17}
+}
+\author{Marco Cameriero}
+\date{}
+
+\providecommand{\inlinecode}[1]{\texttt{#1}}
+
+% ------------------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------------------
+% ------------------------------------------------------------------------------------------
+
+\begin{document}
+
+
+
+\maketitle
+
+
+
+\inlinecode{SNMPScan} \`{e} un network scanner che ricerca agent SNMP.
+
+
+
+\section{Introduzione}
+
+SNMP \'{e} un protocollo relativamente semplice e leggero per la configurazione,
+la gestione ed il monitoraggio degli apparati di rete. \'{E} un protocollo di livello
+applicativo che utilizza la porta UDP/161.
+
+\inlinecode{SNMPScan} scansiona una determinata subnet alla ricerca di agent SNMP gestibili.
+L'applicazione effettua una scansione dell'intera subnet, inviando ad ogni singolo host una
+\textit{Get} SNMP richiedendo il valore di \inlinecode{system.sysName.0}, che contiene il nome
+dell'agent. Se l'agent risponde positivamente, viene considerato attivo, ed il suo nome
+ed il suo indirizzo verranno stampati a schermo al termine dell'operazione.
+
+
+
+\section{Implementazione e struttura interna}
+
+\inlinecode{SNMPScan} utilizza la libreria \inlinecode{libsnmp}, parte del pacchetto
+\inlinecode{net-snmp}, per la comunicazione con gli agent SNMP. La libreria si occupa
+dell'implementazione del protocollo SNMP e della comunicazione con i singoli agent.
+
+La logica principale dell'applicazione \'{e} all'interno della funzione \inlinecode{do\_scan},
+la quale si aspetta un puntatore ad una struttura \inlinecode{struct scan\_state} ed il massimo
+grado di parallelismo (quante richieste contemporanee effettuare al massimo). All'interno della
+struttura \inlinecode{scan\_state} \'{e} contenuto tutto lo stato necessario per la scansione attuale,
+tra cui la subnet da visitare, gli host trovati attivi e le richieste ancora pendenti. Le liste
+sono semplici linked list implementate con delle macro in \inlinecode{list.h}.
+
+Il ciclo principale effettua quante pi\'{u} richieste possibili (entro il limite impostato
+dall'utente) e le memorizza in una coda. Dopodich\`{e} si sospende in attesa che almeno una di queste
+abbia successo o vada in timeout o errore. Al ritorno dalla \inlinecode{select}, la funzione
+\inlinecode{snmp\_read} o \inlinecode{snmp\_timeout} invoca il callback delle singole sessioni
+per le quali \'{e} disponibile un aggiornamento di stato (errore o risposta). Notare come il codice
+sia asincrono, ma comunque single thread. La funzione di callback \inlinecode{on\_snmp\_response},
+a questo punto, aggiunge l'host alla lista di host attivi in caso di risposta positiva specificando
+anche il valore dell'oid richiesto \inlinecode{system.sysName.0}, oppure lo ignora completamente
+in caso di errore.
+
+Terminata la scansione, stampa la lista di tutti gli host attivi con i relativi indirizzi e nomi.
+
+
+
+\section{Test ed utilizzo}
+
+\inlinecode{SNMPScan} supporta le seguenti opzioni:
+
+\begin{itemize}
+\item \inlinecode{-h}: Visualizza un aiuto veloce sulle opzioni.
+\item \inlinecode{-c}: Community SNMP da utilizzare per le richieste.
+      Il default \'{e} \inlinecode{public}.
+\item \inlinecode{-r}: Numero di ritrasmissioni da effettuare prima di considerare un host down.
+      Il default \'{e} \inlinecode{1}.
+\item \inlinecode{-t}: Timeout (in millisecondi) da attendere per ogni richiesta SNMP.
+      Il default \'{e} \inlinecode{400ms}.
+\item \inlinecode{-p num}: Limita il massimo numero di richieste contemporanee.
+      Il default \'{e} \inlinecode{4}.
+\item \inlinecode{-d[d]}: Abilita i log per il debugging.
+      Utilizzare \inlinecode{-dd} per un output pi\'{u} verboso.
+\end{itemize}
+
+Lo script \inlinecode{test.sh} pu\'{o} essere utilizzato per testare velocemente \inlinecode{SNMPScan}:
+lo script avvia 6 container Docker con un agent SNMP ed esegue una scansione sulla subnet dei container.
+
+\begin{lstlisting}
+$ ./out/snmpscan 172.17.0.0/24
+
+Scan results:
+- Total hosts scanned: 255
+- Hosts up: 6
+
+Host 172.17.0.2:
+    SNMPv2-MIB::sysName.0 = STRING: 0e60fcd56f61
+
+Host 172.17.0.3:
+    SNMPv2-MIB::sysName.0 = STRING: 3d110d32aaea
+
+Host 172.17.0.4:
+    SNMPv2-MIB::sysName.0 = STRING: 0d4eea195074
+
+Host 172.17.0.5:
+    SNMPv2-MIB::sysName.0 = STRING: 1ccfbdad74ab
+
+Host 172.17.0.6:
+    SNMPv2-MIB::sysName.0 = STRING: 4639c3c64453
+
+Host 172.17.0.7:
+    SNMPv2-MIB::sysName.0 = STRING: e3319d4903d4
+\end{lstlisting}
+
+
+
+\end {document}

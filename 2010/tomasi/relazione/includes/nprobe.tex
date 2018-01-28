@@ -1,0 +1,391 @@
+\section{Uno sguardo a \emph{nProbe}}
+Sviluppato da Luca Deri, \emph{nProbe} è una sonda che implementa il protocollo \emph{NetFlow} (il nome infatti sta per \emph{NetFlow probe}). A partire dalla versione 9 di \emph{NetFlow}, le informazioni esportate non sono più standardizzate secondo quanto stabilito da Cisco (creatore del protocollo), ma sono scelte dall'utente attraverso un \emph{template}. Grazie all'uso dei \emph{template}, quindi, le informazioni generate da \emph{nProbe} non sono solo le classiche 7-tuple:
+
+\begin{enumerate}
+\item indirizzo IP sorgente
+\item indirizzo IP destinatario
+\item porta sorgente
+\item porta destinazione
+\item protocollo IP
+\item interfaccia di ingresso (SNMP ifIndex)
+\item IP Type of Service (\emph{ToS})
+\end{enumerate}
+ma ve ne possono essere anche altre aggiuntive e/o sostitutive.
+
+\subsection{La struttura a plugin di \emph{nProbe}}
+\emph{nProbe} implementa questi nuovi protocolli con un insieme di plugin esterni al codice principale e tutti inseriti nella directory {\footnotesize \texttt{plugins}}. Ogni plugin è in grado di esportare una o più informazioni identificate da un \emph{id} e un \emph{nome} univoci. Al momento dell'invocazione, l'utente sceglie cosa vuole esportare usando l'opzione:
+
+\begin{footnotesize}
+\begin{verbatim}
+[--flow-templ|-T] <flow template>   | Specify the NFv9 template
+\end{verbatim}
+\end{footnotesize}
+\emph{nProbe}, quindi, va alla ricerca dei plugin che implementano almeno una tra le informazioni richieste nel \emph{template} e li attiva.
+
+Ad esempio, un plugin attualmente presente è l'\emph{SMTP Protocol Dissector} che nell'help di \emph{nProbe} riporta quanto segue:
+
+\begin{footnotesize}
+\begin{verbatim}
+Plugin SMTP Protocol Dissector templates:
+[NFv9 57657][IPFIX 35632.185] %SMTP_MAIL_FROM           Mail sender
+[NFv9 57658][IPFIX 35632.186] %SMTP_RCPT_TO             Mail recipient
+\end{verbatim}
+\end{footnotesize}
+In questo esempio, il plugin può esportare sia il mittente che il destinatario di una email. L'\emph{id} univoco che attiva il plugin richiedendogli di esportare il mittente è 57657 (per \emph{NetFlow v.9}. Invece è 35632\footnote{35632 è il \emph{Private Enterprise Number (PEN)} assegnato a \emph{ntop} dall'\emph{Internet Assigned Numbers Authority (IANA)}. Anche \emph{ntop} è stato sviluppato da Luca Deri.}.185 per il protocollo \emph{IPFIX}\footnote{L'\emph{Internet Protocol Flow Information Export (IPFIX)} è un protocollo standardizzato dall'\emph{Internet Engineering TaskForce (IETF)} basato su \emph{NetFlow v.9}.}), mentre il \emph{nome} univoco da inserire nel \emph{template} è {\footnotesize \texttt{\%SMTP\_MAIL\_FROM}}. Se si vuole attivare il plugin richiedendogli di esportare il destinatario della email, basta inserire nel \emph{template} la stringa {\footnotesize \texttt{\%SMTP\_RCPT\_TO}}. Il comando seguente, quindi, fa attivare il plugin \emph{SMTP Protocol Dissector} e gli chiede di esportare nel flusso sia il mittente che il destinatario di una email\footnote{In realtà questo \emph{template} è veramente minimale ed è a solo scopo di esempio. Se non si inseriscono nel \emph{templata} le informazioni relativa agli indirizzi, alle porte e al protocollo IP, \emph{nProbe} ignora totalmente queste informazioni e non riesce a riconoscere i flussi in maniera corretta.}:
+
+\begin{footnotesize}
+\begin{verbatim}
+nprobe -T "%SMTP_MAIL_FROM %SMTP_RCPT_TO"
+\end{verbatim}
+\end{footnotesize}
+
+\subsection{Cosa scrivere nei plugin}
+Dovendo stare ``staccato'' dal codice principale, un plugin deve implementare delle funzioni dai prototipi ben definiti ed essere in grado di fornire gli indirizzi di queste funzioni a \emph{nProbe}, in modo tale che quest'ultimo sia poi in grado di eseguirle ogniqualvolta lo ritenga necessario.
+
+\subsubsection{L'interfaccia dei plugin}
+Tutte le informazioni su di un plugin sono inserite nella struttura dati {\footnotesize \texttt{PluginInfo}}, dichiarata come segue nel file {\footnotesize \texttt{engine.h}}:
+
+\begin{footnotesize}
+\begin{verbatim}
+typedef struct pluginInfo {
+  char *nprobe_revision, *name, *version, *descr, *author;
+  u_char always_enabled, enabled;
+  PluginInitFctn initFctn;
+  PluginTermFctn termFctn;
+  PluginConf pluginFlowConf;
+  PluginFctn deleteFlowFctn;
+  u_char call_packetFlowFctn_for_each_packet;
+  PluginPacketFctn packetFlowFctn;
+  PluginGetPluginTemplateFctn getPluginTemplateFctn;
+  PluginCheckPluginExportFctn checkPluginExportFctn;
+  PluginCheckPluginPrintFctn checkPluginPrintFctn;
+  PluginSetupFctn setupFctn;
+  PluginHelpFctn helpFctn;
+} PluginInfo;
+\end{verbatim}
+\end{footnotesize}
+Le variabili il cui tipo inizia con ``Plugin'' sono dei puntatori a funzione il cui prototipo è dichiarato sempre nello stesso file. Le prime cinque variabili di tipo stringa sono informazioni sul plugin:
+
+\begin{description}
+\item[{\footnotesize nprobe\_revision}] la revisione di \emph{nProbe} per cui è scritto il plugin. Se questo viene aggiornato al pari del programma principale si può anche usare la costante {\footnotesize \texttt{NPROBE\_REVISION}}.
+\item[{\footnotesize name}] il nome del plugin.
+\item[{\footnotesize version}] la versione.
+\item[{\footnotesize descr}] la sua descrizione.
+\item[{\footnotesize author}] le informazioni sullo sviluppatore.
+\end{description}
+
+Dopo queste informazioni seguono due variabili booleane:
+
+\begin{description}
+\item[{\footnotesize always\_enabled}] indica se il plugin deve essere attivo indipendentemente dal \emph{template} utente (settata a 1) oppure deve essere attivato esclusivamente se richiesto nel \emph{template} (settata a 0).
+\item[{\footnotesize enabled}] è una variabile per uso interno. Indica se il plugin è stato attivato o meno.
+\end{description}
+
+Infine gli altri elementi della struttura che, come già detto, sono principalmente dei puntatori a funzione. Se si decide di non implementare una o più di queste funzioni, basta settare il loro valore a {\footnotesize \texttt{NULL}}:
+
+\begin{description}
+\item[{\footnotesize initFctn}] viene invocata per inizializzare il plugin. \emph{nProbe} passa a questa funzione l'intera command line, in modo tale che un plugin possa andare alla ricerca di qualche parametro che gli interessa (si veda la funzione {\footnotesize \texttt{helpFctn()}}).
+\item[{\footnotesize termFctn}] opposta alla precedente {\footnotesize \texttt{initFctn()}}, viene invocata per terminare il plugin.
+\item[{\footnotesize pluginFlowConf}] tutte le informazioni che un plugin può esportare, come detto, sono caratterizzate da un \emph{id} e da un \emph{nome} ma oltre a questi due attributi ne esistono altri che \emph{nProbe} usa internamente. Questa funzione, ritorna un'array terminato da un entry particolare, con tutti gli attributi associati ad ogni informazione che il plugin è in grado di esportare. Si capirà meglio quando si vedrà come fa il plugin ad informare \emph{nProbe} su quali informazioni è in grado di esportare.
+\item[{\footnotesize deleteFlowFctn}] viene invocata quando si elimina un flusso. Ad esempio, in questa funzione il plugin può liberare eventuale memoria allocata associata al flusso.
+\item[{\footnotesize call\_packetFlowFctn\_for\_each\_packet}] questa variabile, di tipo booleano, indica se si vuole chiamare la funzione {\footnotesize \texttt{packetFlowFctn()}} per ogni pacchetto del flusso (settata ad 1), oppure solo per il primo pacchetto del flusso (settata a 0).
+\item[{\footnotesize packetFlowFctn}] è la funzione principale che viene invocata al ricevimento di ogni pacchetto appartenente al flusso (si veda la variabile precedente {\footnotesize \texttt{call\_packetFlowFctn\_for\_each\_packet}}). È in questa funzione che il plugin estrae le informazioni.
+\item[{\footnotesize getPluginTemplateFctn}] questa funzione prende il nome di un elemento del \emph{template} utente (un elemento della stringa passata con l'opzione {\footnotesize \texttt{-T}}) e, se il plugin lo gestisce, ritorna tutti gli attributi ad esso associati, altrimenti ritorna {\footnotesize \texttt{NULL}}. Anche questa funzione sarà più chiara una volta che si vedrà come fa il plugin ad informare \emph{nProbe} su quali informazioni è in grado di esportare.
+\item[{\footnotesize checkPluginExportFctn}] viene invocata al momento dell'esportazione dei dati. In questa funzione il plugin scrive in un buffer limitato, quelle informazioni richieste nel \emph{template} che è in grado di gestire.
+\item[{\footnotesize checkPluginPrintFctn}] \emph{nProbe} su richiesta può salvare le informazioni esportate anche in un file temporaneo e, quando lo fa, invoca questa funzione. È simile alla precedente funzione {\footnotesize \texttt{check\-Plugin\-Export\-Fctn()}}, solo che in questo caso siccome i dati sono scritti in un file, non c'è limite alle informazioni che si possono scrivere. Ad esempio, se il mittente di una email è troppo lungo, potrebbe essere necessario troncare questa informazione per farla entrare nel buffer da esportare, mentre non vi sono restrizioni quando l'informazione è scritta nel file temporaneo.
+\item[{\footnotesize setupFctn}] viene invocata subito dopo l'inizializzazione di tutti i plugin, poco prima che \emph{nProbe} inizi la cattura dei pacchetti.
+\item[{\footnotesize helpFctn}] viene invocata durante l'esecuzione dell'help di \emph{nProbe} (parametro {\footnotesize \texttt{--help|-h}}) per mostrare le opzioni necessarie al plugin. Se un utente, invocando \emph{nProbe}, gli passa sulla command line una o più tra queste opzioni, il plugin le può intercettare durante l'esecuzione della funzione {\footnotesize \texttt{initFctn()}}.
+\end{description}
+
+\subsubsection{Far avere l'interfaccia ad \emph{nProbe}}
+Una volta che nel codice del plugin viene definita la struttura {\footnotesize \texttt{PluginInfo}}, si deve farla avere ad \emph{nProbe}. Per fare questo ci sono due modi, a seconda che i plugin vengano inseriti staticamente nel binario compilato, oppure vengano caricati dinamicamente a tempo di esecuzione. In ogni caso, si deve implementare una funzione senza parametri che ritorna un puntatore alla struttura {\footnotesize \texttt{PluginInfo}} definita, questa sarà la cerniera tra il plugin e il codice principale. Nel primo caso, in cui i plugin sono inseriti nel binario a tempo di compilazione, si deve inserire nel file {\footnotesize \texttt{plugin.c}} la dichiarazione della funzione esterna (definita nel plugin) che restituirà la struttura dati. Ad esempio, per il plugin di SMTP nel file c'è inserita questa dichiarazione:
+
+\begin{footnotesize}
+\begin{verbatim}
+#ifdef MAKE_STATIC_PLUGINS
+...
+extern PluginInfo* smtpPluginEntryFctn(void)
+...
+#endif
+\end{verbatim}
+\end{footnotesize}
+
+Invece, nel caso in cui i plugin sono caricati in maniera dinamica a tempo di esecuzione, \emph{nProbe} deve sapere a priori il nome della funziona da invocare una volta caricato il codice, così il plugin deve definire, al suo interno, la funzione:
+
+\begin{footnotesize}
+\begin{verbatim}
+PluginInfo *PluginEntryFctn(void)
+\end{verbatim}
+\end{footnotesize}
+La figura \ref{load-plugin-a-runtime} mostra come vengono prelevate le interfacce dei plugin, quando questi vengono inseriti a tempo di esecuzione.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=0.8]{images/caricamento_plugin_dinamici.eps}
+    \caption{Prelevamento interfacce plugin a run-time}
+    \label{load-plugin-a-runtime}
+\end{figure}
+
+\subsubsection{Le informazioni esportate}
+Una volta che il plugin è correttamente legato al codice di \emph{nProbe} non resta che una cosa da fare, indicare a quest'ultimo quando attivarlo. Come già detto, \emph{nProbe} si basa sul \emph{template} utente passato attraverso il parametro {\footnotesize \texttt{-T}} della linea di comando per sapere quale plugin attivare e quale no. Per ogni informazione che il plugin è in grado di esportare, si deve definire una struttura {\footnotesize \texttt{V9V10TemplateElementId}}, dichiarata nel file {\footnotesize \texttt{nprobe.h}} come segue:
+
+\begin{footnotesize}
+\begin{verbatim}
+typedef struct flow_ver9_ipfix_template_elementids {
+  u_int8_t  isOptionTemplate; /* 0=flow template, 1=option template */
+  u_int8_t  useLongSnaplen;
+  u_int32_t templateElementEnterpriseId;
+  u_int16_t templateElementId;
+  u_int8_t variableFieldLength;
+  u_int16_t templateElementLen;
+  ElementFormat elementFormat; /* Only for elements longer than 4 bytes */
+  ElementDumpFormat fileDumpFormat; /* Hint when data has to be printed on
+                                       a human readable form */
+  char      *templateElementName, *templateElementDescr;
+} V9V10TemplateElementId;
+\end{verbatim}
+\end{footnotesize}
+Le variabili della struttura hanno il seguente significato:
+
+\begin{description}
+\item[{\footnotesize isOptionTemplate}] Specifica se il \emph{template} è un \emph{option template} (settata a 1) o un \emph{flow template} (settata a 0). Si possono usare le due costanti {\footnotesize \texttt{FLOW\_TEMPLATE}} e {\footnotesize \texttt{OPTION\_TEMPLATE}}, definite in {\footnotesize \texttt{nprobe.h}} come segue:
+
+\begin{footnotesize}
+\begin{verbatim}
+#define FLOW_TEMPLATE       0
+#define OPTION_TEMPLATE     1
+\end{verbatim}
+\end{footnotesize}
+\item[{\footnotesize useLongSnaplen}] \emph{nProbe} è in grado di passare al plugin tutto il \emph{payload} del pacchetto oppure solo una piccola parte. Nel caso in cui un plugin voglia fare \emph{packet inspection} e necessiti di tutto il \emph{payload} contenuto nel pacchetto deve settare questa opzione a 1, altrimenti se necessita solo di una piccola parte iniziale può settare questa opzione a 0. Alternativamente ai valori numerici si possono usare le costanti definite nel file {\footnotesize \texttt{nprobe.h}}:
+
+\begin{footnotesize}
+\begin{verbatim}
+#define SHORT_SNAPLEN       0
+#define LONG_SNAPLEN        1
+\end{verbatim}
+\end{footnotesize}
+Si noti che anche nel caso in cui questa opzione è settata a {\footnotesize \texttt{LONG\_SNAPLEN}}, il \emph{payload} ha comunque una dimensione massima che non può andare oltre il valore della costante:
+
+\begin{footnotesize}
+\begin{verbatim}
+#define PCAP_LONG_SNAPLEN        1600
+\end{verbatim}
+\end{footnotesize}
+definita nel file {\footnotesize \texttt{engine.h}}.
+\item[{\footnotesize templateElementEnterpriseId}] l'identificativo univoco dell'azienda che ha creato il plugin (ad esempio il \emph{PEN} rilasciato dalla \emph{IANA}).
+\item[{\footnotesize templateElementId}] l'identificativo univoco per questa informazione (il suo \emph{id}).
+\item[{\footnotesize variableFieldLength}] specifica se l'informazione ha dimensione fissa o variabile. Anche in questo caso si può usare una delle due costanti {\footnotesize \texttt{STATIC\_FIELD\_LEN}} o {\footnotesize \texttt{VARIABLE\_FIELD\_LEN}}, definite in {\footnotesize \texttt{nprobe.h}} come segue:
+
+\begin{footnotesize}
+\begin{verbatim}
+#define STATIC_FIELD_LEN    1
+#define VARIABLE_FIELD_LEN  2
+\end{verbatim}
+\end{footnotesize}
+
+\item[{\footnotesize templateElementLen}] la dimensione massima, in byte, che occupa quest'informazione. Anche se la precedente variabile {\footnotesize \texttt{variableFieldLength}} è stata settata a {\footnotesize \texttt{VARIABLE\_FIELD\_LEN}}, occorre comunque informare {\footnotesize \texttt{nProbe}} della sua dimensione massima.
+\item[{\footnotesize elementFormat}] specifica il formato di questa informazione. Il tipo di questa variabile è {\footnotesize \texttt{Element\-Format}}, che è un \emph{enumerate} definito sempre in {\footnotesize \texttt{nprobe.h}}:
+
+\begin{footnotesize}
+\begin{verbatim}
+typedef enum {
+  ascii_format = 0,
+  hex_format,
+  numeric_format,
+  ipv6_address_format
+} ElementFormat;
+\end{verbatim}
+\end{footnotesize}
+\item[{\footnotesize fileDumpFormat}] indica come dev'essere stampata l'informazione in un formato interpretabile dall'uomo. Il tipo di questa variabile è {\footnotesize \texttt{ElementDumpFormat}}, che  è un \emph{enumerate} definito in {\footnotesize \texttt{nprobe.h}} come segue:
+
+\begin{footnotesize}
+\begin{verbatim}
+typedef enum {
+  dump_as_uint = 0, /* 1234567890 */
+  dump_as_formatted_uint, /* 123'456 */
+  dump_as_ip_port,
+  dump_as_ip_proto,
+  dump_as_ipv4_address,
+  dump_as_ipv6_address,
+  dump_as_mac_address,
+  dump_as_epoch,
+  dump_as_bool,
+  dump_as_tcp_flags,
+  dump_as_hex,
+  dump_as_ascii
+} ElementDumpFormat;
+\end{verbatim}
+\end{footnotesize}
+\item[{\footnotesize templateElementName}] il nome univoco che identifica questa informazione (quello che viene usato nel \emph{template} utente passato con l'opzione {\footnotesize \texttt{-T}}).
+\item[{\footnotesize templateElementDescr}] una descrizione sull'informazione che si esporta.
+\end{description}
+
+È molto importante scegliere bene sia la variabile {\footnotesize \texttt{templateElementId}} che {\footnotesize \texttt{template\-Element\-Name}} perché, come detto, devono essere univoche. Per la seconda si usa anteporre il nome del plugin in modo da stare relativamente sicuri (ad esempio: {\footnotesize \texttt{SMTP\_MAIL\_FROM}} o {\footnotesize \texttt{SMTP\_RCPT\_TO}}). Per la prima invece bisogna assicurarsi che l'\emph{id} non sia già stato usato. L'unica informazione usabile è una base di partenza, definita nel file {\footnotesize \texttt{nprobe.h}} dalla costante {\footnotesize \texttt{NTOP\_BASE\_ID}}:
+
+\begin{footnotesize}
+\begin{verbatim}
+#define NTOP_BASE_ID 57472
+\end{verbatim}
+\end{footnotesize}
+
+Dato che un plugin generalmente esporta più di un'informazione, queste strutture {\footnotesize \texttt{V9V10\-Template\-Element\-Id}} devono essere inserite in un'array terminato dalla particolare struttura:
+
+\begin{footnotesize}
+\begin{verbatim}
+{ FLOW_TEMPLATE, NTOP_ENTERPRISE_ID, 0, STATIC_FIELD_LEN, 0, 0, 0, NULL, NULL }
+\end{verbatim}
+\end{footnotesize}
+
+Ora si possono capire meglio le due funzioni dell'interfaccia dei plugin, {\footnotesize \texttt{pluginFlowConf()}} e {\footnotesize \texttt{get\-Plugin\-Template\-Fctn()}}. La prima ritorna l'array contenente tutte le strutture dati {\footnotesize \texttt{V9V10\-Template\-Element\-Id}} per le informazioni definite dal plugin, mentre la seconda prende come parametro il nome di un'informazione, controlla per ogni struttura la variabile {\footnotesize \texttt{templateElementName}}, e se ne trova una uguale al parametro passatogli, allora ritorna il puntatore alla struttura {\footnotesize \texttt{V9V10\-Template\-Element\-Id}} associata, altrimenti ritorna {\footnotesize \texttt{NULL}}.
+
+\emph{nProbe}, per sapere se deve attivare un plugin o meno, esegue l'algoritmo seguente (si veda la figura \ref{attivazione_plugin}): per ogni elemento passato nel \emph{template} utente tramite l'opzione {\footnotesize \texttt{-T}}, invoca la funzione {\footnotesize \texttt{getPluginTemplateFctn()}} di un plugin e, se questo ritorna una struttura {\footnotesize \texttt{V9V10TemplateElementId}} valida (cioè diversa da {\footnotesize \texttt{NULL}}), lo attiva.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=0.8]{images/attivazione_plugin.eps}
+    \caption{Algoritmo di attivazione dei plugin}
+    \label{attivazione_plugin}
+\end{figure}
+
+\subsubsection{I dati privati}
+\label{dati_privati}
+Alla creazione di un nuovo flusso, \emph{nProbe} crea una struttura dati di tipo {\footnotesize \texttt{FlowHashBucket}} dichiarata nel file {\footnotesize \texttt{bucket.h}}. Questa stuttura dati è molto complessa ed è quasi esclusivamente di uso interno. Per quanto riguarda i plugin tutto ciò che importa sapere è la presenza all'interno di questa struttura dati della variabile {\footnotesize \texttt{plugin}}: una lista concatenata di strutture dati di tipo {\footnotesize \texttt{PluginInformation}}. Se un plugin è interessato ad analizzare il flusso appena creato, deve definire un oggetto di tipo {\footnotesize \texttt{PluginInformation}} e concatenarlo alla lista puntata dalla variabile {\footnotesize \texttt{plugin}}.
+
+Prima di vedere più in dettaglio cosa avviene dal punto di vista dei plugin durante la creazione di un nuovo flusso, è importante vedere la struttura dati {\footnotesize \texttt{PluginInformation}} dichiarata sempre nel file {\footnotesize \texttt{bucket.h}}:
+
+\begin{footnotesize}
+\begin{verbatim}
+typedef struct pluginInformation {
+  struct pluginInfo *pluginPtr;
+  void *pluginData;
+  struct pluginInformation *next;
+} PluginInformation;
+\end{verbatim}
+\end{footnotesize}
+La struttura ha tre variabili:
+
+\begin{description}
+\item[{\footnotesize pluginPtr}:] un puntatore all'interfaccia del plugin (la sua struttura dati {\footnotesize \texttt{PluginInfo}}).
+\item[{\footnotesize pluginData}:] un puntatore a dei dati privati che il plugin vuole associare al flusso.
+\item[{\footnotesize next}:] il prossimo elemento della lista.
+\end{description}
+
+Durante la creazione di un flusso avviene quanto segue:
+
+\begin{itemize}
+\item \emph{nProbe} crea la struttura dati {\footnotesize \texttt{FlowHashBucket}} settando la variabile {\footnotesize \texttt{plugin}} a {\footnotesize \texttt{NULL}}.
+\item Per ogni plugin attivo, invoca la funzione {\footnotesize \texttt{packetFlowFctn()}} passandogli la struttura\\ {\footnotesize \texttt{FlowHashBucket}} e una variabile ({\footnotesize \texttt{new\_bucket}}) settata appositamente (a 1) per far capire al plugin che si tratta di un nuovo flusso.
+\item Il plugin, se è interessato a trattare il flusso:
+  \begin{itemize}
+    \item definisce una variabile di tipo {\footnotesize \texttt{PluginInformation}}.
+    \item collega alla variabile {\footnotesize \texttt{pluginPtr}} la sua struttura dati {\footnotesize \texttt{PluginInfo}}.
+    \item eventualmente crea una struttura dati privata da collegare alla variabile {\footnotesize \texttt{pluginData}}.
+    \item si inserisce nella lista concatenata {\footnotesize \texttt{plugin}} di {\footnotesize \texttt{FlowHashBucket}}.
+  \end{itemize}
+\end{itemize}
+In questo modo \emph{nProbe} ha nella variabile {\footnotesize \texttt{plugin}} di ogni flusso, la lista concatenata dei plugin attivi per quello specifico flusso.
+
+Per rendere più chiaro ciò che avviene, ecco un estratto dal \emph{MySQL protocol dissector}:
+
+\begin{scriptsize}
+\begin{verbatim}
+/* La struttura per i dati privati del plugin */
+struct plugin_data
+{
+  ...
+};
+
+static void
+mysqlPlugin_packet(u_char new_bucket,
+		   FlowHashBucket* bkt,
+                   u_short sport,
+                   u_short dport,
+                   ...)
+{
+  struct plugin_data *p_data; /* dati privati del plugin */
+
+  /* Testa se il flusso è interessante:
+     ovvero se almeno una delle porte è quella del server MySQL */
+  if ( sport != MYSQL_SERVER_PORT && dport != MYSQL_SERVER_PORT )
+    return; /* Nothing to be done */
+
+  ...
+
+  if ( new_bucket ) /* Se è un nuovo flusso */
+    {
+      /* Crea la struttura dati PluginInformation */
+      PluginInformation *info;
+      if( ! (info = (PluginInformation*)malloc(sizeof(PluginInformation))) )
+        {
+          traceEvent(TRACE_ERROR, "Not enough memory?");
+          return; /* Not enough memory */
+        }
+
+      /* Colloga la sua PluginInfo alla variabile pluginPtr */
+      info->pluginPtr  = (void*)&mysqlPlugin;
+
+      /* Crea la struttura per i dati privati e la collega alla variabile pluginData */
+      if ( ! (p_data = info->pluginData = malloc(sizeof(struct plugin_data))) )
+        {
+          traceEvent(TRACE_ERROR, "Not enough memory?");
+          free(info);
+          return; /* Not enough memory */
+        }
+
+      /* Collega le sue informazioni alla lista dei plugin attivi per questo flusso */
+      info->next = bkt->plugin;
+      bkt->plugin = info;
+    }
+\end{verbatim}
+\end{scriptsize}
+
+\subsubsection{Esportazione forzata delle informazioni}
+L'esportazione delle informazioni su di un flusso è generalmente segnata dalla ``morte'' del flusso stesso o quando lo si ritiene scaduto. Questo però permette di ottenere solo delle informazioni aggregate sul flusso e non delle informazioni specifiche: si può sapere quanti byte in totale si sono scambiati server e client e non cosa si sono scambiati in un dato momento.
+
+\emph{nProbe} mette a disposizione dei plugin una funzione che forza l'esportazione delle informazioni pur eventualmente mantenendo in memoria i dati interni relativi al flusso stesso. La funzione è definita nel file {\footnotesize \texttt{engine.c}} ed ha il seguente prototipo:
+
+\begin{footnotesize}
+\begin{verbatim}
+void exportBucket(FlowHashBucket *myBucket, u_char free_memory);
+\end{verbatim}
+\end{footnotesize}
+
+Dove {\footnotesize \texttt{myBucket}} è il flusso che si vuole esportare, mentre {\footnotesize \texttt{free\_memory}} è una variabile booleana che, se settata a 1 indica di rimuovere dalla memoria le informazioni sul flusso\footnote{Attenzione a settare la variabile a 1. Questo implica la chiamata per ogni plugin attivo su quel flusso della funzione \texttt{deleteFlowFctn()} e la rimozione da parte di \emph{nProbe} della struttura dati \texttt{FlowHashBucket}. Se però il flusso non è effettivamente terminato, l'arrivo di nuovi dati implicheranno la creazione di un nuovo flusso con tutto l'iter che ne consegue.}, mentre se viene settata a 0 i dati relativi al flusso rimarranno comunque in memoria.
+
+L'esportazione di un flusso implica l'invocazione per ogni plugin attivo su quel flusso della sua funzione {\footnotesize \texttt{checkPluginExportFctn()}}, ed eventualmente della funzione {\footnotesize \texttt{checkPluginPrintFctn()}}. In questo modo il plugin è in grado di dire al collezionatore cosa si sono scambiati in un determinato periodo il server e il client.
+
+\subsubsection{Un plugin di base}
+Per riassumere tutto ciò che si è visto in questo paragrafo, ecco il corpo vuoto di un plugin:
+
+\raggedbottom
+\begin{scriptsize}
+\verbatiminput{includes/plugin_base.c}
+\end{scriptsize}
+\flushbottom
+
+\subsection{Cosa tenere a mente durante la stesura di un plugin}
+Va ricordato che \emph{nProbe} è una sonda e cattura i pacchetti che passano dalla rete. Durante lo sviluppo di un plugin per l'analisi di un particolare protocollo, si deve tener sempre presente che il plugin:
+
+\begin{itemize}
+\item \texttt{Deve essere stateless}. La sonda in generale non riceve i pacchetti così come li ricevono gli host che generano il flusso. Il client e il server sanno in ogni istante cosa aspettarsi dal pacchetto successivo, ma la sonda potrebbe essere stata attivata, ad esempio, nel mezzo della comunicazione. Pertanto è un errore scrivere un plugin che implementa un automa a stati per l'analisi del contenuto. Affermazioni come: ``dato che prima è passato il pacchetto A, questo è sicuramente il pacchetto B'', sono, in generale, sbagliate.
+\item \texttt{Deve stare attento alla frammentazione dei pacchetti}. Un flusso di informazioni potrebbe non essere inviato tutto in un solo pacchetto. Se, ad esempio, il client e il server usano una connessione TCP e il client invia una richiesta superiore al \emph{maximum transmission unit (MTU)}, allora il kernel del client suddividerà il flusso di richiesta in più pacchetti TCP. Il kernel del server dall'altra parte ``fonderà'' questi pacchetti e li farà ricevere all'applicazione come un unico flusso di dati continuo. Questa suddivisione del flusso è, quindi, completamente trasparente alle applicazioni client e server, ma il plugin, per quanto detto al punto precedente, deve occuparsi anche di questa eventualità. Non solo la sonda potrebbe aver perso uno dei pacchetti, ma tenendo conto dell'inaffidabilità della rete, potrebbe prendere i pacchetti in un ordine casuale, oppure prendere un duplicato del pacchetto precedente\footnote{Ad esempio se il protocollo di trasporto è TCP e un pacchetto non viene ricevuto.}.
+\item \texttt{Non si deve fidare dei pacchetti}. Il plugin non deve basarsi solo sulle specifiche del protocollo per analizzare i pacchetti, ma deve stare sempre attento che ciò che analizza sia effettivamente un pacchetto valido. Ad esempio, se nelle specifiche del protocollo viene detto che una stringa e null-terminated, il plugin potrebbe usare una strlen() per contare quanto è grande la stringa, ma se non tiene conto del fatto che il pacchetto che sta analizzando potrebbe non essere di quel protocollo e che, quindi, il carattere di fine stringa potrebbe non esserci affatto, allora la strlen() potrebbe andare in buffer overflow determinando un segmentation fault del plugin e il conseguente crash della sonda.
+\end{itemize}
+
+% LocalWords:  nProbe Deri NetFlow Cisco template tuple SNMP ifIndex Type of TO
+% LocalWords:  Service ToS plugin plugins SMTP Protocol Dissector Enterprise
+% LocalWords:  Number PEN ntop dall' Assigned Numbers Authority IANA IPFIX Flow
+% LocalWords:  Information TaskForce IETF PluginInfo engine nprobe revision for
+% LocalWords:  name version descr author always enabled NULL initFctn command
+% LocalWords:  line helpFctn termFctn pluginFlowConf un'array entry call each
+% LocalWords:  deleteFlowFctn packetFlowFctn packet getPluginTemplateFctn Fctn
+% LocalWords:  checkPluginExportFctn checkPluginPrintFctn setupFctn run option
+% LocalWords:  TemplateElementId isOptionTemplate flow useLongSnaplen payload
+% LocalWords:  inspection LONG SNAPLEN templateElementEnterpriseId STATIC FIELD
+% LocalWords:  templateElementId variableFieldLength LEN VARIABLE elementFormat
+% LocalWords:  templateElementLen Element Format fileDumpFormat FROM RCPT get
+% LocalWords:  ElementDumpFormat templateElementName templateElementDescr next
+% LocalWords:  l'array FlowHashBucket bucket stuttura PluginInformation new TCP
+% LocalWords:  pluginPtr pluginData MySQL dissector morte' client myBucket host
+% LocalWords:  memory collezionatore includes router stateless transmission MTU
+% LocalWords:  unit fonderà' null terminated strlen overflow segmentation fault
+% LocalWords:  crash

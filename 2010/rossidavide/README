@@ -1,0 +1,36 @@
+RIfSNIFF - Remote InterFace SNIFFer (Client), v0.1
+(C) 2011 Davide Rossi - Source released under the GPL-2.0 license.
+
+Receives data packets captured from a remote interface by server application
+(actually a python script) and writes them onto a virtual TUN/TAP interface
+on local host, making them available to other applications.
+Client and server communicates through a plain TCP session.
+
+To run this client you'll need:
+  - POSIX-compliant operating system.
+  - gcc compiler (another good C compiler will do, i suppose)
+  - Universal TUN/TAP driver
+  - Root privileges (to ioctl the tun/tap if)
+
+
+To compile RIfSNIFF (Client) simply run:
+  # gcc -o rifsniff-cli rifsniff_client.c
+
+
+Command-line examples to run the program:
+(Consider server listening at 192.168.0.1 on port 1789)
+
+  - Lists of all interfaces on the server suitable for packet capture
+    # ./rifsniff-cli -t 192.168.0.1:1789 -L
+
+  - Sniff all packets on the remote interface 'wlan0'
+    # ./rifsniff-cli -t 192.168.0.1:1789 -I wlan0
+
+  - Sniff IPv4 packets on remote if 'eth0' to and from port 80 that contains data (not SYN, FIN or ACK only)
+    # ./rifsniff-cli -t 192.168.0.1:1789 -I eth0 -f "tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)"
+
+  - Sniff all packets on eth0, but truncate them after 576 bytes, if the packet exceed
+    # ./rifsniff-cli -t 192.168.0.1:1789 -I eth0 -s 576
+
+  - Sniff all UDP packets on eth0, local virtual interface will be called 'rifsniff0'
+    # ./rifsniff-cli -t 192.168.0.1:1789 -I eth0 -i rifsniff0 -f udp

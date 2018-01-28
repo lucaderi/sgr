@@ -1,0 +1,84 @@
+##### Dipendenze #####
+Per un'installazione più pratica è consigliato l'uso dell'utility MAKE (sudo apt-get install -y make) e del Makefile fornito.
+
+Tutte le dipendenze necessarie dovrebbero venire installate tramite il comando
+	make deps
+
+	1. Java (per Kairosdb, in questo caso versione 8)
+	2. Swagger (per Snap)
+	
+Se si ha java già installato, assicurarsi che la variabile JAVA_HOME sia impostata correttamente (es: export JAVA_HOME=/usr/lib/jvm/java-8-oracle), e installare solamente Swagger tramite
+	make swagger
+
+##### Installazione #####
+Utilizzando il comando 
+	make install
+verranno installati, nell'ordine:
+	1. Le dipendenze (Java e Swagger)
+	2. Kairosdb
+	3. Snap-Telemetry
+	4. nDPI e ntopng
+	5. Grafana
+In caso si abbia anche uno solo di questi già installati è consigliato installare singolarmente i pacchetti mancanti, con i comandi:
+	1. make deps
+	2. make kairosdb
+	3. make snap
+	4. make ntopng (installa anche nDPI)
+	5. make grafana
+
+Controllare quindi che i file snap-plugin-* e task.json siano stati correttamente spostati nelle directory /opt/snap/plugins e /opt/snap/tasks rispettivamente.
+In caso contrario, spostarli manualmente in queste cartelle accertandosi che abbiano i permessi 755.
+
+##### Avvio #####
+Per avviare tutti i servizi è sufficiente dare il comando
+	make start
+Questo avvierà Kairosdb e ntopng in background in ascolto sulle porte, rispettivamente, 8080 e 80.
+Verranno inoltre avviati snaptel e grafana, quest'ultimo raggiungibile sulla porta 3000.
+Se si volesse attivare l'avvio al login di Snap e Grafana, è possibile utilizzare il comando
+	make enable
+
+##### Chiusura #####
+Per fermare tutti i servizi utilizzare il comando
+	make stop
+che chiuderà, nell'ordine, grafana, snaptel, kairosdb e ntopng.
+
+##### Configurazione di Grafana #####
+Dopo aver avviato tutti i servizi, dare i seguenti comandi per installare i plugin di Grafana necessari:
+	sudo grafana-cli plugins install grafana-kairosdb-datasource
+        sudo grafana-cli plugins install grafana-simple-json-datasource
+	systemctl restart grafana-server
+
+Fatto questo, aprire http://localhost:3000 e recarsi nella sezione "Datasources":
+	1. Cliccare su "Add data source"
+	2. Nel campo "Name" digitare "Snap"
+	2. Nel campo "Type" selezionare KairosDB
+	3. Nell'URL inserire http://127.0.0.1:8080 e access "proxy"
+	4. Cliccare su Save & Test
+	5. Ripetere il procedimento con i seguenti parametri:
+		5.1. "Name": Ntopng (N maiuscola)
+		5.2. "Type": SimpleJson
+		5.3. "Url": http://127.0.0.1:80/lua/modules/grafana/
+		5.4. "Access": direct
+		5.5. Mettere il tick a "Basic Auth" e "With Credentials"
+		5.6. Inserire l'username e la password di ntopng nei campi che appariranno.
+Se tutto è andato a buon fine, dovrebbe comparire la scritta "Success - Data source is working"
+
+Fatto questo, importare le dashboard contenute nell'omonima cartella:
+	1. Cliccare sul logo di Grafana -> Dashboards 
+	2. Cliccare su "import" -> Upload .json file
+	3. Selezionare il primo file nella cartella dashboards/
+	4. Ripetere il procedimento col secondo file.
+
+
+##### Configurazione delle interfacce di rete nelle dashboard #####
+Nella dashboard relativa alla rete le metriche vengono raccolte dall'interfaccia "ens33".
+In caso questa non corrisponda all'interfaccia in uso sulla macchina, è necessario cambiarla seguendo questo procedimento:
+	1. Aprire la dashboard e cliccare sul nome del grafico da modificare, quindi su "edit"
+	2. Nella tab "Metrics" che si aprirà, modificare il nome della metrica cambiando il nome dell'interfaccia e lasciando il resto invariato.
+		2.1 In caso di metriche provenienti da ntopng è necessario cliccare fuori dal campo di testo affinché si attivi l'autocompletamento
+		    (per questo si consiglia di scrivere "int" e poi selezionare l'interfaccia giusta dopo)
+	3. Premere sulla X a destra
+	4. Salvare la dashboard premendo sull'icona del Floppy Disk sulla barra in alto -> tasto verde "save"
+Questo procedimento si applica solo ai primi due grafici della dashboard. Gli ultimi tre raccolgono metriche da TUTTE le interfacce presenti sulla macchina (se si desidera è possibile cambiare anche queste)
+
+

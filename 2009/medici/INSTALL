@@ -1,0 +1,19 @@
+Required for compilation:
+Linux environment	(any with gcc and make)
+libpcap			(v 1.0.0 tested)
+GeoIP			(v 1.4.6 tested)
+GeoLite City database	(any, the newer the better)
+Web Browser with javascript enabled and Flash plugin
+
+No installation is provided, to compile the source just run:
+
+make
+
+then to run the program:
+
+./GeoPacketVisualizer -p [locationOfThePcapSavefile]
+
+other options available with
+
+./GeoPacketVisualizer -?
+

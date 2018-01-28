@@ -1,0 +1,794 @@
+\section{Monitoraggio del flusso}
+\subsection{I flussi}
+\begin{itemize}
+\item SNMP è basato su un paradigma manager-agent.
+  \begin{itemize}
+  \item L'agent monitora la rete ed informa il manager (via trap) quando qualcosa di importante è successo (ad esempio, un interfaccia ha cambiato stato).
+  \item Il manager preleva l'intero stato del sistema periodicamente leggendo (polling) le variabili (ad esempio con le SNMP Get) dall'agent.
+  \item Le variabili SNMP possono essere usate sia per la gestione di elementi/dispositivi/sistema (ad esempio sullo spazio del disco e sulle partizioni) che il monitoraggio del traffico.
+  \end{itemize}
+\item I flussi di rete invece sono emessi da una sonda verso uno o più collezionatori a seconda delle condizioni di traffico.
+  \begin{itemize}
+  \item I flussi contengono informazioni a proposito dell'analisi del traffico (cioè non contengono informazioni a proposito del dispositivo/sonda come con le variabili del MIB II).
+  \item I flussi emessi hanno un formato ben definito (ad esempio Cisco NetFlow v5) e spesso usano UDP come livello di trasporto (non protocolli specializzati come SNMP).
+  \item Non esiste il concetto di ``allarme'' sui flussi e la sonda non ha la capacità di eseguire delle operazioni in base al traffico: tutta la parte intelligente sta nel collezionatore.
+  \item L'instrumentazione della sonda viene fatta offline.
+  \item Le sonde vengono attivate dove fluisce il traffico di rete (ad esempio nei router o negli switch).
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Quindi, cosa ci si aspetta di misurare con i flussi}
+\begin{itemize}
+\item Con chi vi è uno scambio di traffico a seconda degli indirizzi IP, prefissi IP, o \gls{ASN}.
+\item Quanto traffico e di che tipo (SMTP, WEB, file sharing, etc\ldots).
+\item Che servizi girano ad esempio in un ateneo universitario.
+\item Sommario dei traffici dei dipartimenti universitari.
+\item Tracciare la sorgente degli attacchi \gls{DoS}, ad esempio i 100 server che hanno inondato il dominio XXX.com.
+\item Trovare gli host che usano molto la rete (top host).
+\item Con quante destinazioni ogni host ha del traffico.
+\item Contare gli host che hanno dei servizi attivi, ad esempio quanti sono i server web attivi.
+\end{itemize}
+
+\subsubsection{Cosa non si può misurare con i flussi}
+\begin{itemize}
+\item Il traffico Non-IP (ad esempio NetBIOS, AppleTalk).
+\item Le informazioni a livello 2 (ad esempio il cambiamento di stato down/up delle interfacce).
+\item Il traffico filtrato (contare le politiche di un firewall).
+\item Statistiche per link (ad esempio l'uso del link, congestione, il ritardo, i pacchetti persi).
+\item Statistiche sulle applicazioni (ad esempio la latenza delle transazioni, il numero di risposte positive/negative, errori di protocollo).
+\end{itemize}
+
+\subsubsection{I flussi di rete: cosa sono?}
+Un flusso è un insieme di pacchetti legati da un insieme comune di proprietà (ad esempio hanno stesso indirizzo IP e la stessa porta).
+
+\subsubsection{Emissione dei flussi}
+Un flusso viene (accodato) emesso solo quando lo si considera terminato.
+\begin{itemize}
+\item Politica di creazione e terminazione:
+  \begin{itemize}
+  \item Quali condizioni fanno iniziare e finire un flusso?
+  \item Massima durata di un flusso senza considerare lo stato della connessione (ad esempio una connessione TCP finisce quando entrambi gli host si sono messi d'accordo sul FIN/RST).
+  \item Emettere un flusso quando non c'è traffico per una certa quantità di tempo.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{I contenuti dei flussi di rete}
+\begin{itemize}
+\item Un flusso contiene:
+  \begin{itemize}
+  \item Host: sorgente e destinazione
+  \item Contatori: pacchetti, byte, tempo.
+  \item Informazioni sul routing: \gls{AS}, maschera di rete, interfacce.
+  \end{itemize}
+\item I flussi possono essere unidirezionali (di default) o bidirezionali (solo NetFlow v9 e IPFIX\footnote{Internet Protocol Flow Information Export (IPFIX) è la versione standardizzata dalla IETF del NetFlow v9 della Cisco.}).
+\item Due opposti flussi unidirezionali corrispondono ad un unico flusso bidirezionale.
+\item I flussi bidirezionali possono contenere altre informazioni coma il round trip time o il comportamento del TCP.
+\end{itemize}
+
+\subsubsection{I problemi dei flussi di rete}
+\begin{itemize}
+\item Overhead (carico della CPU) contro accuratezza:
+  \begin{itemize}
+  \item Molte misurazioni risultano in più dati collezionati.
+  \item Molta aggregazione, meno granularità.
+  \item Overhead sui router, switch e host.
+  \end{itemize}
+\item Sicurezza contro condivisione dati:
+  \begin{itemize}
+  \item Il flusso emesso deve raggiungere il collezionatore attraverso un percorso protetto (ad esempio usando una differente rete/VLAN).
+  \item La privacy dell'utente deve essere rispettata.
+  \item Le misurazioni devono essere protette in modo da non divulgare informazioni importanti sulla rete a terze parti.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Esempi di flussi}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/Flussi_unidirezionali_IP.eps}
+  \caption{Flussi unidirezionali tramite indirizzo IP sorgente/destinazione}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/Flussi_unidirezionali_IP_porta_protocollo.eps}
+  \caption{Flussi unidirezionali tramite indirizzo IP, porta e protocollo}
+\end{figure}
+
+\subsubsection{Aggregazione del flusso}
+Vengono usati i flussi grezzi, ma spesso è necessario rispondere ad alcune domande, tipo:
+\begin{itemize}
+\item Quanto del traffico è web, mail, news, quake?
+\item Quanto del traffico va verso o parte da un dipartimento.
+\item Quanto del traffico va verso altri specifici dipartimenti, il provider X, Goolge, etc\ldots?
+\item Quanto traffico passa dall'interfaccia X?
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/Aggregazione_del_flusso.eps}
+  \caption{Aggregazione del flusso}
+\end{figure}
+
+Lo stesso flusso può essere aggregato più volte usando criteri differenti. Ad esempio, dai flussi grezzi è possibile generare:
+\begin{itemize}
+\item Lista dei protocolli.
+\item Matrice delle conversazioni (chi parla con chi).
+\item Le porte TCP/UDP più usate.
+\end{itemize}
+
+L'aggregazione del flusso è più veloce e usa meno memoria se viene fatta subito, piuttosto che farla dopo. Ad esempio, la matrice delle conversazioni è molto più semplice farla sulla sonda invece di usare grezzi flussi aggregati.
+
+\begin{itemize}
+\item I flussi possono essere aggregati usando anche criteri ``esterni'' e non solo usando i grezzi campi del flusso.
+\item Generalmente questi criteri esterni sono applicati su delle ``chiavi'' (e non sui ``valori'') dei campi come una porta, l'indirizzo IP, protocollo, etc\ldots, e sono usati per raggruppare insieme i valori.
+\item I criteri sono aggiunti (e non rimpiazzano) i campi esistenti.
+\item Esempio: port-map, protocol-map, ip-address
+  {\footnotesize
+\begin{verbatim}
+       IP src   IP dst   Proto Src port Dst port
+Before 10.0.0.1 10.0.0.2 UDP   32000    53
+       10.0.0.2 10.0.0.1 TCP   34354    80
+
+      IP src   IP dst   Proto Src port Dst port Src port map Dst port map
+After 10.0.0.1 10.0.0.2 TCP   32000    53       udp_other    domain
+      10.0.0.2 10.0.0.1 TCP   34354    80       tcp_other    http
+\end{verbatim}
+  }
+\item I flussi possono essere aggregati secondo:
+  \begin{itemize}
+  \item Porta TCP/UDP, \gls{ToS}, protocollo (ad esempio ICMP, UDP), \gls{AS}.
+  \item IP sorgente/destinazione.
+  \item Sottorete, ora del giorno.
+  \end{itemize}
+\item L'aggregazione può essere fatta sulla sonda, sul collezionatore o su entrambi.
+\item L'aggregazione fatta sulla sonda è veramente efficace in termini di uso delle risorse e di flusso del traffico di rete.
+\item L'aggregazione sul collezionatore è più potente (ad esempio aggregando i flussi prodotti da più sonde) ma è piuttosto costosa (riceve tutti gli aggregati).
+\end{itemize}
+
+\subsubsection{Filtrare i flussi}
+Filtrare i flussi significa: scartare i flussi in base a qualche criterio come:
+\begin{itemize}
+\item Durata del flusso (ad esempio, scartare i flussi che non sono stati visti per più di X secondi).
+\item Sorgente/destinazione del flusso (ad esempio, ignorare i flussi che contengono indirizzi \glstext{broadcast}).
+\item Porta del flusso (ad esempio, ignorare i flussi originati sulla porta X).
+\end{itemize}
+
+Si noti che:
+\begin{itemize}
+\item Il filtraggio è diverso dall'aggregazione: fanno due lavori differenti.
+\item Il filtraggio e l'aggregazione possono coesistere.
+\item Il filtraggio viene generalmente applicato prima dell'aggregazione e non dopo.
+\end{itemize}
+
+\subsection{Architettura di NetFlow}
+\begin{minipage}{.7\textwidth}
+  \begin{itemize}
+  \item I flussi sono esportati (push) dalla sonda quando questi finiscono, al contrario di SNMP dove il manager interroga (pull) l'agent periodicamente.
+  \item Il protocollo di trasporto è NetFlow (e non SNMP).
+  \item La configurazione della sonda e del collezionatore non è specificata dal protocollo NetFlow.
+  \item Il collezionatore NetFlow ha il compito di assemblare e capire i flussi esportati e combinarli o aggregarli in modo da creare report significativi del traffico e per l'analisi della sicurezza.
+  \end{itemize}
+\end{minipage}%
+\hspace{.05\textwidth}
+\begin{minipage}{.23\textwidth}
+  \includegraphics{figure/Architettura_NetFlow.eps}
+\end{minipage}
+
+\bigskip
+Le figure \ref{architettura_NetFlow_1} e \ref{architettura_NetFlow_2} mostrano degli esempi di come si possono collezionare i dati.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/Flussi_architettura_collezionatore_1.eps}
+  \caption{Architettura di NetFlow}
+  \label{architettura_NetFlow_1}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/Flussi_architettura_collezionatore_2.eps}
+  \caption{Architettura di NetFlow}
+  \label{architettura_NetFlow_2}
+\end{figure}
+
+\subsubsection{Vincoli di spazio per il collezionatore}
+\begin{itemize}
+\item Lo spazio richiesto dipende dal traffico.
+\item Qualche cifra media:
+  \begin{itemize}
+  \item 67.320 ottetti/flusso, 92 pacchetti/flusso.
+  \item Occupazione dei router: 397 GB di traffico/giorno, 548.000.000 di pacchetti/giorno == 5.900.000 pacchetti/giorno.
+  \item A 60 byte/flusso ci vogliono 350 MB di log/giorno.
+  \item Con una compressione di livello 6 si ha 4.3:1.
+  \item Lavoro per 82 MB/giorno per un router.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Nozioni di base per Cisco NetFlow}
+\begin{itemize}
+\item Flussi unidirezionali (fino alla v8), bidirezionali sulla v9.
+\item Molte versioni, v1,5,6,7,8,9. La più comune è la v5, l'ultima è la v9.
+\item Si analizza solo il traffico IP (non su tutte le piattaforme) e solo inbound (cioè il traffico che entra nel router).
+\item IPv4 \glstext{unicast} e \glstext{multicast}: tutte le versioni di NetFlow. IPv6 è supportata solo dalla v9.
+\item Protocollo aperto definito dalla Cisco e supportato dalle piattaforme IOS e CatIOS (nessun NetFlow è supportato dai firewall PIX) così come sulle piattaforme on-Cisco.
+\end{itemize}
+
+\subsubsection{Versioni di Cisco NetFlow}
+\begin{itemize}
+\item Ogni versione ha proprio formato per il pacchetto:
+  \begin{itemize}
+  \item v1,5,6,7,8 hanno un loro fissato/chiuso, specifico formato.
+  \item v9 è dinamico e aperto alle estensioni.
+  \end{itemize}
+\item Numeri di sequenza:
+  \begin{itemize}
+  \item v1 non ha numeri di sequenza (nessun modo per determinare la perdita di flussi).
+  \item v5,6,7,8 i numeri di sequenza per i flussi (cioè tiene traccia del numero di flussi emessi).
+  \item v9 ha i numeri di sequenza per i pacchetti (no per i flusso) (cioè è facile capire il numero di pacchetti persi, ma non di flussi persi).
+  \end{itemize}
+\item La ``versione'' stabilisce che tipo di dato c'è nel flusso.
+\item Qualche versione (ad esempio la v7) è specifico per le piattaforme Catalyst della Cisco.
+\end{itemize}
+
+\subsubsection{Netflow: nascita e morte di un flusso}
+\begin{itemize}
+\item Di ogni pacchetto che è stato inviato al router o ad uno switch di livello 3 viene analizzato un insieme di attributi IP.
+\item Tutti i pacchetti che hanno lo stesso:
+  \begin{itemize}
+  \item indirizzo IP di sorgente e destinazione.
+  \item porta sorgente e destinazione.
+  \item protocollo.
+  \end{itemize}
+  sono raggruppati insieme e vengono contati sia i byte che i pacchetti.
+\item I flussi attivi vengono salvati in memoria, in quella che viene chiamata, cache NetFlow.
+\end{itemize}
+La figura \ref{NetFlow_nascita_di_un_flusso} mostra come avviene la creazione del flusso.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/NetFlow_nascita_del_flusso.eps}
+  \caption{NetFlow: nascita del flusso}
+  \label{NetFlow_nascita_di_un_flusso}
+\end{figure}
+
+I flussi terminano quando avviene una di queste condizioni:
+\begin{itemize}
+\item La comunicazione è finita (ad esempio la comunicazione contiene il flag TCP FIN o RST).
+\item \`E durato troppo (di default 30 minuti).
+\item Il flusso non è più attivo (non sono stati ricevuti pacchetti) da troppo tempo (di default 15 secondi).
+\item La cache NetFlow è piena e il gestore della cache deve eliminare qualche dato.
+\end{itemize}
+Si noti che la cache NetFlow ha una dimensione limitata, quindi spesso non è possibile inserirvi tutti i flussi (si veda la figura \ref{NetFlow_cache_dei_flussi}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/NetFlow_cache_dei_flussi.eps}
+  \caption{NetFlow: politiche di esportazione dei flussi dalla cache NetFlow}
+  \label{NetFlow_cache_dei_flussi}
+\end{figure}
+
+\begin{itemize}
+\item La cache NetFlow si riempie costantemente di flussi, quindi il software all'interno del router o dello switch va in cerca di quei flussi che sono terminati o scaduti e li esporta verso il collezionatore.
+\item Una conseguenza è che il flusso di rete viene spezzato in molti flussi NetFlow che, se necessario, vengono riassemblati dal collezionatore.
+\end{itemize}
+
+\subsubsection{Formato del pacchetto del flusso}
+\begin{itemize}
+\item Un header comune tra le versioni esportate.
+\item Vengono esportati N record e la versione specifica cosa contengono.
+\item N viene determinato dalla definizione del flusso (ad esempi N=30 per v5). La dimensione del pacchetto viene mantenuta sotto i 1480 byte circa in modo da non avere nessuna frammentazione a livello ethernet.
+\end{itemize}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/NetFlow_pacchetto_v5.eps}
+  \caption{Pacchetto NetFlow v5}
+\end{figure}
+
+\subsection{Cisco NetFlow v5}
+
+{\footnotesize
+\begin{verbatim}
+    struct netflow5_record {
+      struct flow_ver5_hdr flowHeader;
+      struct flow_ver5_rec flowRecord[30];
+    } NetFlow5Record;
+
+    struct flow_ver5_hdr {
+      u_int16_t version;                 /* Current version=5*/
+      u_int16_t count;                   /* The number of records in PDU. */
+      u_int32_t sysUptime;               /* Current time in msecs since router booted */
+      u_int32_t unix_secs;               /* Current seconds since 0000 UTC 1970 */
+      u_int32_t unix_nsecs;              /* Residual nanoseconds since 0000 UTC 1970 *
+      u_int32_t flow_sequence;           /* Sequence number of total flows seen */
+      u_int8_t engine_type;              /* Type of flow switching engine (RP,VIP,etc.)*/
+      u_int8_t engine_id;                /* Slot number of the flow switching engine */
+
+      struct flow_ver5_rec {
+        u_int32_t srcaddr;   /* Source IP Address */
+        u_int32_t dstaddr;   /* Destination IP Address */
+        u_int32_t nexthop;   /* Next hop router's IP Address */
+        u_int16_t input;     /* Input interface index */
+        u_int16_t output;    /* Output interface index */
+        u_int32_t dPkts;     /* Packets sent */
+        u_int32_t dOctets;   /* Octets sent */
+        u_int32_t First;     /* SysUptime at start of flow */
+        u_int32_t Last;      /* and of last packet of the flow */
+        u_int16_t srcport;   /* TCP/UDP source port number (.e.g, FTP, Telnet, etc.,or equivalent) */
+        u_int16_t dstport;   /* TCP/UDP destination port number (.e.g, FTP, Telnet, etc.,or equivalent) */
+        u_int8_t pad1;       /* pad to word boundary */
+        u_int8_t tcp_flags;  /* Cumulative OR of tcp flags */
+        u_int8_t prot;       /* IP protocol, e.g., 6=TCP, 17=UDP, etc... */
+        u_int8_t tos;        /* IP Type-of-Service */
+        u_int16_t src_as;    /* source peer/origin Autonomous System */
+        u_int16_t dst_as;    /* dst peer/origin Autonomous System */
+        u_int8_t src_mask;   /* source route's mask bits */
+        u_int8_t dst_mask;   /* destination route's mask bits */
+        u_int16_t pad2;      /* pad to word boundary */
+      };
+\end{verbatim}
+}
+
+\subsection{NetFlow v9}
+\subsubsection{Perché se ne ha bisogno?}
+\begin{itemize}
+\item I formati fissi (dalla versione 1 alla 8) sono:
+  \begin{itemize}
+  \item Facili da implementare.
+  \item Consumano poca larghezza di banda.
+  \item Sono facili da decifrare per il collezionatore.
+  \item Non flessibili (molti ???)
+  \item Non estensibili (non c'è modo di estendere il flusso a meno che non venga definita una nuova versione).
+  \item Qualche caratteristica viene persa: livello 2, VLAN, IPv6, MPLS\footnote{Multiprotocol Label Switching (MPLS) è un meccanismo delle reti performanti che dirige e trasporta i dati direttamente da un nodo della rete ad un altro. MPLS rende facile la creazione di ``link virtuali'' tra due nodi distanti. \`E in grado di incapsulare vari tipi di protocolli.}.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{I principi}
+\begin{itemize}
+\item Protocollo aperto definito da Cisco (non è proprietario) nelle RFC 3954.
+\item Template di flusso + record di flusso
+  \begin{itemize}
+  \item Il template è composto da tipo e lunghezza.
+  \item Il record di un flusso è composto da un template ID e da un valore.
+  \item I template sono spediti periodicamente e sono il prerequisito per decodificare i record del flusso.
+  \item I record del flusso contengono ``la ciccia''.
+  \end{itemize}
+\item Template di opzioni + record di opzioni, contengono la configurazione della sonda (ad esempio, la velocità di campionamento, interfaccia dei pacchetti).
+\item Modello push della sonda verso il collezionatore (come nelle precedenti versioni).
+\item Spedisce i template regolarmente: ogni X flussi, ogni X secondi.
+\item Indipendente dal protocollo sottostante, pronto per ogni protocollo affidabile.
+\item Può spedire sia i template che i record di flusso in una sola esportazione.
+\item Può inserire differenti record di flussi in una sola esportazione.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/NetFlow_v9_formato.eps}
+  \caption{Formato di NetFlow v9}
+\end{figure}
+
+\subsubsection{Qualche tag}
+
+{\footnotesize
+\begin{verbatim}
+[ 1] %IN_BYTES                Incoming flow bytes
+[ 2] %IN_PKTS                 Incoming flow packets
+[ 3] %FLOWS                   Number of flows
+[ 4] %PROTOCOL                IP protocol byte
+[ 5] %SRC_TOS                 Type of service byte
+[ 6] %TCP_FLAGS               Cumulative of all flow TCP flags
+[ 7] %L4_SRC_PORT             IPv4 source port
+[ 8] %IPV4_SRC_ADDR           IPv4 source address
+[ 9] %SRC_MASK                Source subnet mask (/<bits>)
+[ 10] %INPUT_SNMP             Input interface SNMP idx
+[ 11] %L4_DST_PORT            IPv4 destination port
+[ 12] %IPV4_DST_ADDR          IPv4 destination address
+[ 13] %DST_MASK               Dest subnet mask (/<bits>)
+[ 16] %SRC_AS                 Source BGP AS
+[ 17] %DST_AS                 Destination BGP AS
+[ 21] %LAST_SWITCHED          SysUptime (msec) of the last flow pkt
+[ 22] %FIRST_SWITCHED         SysUptime (msec) of the first flow pkt
+[ 23] %OUT_BYTES              Outgoing flow bytes
+[ 24] %OUT_PKTS               Outgoing flow packets
+[ 27] %IPV6_SRC_ADDR          IPv6 source address
+[ 28] %IPV6_DST_ADDR          IPv6 destination address
+[ 29] %IPV6_SRC_MASK          IPv6 source mask
+[ 30] %IPV6_DST_MASK          IPv6 destination mask
+[ 32] %ICMP_TYPE              ICMP Type * 256 + ICMP code
+[ 34] %SAMPLING_INTERVAL      Sampling rate
+[ 37] %FLOW_INACTIVE_TIMEOUT  Inactivity timeout of flow cache entries
+[ 38] %ENGINE_TYPE            Flow switching engine
+[ 39] %ENGINE_ID              Id of the flow switching engine
+[ 40] %TOTAL_BYTES_EXP        Total bytes exported
+[ 41] %TOTAL_PKTS_EXP         Total flow packets exported
+[ 42] %TOTAL_FLOWS_EXP        Total number of exported flows
+[ 56] %IN_SRC_MAC             Source MAC Address
+[ 57] %OUT_DST_MAC            Destination MAC Address
+[ 58] %SRC_VLAN               Source VLAN
+[ 59] %DST_VLAN               Destination VLAN
+[ 60] %IP_PROTOCOL_VERSION    [4=IPv4][6=IPv6]
+[ 70] %MPLS_LABEL_1           MPLS label at position 1
+[ 71] %MPLS_LABEL_2           MPLS label at position 2
+[ 72] %MPLS_LABEL_3           MPLS label at position 3
+[ 73] %MPLS_LABEL_4           MPLS label at position 4
+[ 74] %MPLS_LABEL_5           MPLS label at position 5
+[ 75] %MPLS_LABEL_6           MPLS label at position 6
+[ 76] %MPLS_LABEL_7           MPLS label at position 7
+[ 77] %MPLS_LABEL_8           MPLS label at position 8
+[ 78] %MPLS_LABEL_9           MPLS label at position 9
+[ 79] %MPLS_LABEL_10          MPLS label at position 10
+[ 80] %IN_DST_MAC             Source MAC Address
+[ 81] %OUT_SRC_MAC            Destination MAC Address
+\end{verbatim}
+}
+
+\subsubsection{Esempio}
+
+{\footnotesize
+\begin{verbatim}
+Cisco NetFlow
+    Version: 9
+    Count: 4
+    SysUptime: 1132427188
+    Timestamp: Aug 18, 2000 23:49:25.000012271
+        CurrentSecs: 966635365
+    FlowSequence: 12271
+    SourceId: 0
+    FlowSet 1/4
+ FlowSet 1/4
+        Template FlowSet: 0
+        FlowSet Length: 164
+        Template Id: 257
+        Field Count: 18
+        Field (1/18)
+            Type: LAST_SWITCHED (21)
+            Length: 4
+
+Cisco NetFlow
+    Version: 9
+    Count: 1
+    SysUptime: 1133350352
+    Timestamp: Aug 19, 2000 00:04:48.000012307
+        CurrentSecs: 966636288
+    FlowSequence: 12307
+    SourceId: 0
+    FlowSet 1/1
+        Data FlowSet (Template Id): 257
+        FlowSet Length: 52
+        pdu 1
+            EndTime: 1133334.000000000 seconds
+            StartTime: 1133334.000000000 seconds
+            Octets: 84
+            Packets: 1
+            InputInt: 15
+\end{verbatim}
+}
+
+\subsubsection{Template di opzioni}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/NetFlow_v9_template_di_opzioni.eps}
+  \caption{NetFlow v9: template di opzioni}
+\end{figure}
+
+\subsubsection{v5 contro v9}
+\begin{tabular}{|l|l|l|}
+  \hline
+  & v5 & v9\\
+  \hline
+  Formato del flusso & Fisso & Definito dall'utente\\
+  \hline
+  Estensibile & No & Si (definendo un nuovo campo FlowSet)\\
+  \hline
+  Tipo di flusso & Unidirezionale & Bidirezionale\\
+  \hline
+  Dimensione del flusso & 48 byte (fisso) & Dipende dal formato\\
+  \hline
+  IPv6 & No & IPv4 e IPv6\\
+  \hline
+  MPLS/VLAN & No & Si\\
+  \hline
+\end{tabular}
+
+\subsection{Cisco IOS}
+\subsubsection{Configurazione}
+\begin{itemize}
+\item Configurato su ogni interfaccia di input.
+\item Definire la versione.
+\item Definire l'indirizzo IP del collezionatore (dove esportare i flussi).
+\item Opzionalmente abilita l'aggregazione delle tabelle.
+\item Opzionalmente configura il timeout del flusso e la principale (v5) dimensione della tabella di flusso.
+\item Opzionalmente configura la velocità di campionamento.
+\end{itemize}
+
+{\footnotesize
+\begin{verbatim}
+interface FastEthernet0/0/0
+ ip address 10.0.0.1 255.255.255.0
+ no ip directed-broadcast
+ ip route-cache flow
+
+interface ATM1/0/0
+ no ip address
+ no ip directed-broadcast
+ ip route-cache flow
+
+interface Loopback0
+ ip address 10.10.10.10 255.255.255.255
+ no ip directed-broadcast
+
+ip flow-export version 5 origin-as
+ip flow-export destination 10.0.0.10 5004
+ip flow-export source loopback 0
+
+ip flow-aggregation cache prefix
+ export destination 10.0.0.10 5555
+ enabled
+\end{verbatim}
+}
+
+\subsubsection{Report}
+
+{\footnotesize
+\begin{verbatim}
+#sh ip flow export
+Flow export is enabled
+  Exporting flows to 10.0.0.10 (5004)
+  Exporting using source IP address 10.10.10.10
+  Version 5 flow records, origin-as
+  Cache for prefix aggregation:
+    Exporting flows to 10.0.0.10 (5555)
+    Exporting using source IP address 10.10.10.10
+  3176848179 flows exported in 105898459 udp datagrams
+  0 flows failed due to lack of export packet
+  45 export packets were sent up to process level
+  0 export packets were punted to the RP
+  5 export packets were dropped due to no fib
+  31 export packets were dropped due to adjacency issues
+  0 export packets were dropped due to fragmentation failures
+  0 export packets were dropped due to encapsulation fixup failures
+  0 export packets were dropped enqueuing for the RP
+  0 export packets were dropped due to IPC rate limiting
+  0 export packets were dropped due to output drops
+
+#sho ip ca fl
+IP packet size distribution (106519M total packets):
+   1-32    64   96  128  160  192  224  256  288  320  352  384  416  448  480
+   .002  .405 .076 .017 .011 .010 .007 .005 .004 .005 .004 .004 .003 .002 .002
+
+    512  544  576 1024 1536 2048 2560 3072 3584 4096 4608
+   .002 .006 .024 .032 .368 .000 .000 .000 .000 .000 .000
+
+IP Flow Switching Cache, 4456704 bytes
+  36418 active, 29118 inactive, 3141073565 added
+  3132256745 ager polls, 0 flow alloc failures
+  Active flows timeout in 30 minutes
+  Inactive flows timeout in 15 seconds
+  last clearing of statistics never
+Protocol          Total   Flows   Packets Bytes Packets Active(Sec) Idle(Sec)
+--------          Flows    /Sec     /Flow  /Pkt      /Sec    /Flow     /Flow
+TCP-Telnet      2951815     0.6        61   216      42.2     26.6      21.4
+TCP-FTP        24128311     5.6        71   748     402.3     15.0      26.3
+TCP-FTPD        2865416     0.6       916   843     611.6     34.7      19.8
+TCP-WWW       467748914   108.9        15   566    1675.8      4.9      21.6
+TCP-SMTP       46697428    10.8        14   370     159.6      4.0      20.1
+TCP-X            521071     0.1       203   608      24.7     24.5      24.2
+TCP-BGP         2835505     0.6         5    94       3.3     16.2      20.7
+TCP-other    1620253066   377.2        47   631   18001.6     27.3      23.4
+UDP-DNS       125622144    29.2         2    78      82.5      4.6      24.7
+UDP-NTP        67332976    15.6         1    76      22.0      2.7      23.4
+UDP-TFTP          37173     0.0         2    76       0.0      4.1      24.6
+UDP-Frag          68421     0.0       474   900       7.5    111.7      21.6
+UDP-other     493337764   114.8        17   479    1990.3      3.8      20.2
+ICMP          243659509    56.7         3   166     179.7      3.3      23.3
+IGMP              18601     0.0        96    35       0.4    941.4       8.1
+IPINIP            12246     0.0        69    52       0.1    548.4      15.2
+GRE              125763     0.0       235   156       6.9     50.3      21.1
+IP-other       75976755    17.6         2    78      45.4      3.9      22.8
+Total:       3176854246   739.6        33   619   24797.4     16.2      22.6
+
+SrcIf         SrcIPaddress     DstIf        DstIPaddress   Pr  SrcP DstP   Pkts
+AT5/0/0.4     206.21.162.150   AT1/0/0.1    141.219.73.45  06  0E4B A029    507
+AT4/0/0.10    132.235.174.9    AT1/0/0.1    137.99.166.126 06  04BE 074C      3
+AT4/0/0.12    131.123.59.33    AT1/0/0.1    137.229.58.168 06  04BE 09BB    646
+AT1/0/0.1     137.99.166.126   AT4/0/0.10   132.235.174.9  06  074C 04BE      3
+
+#show ip flow top-talkers
+SrcIf SrcIPaddress DstIf DstIPaddress Pr SrcP DstP Pkts
+Et1/0  172.16.10.2 Et0/0  172.16.1.84 06 0087 0087 2100
+Et1/0  172.16.10.2 Et0/0  172.16.1.85 06 0089 0089 1892
+Et1/0  172.16.10.2 Et0/0  172.16.1.86 06 0185 0185 1762
+Et1/0  172.16.10.2 Et0/0  172.16.1.86 06 00B3 00B3 2
+Et1/0  172.16.10.2 Et0/0  172.16.1.84 06 0050 0050 1
+Et1/0  172.16.10.2 Et0/0  172.16.1.85 06 0050 0050
+
+17 of 10 top talkers shown. 7 flows processed.
+
+#show ip flow top 10 aggregate destination-address
+There are 3 top talkers:
+IPV4 DST-ADDR        bytes       pkts      flows
+=============== ========== ========== ==========
+172.16.1.86            160          4          2
+172.16.1.85            160          4          2
+172.16.1.84            160          4          2
+
+#show ip flow top 10 aggregate destination-address sorted-by bytes match
+source-port min 0 max 1000
+There are 3 top talkers:
+IPV4 DST-ADDR        bytes       pkts      flows
+=============== ========== ========== ==========
+172.16.1.84             80          2          2
+172.16.1.85             80          2          2
+172.16.1.86             80          2         26 of 6 flows matched.
+\end{verbatim}
+}
+
+\subsection{Configurazione JunOS}
+\begin{itemize}
+\item Pacchetti campione filtrati da un firewall e inviati verso un motore di routing.
+\item La velocità di campionamento è limitata a 7000pps (packets per seconds) indirizzati al prossimo PIC (Physical Interface Card).
+\item Buono per il controllo del traffico, ma non troppo efficace per scoprire attacchi \gls{DoS} o le intrusioni.
+\item Juniper \footnote{JunOS è un sistema operativo di rete affidabile e ad alte prestazioni per router, switch e dispositivi di sicurezza sviluppato da Juniper.} chiama NetFlow cflowd (un popolare collezionatore fornito dalla CAIDA).
+\end{itemize}
+
+\begin{tabular}{p{0.2\textwidth}|p{0.35\textwidth}|p{0.35\textwidth}}
+  {\bf Filtri per il firewall}
+  {\footnotesize
+\begin{verbatim}
+firewall {
+  filter all {
+    term all {
+      then {
+        sample;
+        accept;
+      }
+    }
+  }
+}
+\end{verbatim}
+  }
+  &
+  {\bf Abilitare il campionamento/flusso}
+  {\footnotesize
+\begin{verbatim}
+forwarding-options {
+  sampling {
+    input {
+      family inet {
+        rate 100;
+      }
+    }
+    output {
+      cflowd 10.0.0.16{
+        port 2055;
+        version 5;
+      }
+    }
+  }
+}
+\end{verbatim}
+  }
+  &
+  {\bf Applicare i filtri del firewall ad ogni interfaccia}
+  {\footnotesize
+\begin{verbatim}
+interfaces {
+  ge-0/3/0 {
+    unit 0 {
+      family inet {
+        filter {
+          input all;
+          output all;
+        }
+        address 192.148.244.1/24;
+      }
+    }
+  }
+\end{verbatim}
+  }
+\end{tabular}
+
+\subsection{Sonde NetFlow basate sui PC}
+\begin{itemize}
+\item Ci sono  sonde NetFlow basate sui PC.
+\item Molte di queste si basano sulla libreria pcap.
+\item nProbe (\url{www.ntop.org/nProbe.html}):
+  \begin{itemize}
+  \item Open Source (GPL2).
+  \item Una sonda veloce sul mercato.
+  \item Supporta sia NetFlow v5,v9 che IPFIX.
+  \item Formato flessibile per i flussi esportati.
+  \item Supporta IPv4/v6, un template flessibile (non sempre supportato da Cisco).
+  \item Disponibile sia per Linux che per Windows.
+  \end{itemize}
+\end{itemize}
+
+\subsection{IPFIX}
+\subsubsection{Campo di applicazione e requisiti generali}
+\begin{itemize}
+\item Scopo: trovare o sviluppare una base comune per la misurazione del flusso di traffico IP in modo che sia disponibile su (quasi) tutti i router futuri.
+\item Requisiti che soddisfano molte applicazioni.
+\item Basso costo hardware/software.
+\item Semplice e scalabile.
+\item Dovrebbe essere integrabile su tutti i router IP e altri dispositivi (sonde o middle boxe\footnote{I middle boxe sono quei dispositivi che si trovano nel mezzo del traffico, come appunto i router, switch, etc\ldots.}).
+\item Processare i dati in modo che sia integrato su varie applicazioni.
+\item Interoperabilità sia nell'apertura che nella standardizzazione.
+\end{itemize}
+
+\subsubsection{In breve}
+\begin{itemize}
+\item Fortemente basato su NetFlow v9.
+\item Capacità di definire nuovi campi per il flusso usando un formato standard (OID).
+\item Il trasporto del flusso è basato su SCTP (Stream Control Transport Protocol), opzionalmente su supporto UDP/TCP.
+\item Stato corrente: bozza della specifica di protocollo.
+\item In pratica: IPFIX = NetFlow v9 su SCTP.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/Architettura_IPFIX.eps}
+  \caption{Architettura di IPFIX}
+\end{figure}
+
+\subsection{Flussi e sicurezza}
+NetFlow e IPFIX possono essere usati anche a livello di sicurezza e non solo per la gestione del traffico:
+\begin{itemize}
+\item Possono individuare portscan\footnote{Si scansionano tutte le porte alla ricerca dei servizi attivi.}/portmap\footnote{Scovare un host con il servizio RPC (Remote Procedure Call) attivo. Questo servizio permette di eseguire delle elaborazioni remote.}.
+\item Scovare attività su porte sospette.
+\item Identificare la sorgente di uno SPAM, disabilitare i server (ad esempio un server file).
+\end{itemize}
+
+\subsubsection{Portmap}
+
+{\footnotesize
+\begin{verbatim}
+Start       SrcIPaddress    SrcP DstIPaddress DstP P Pkts
+10:53:42.50 165.132.86.201  9781 128.146.0.76  111 6    1
+10:53:42.54 165.132.86.201  9874 128.146.0.7   111 6    1
+10:53:42.54 165.132.86.201  9982 128.146.0.80  111 6    1
+10:53:42.54 165.132.86.201  9652 128.146.0.74  111 6    1
+10:53:42.54 165.132.86.201  9726 128.146.0.75  111 6    1
+10:53:42.54 165.132.86.201  9855 128.146.0.77  111 6    1
+10:53:42.58 165.132.86.201 10107 128.146.0.82  111 6    1
+\end{verbatim}
+}
+In un breve lasso di tempo ci sono molti pacchetti con lo stesso indirizzo sorgente ma con differenti indirizzi di destinazione e tutti sulla stessa porta di destinazione (porta 111=RPC (Remote Procedure Call)).
+
+\subsubsection{Trovare le backdoor}
+
+{\footnotesize
+\begin{verbatim}
+Start    SrcIPaddress   SrcP DstIPaddress    DstP P Pkts
+19:08:40 165.132.86.201 8401 128.146.172.232 1524 6  19
+19:08:40 165.132.86.201 8422 128.146.172.230 1524 6  16
+19:08:40 165.132.86.201 8486 128.146.172.234 1524 6  19
+19:08:40 165.132.86.201 8529 128.146.172.236 1524 6  10
+19:08:41 165.132.86.201 8614 128.146.172.237 1524 6  16
+19:08:41 165.132.86.201 8657 128.146.172.238 1524 6  22
+\end{verbatim}
+}
+
+Come il portmap, solo si cercano porte aperte da applicazioni conosciute, nell'esempio la porta di destinazione è la 1524 (trinoo backdoor port \url{http://www.auditmypc.com/port/tcp-port-1524.asp}).
+
+\subsubsection{Trovare le intrusioni}
+Semplice sistema IDS\footnote{Intrusion Detection System} basato sui flussi:
+\begin{itemize}
+\item I flussi che hanno troppi ottetti o troppi pacchetti (troppi dati: floods - inondazione).
+\item Lo stesso IP sorgente contatta più di N destinazioni - host scanning.
+\item Lo stesso IP sorgente contatta più di M porte per la stessa destinazione - port scanning.
+\end{itemize}
+
+% LocalWords:  SNMP agent L'agent trap polling Get dall'agent collezionatori of
+% LocalWords:  MIB Cisco NetFlow UDP collezionatore L'instrumentazione offline
+% LocalWords:  router switch ASN Autonomous System Number routing BGP Border AS
+% LocalWords:  Gateway Protocol SMTP sharing DoS Denial Service com host TCP ip
+% LocalWords:  NetBIOS AppleTalk firewall RST IPFIX Flow Information IETF trip
+% LocalWords:  Overhead VLAN news quake Goolge esterni' chiavi' valori' port GB
+% LocalWords:  map protocol address ToS Type ICMP Sottorete broadcast push pull
+% LocalWords:  l'agent report Reader' NeTraMet RFC MB log inbound IPv unicast
+% LocalWords:  multicast
+% LocalWords:  IOS CatIOS PIX Catalyst Netflow cache header ethernet MPLS Label
+% LocalWords:  Multiprotocol Switching virtuali' Template template tag FlowSet
+% LocalWords:  JunOS pps packets seconds PIC Physical Interface Juniper cflowd
+% LocalWords:  CAIDA pcap nProbe Source middle OID SCTP Stream Control portscan
+% LocalWords:  Transport portmap RPC Call SPAM backdoor trinoo IDS Intrusion
+% LocalWords:  Detection floods scanning

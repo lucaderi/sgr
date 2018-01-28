@@ -1,0 +1,57 @@
+<html>
+  <head>
+    <title></title>
+    <meta content="">
+    <style>
+    </style>
+    <script type="text/javascript" language="JavaScript">
+var image;
+var c = 0; 
+var first = 0;
+
+function count(nameFile) 
+{ 
+  	if(first == 0)
+	{
+		first = 1;
+		document.getElementById("refresh").style.display = '';
+		
+	}
+	if(first == 1)
+	{
+		document.getElementById("info").innerHTML = '';
+		first = 2;
+	}
+   	image.src=nameFile+(++c); 
+} 
+
+
+function init(nameFile) 
+{ 
+ image = document.getElementById("refresh"); 
+ if( image ) 
+ { 
+	var fun = "count('" + nameFile + "')";
+	document.getElementById("info").innerHTML = 'attendi...';
+  setInterval(fun,5000); 
+ } 
+} 
+
+function click1() {
+	nameFile = document.getElementById("nameFile").value + '?';
+	
+	init(nameFile);
+}
+
+
+</script>
+  </head>
+  <body>
+    <form>
+      <p id="info">
+         Inserisci il nome dell'immagine e clicca su ok 
+      </p>
+      <INPUT type="text" id="nameFile"><INPUT type="button" value="ok" onclick="click1();"><img border="1" id="refresh" style="display:none">
+    </form>
+  </body>
+</html>

@@ -1,0 +1,1014 @@
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2012.6.15)  12 JUL 2012 23:13
+entering extended mode
+ %&-line parsing enabled.
+**relazione.tex
+(./relazione.tex
+LaTeX2e <2005/12/01>
+Babel <v3.8h> and hyphenation patterns for english, usenglishmax, dumylang, noh
+yphenation, arabic, basque, bulgarian, coptic, welsh, czech, slovak, german, ng
+erman, danish, esperanto, spanish, catalan, galician, estonian, farsi, finnish,
+ french, greek, monogreek, ancientgreek, croatian, hungarian, interlingua, ibyc
+us, indonesian, icelandic, italian, latin, mongolian, dutch, norsk, polish, por
+tuguese, pinyin, romanian, russian, slovenian, uppersorbian, serbian, swedish, 
+turkish, ukenglish, ukrainian, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2005/09/16 v1.4f Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk12.clo
+File: bk12.clo 2005/09/16 v1.4f Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/base/inputenc.sty
+Package: inputenc 2006/05/05 v1.1b Input encoding file
+\inpenc@prehook=\toks14
+\inpenc@posthook=\toks15
+
+(/usr/share/texmf/tex/latex/base/utf8.def
+File: utf8.def 2006/03/30 v1.1i UTF-8 support for inputenc
+Now handling font encoding OML ...
+... no UTF-8 mapping file for font encoding OML
+Now handling font encoding T1 ...
+... processing UTF-8 mapping file for font encodingT1
+
+(/usr/share/texmf/tex/latex/base/t1enc.dfu
+File: t1enc.dfu 2006/03/30 v1.1i UTF-8 support for inputenc
+   defining Unicode char U+00A1 (decimal 161)
+   defining Unicode char U+00A3 (decimal 163)
+   defining Unicode char U+00AB (decimal 171)
+   defining Unicode char U+00BB (decimal 187)
+   defining Unicode char U+00BF (decimal 191)
+   defining Unicode char U+00C0 (decimal 192)
+   defining Unicode char U+00C1 (decimal 193)
+   defining Unicode char U+00C2 (decimal 194)
+   defining Unicode char U+00C3 (decimal 195)
+   defining Unicode char U+00C4 (decimal 196)
+   defining Unicode char U+00C5 (decimal 197)
+   defining Unicode char U+00C6 (decimal 198)
+   defining Unicode char U+00C7 (decimal 199)
+   defining Unicode char U+00C8 (decimal 200)
+   defining Unicode char U+00C9 (decimal 201)
+   defining Unicode char U+00CA (decimal 202)
+   defining Unicode char U+00CB (decimal 203)
+   defining Unicode char U+00CC (decimal 204)
+   defining Unicode char U+00CD (decimal 205)
+   defining Unicode char U+00CE (decimal 206)
+   defining Unicode char U+00CF (decimal 207)
+   defining Unicode char U+00D0 (decimal 208)
+   defining Unicode char U+00D1 (decimal 209)
+   defining Unicode char U+00D2 (decimal 210)
+   defining Unicode char U+00D3 (decimal 211)
+   defining Unicode char U+00D4 (decimal 212)
+   defining Unicode char U+00D5 (decimal 213)
+   defining Unicode char U+00D6 (decimal 214)
+   defining Unicode char U+00D8 (decimal 216)
+   defining Unicode char U+00D9 (decimal 217)
+   defining Unicode char U+00DA (decimal 218)
+   defining Unicode char U+00DB (decimal 219)
+   defining Unicode char U+00DC (decimal 220)
+   defining Unicode char U+00DD (decimal 221)
+   defining Unicode char U+00DE (decimal 222)
+   defining Unicode char U+00DF (decimal 223)
+   defining Unicode char U+00E0 (decimal 224)
+   defining Unicode char U+00E1 (decimal 225)
+   defining Unicode char U+00E2 (decimal 226)
+   defining Unicode char U+00E3 (decimal 227)
+   defining Unicode char U+00E4 (decimal 228)
+   defining Unicode char U+00E5 (decimal 229)
+   defining Unicode char U+00E6 (decimal 230)
+   defining Unicode char U+00E7 (decimal 231)
+   defining Unicode char U+00E8 (decimal 232)
+   defining Unicode char U+00E9 (decimal 233)
+   defining Unicode char U+00EA (decimal 234)
+   defining Unicode char U+00EB (decimal 235)
+   defining Unicode char U+00EC (decimal 236)
+   defining Unicode char U+00ED (decimal 237)
+   defining Unicode char U+00EE (decimal 238)
+   defining Unicode char U+00EF (decimal 239)
+   defining Unicode char U+00F0 (decimal 240)
+   defining Unicode char U+00F1 (decimal 241)
+   defining Unicode char U+00F2 (decimal 242)
+   defining Unicode char U+00F3 (decimal 243)
+   defining Unicode char U+00F4 (decimal 244)
+   defining Unicode char U+00F5 (decimal 245)
+   defining Unicode char U+00F6 (decimal 246)
+   defining Unicode char U+00F8 (decimal 248)
+   defining Unicode char U+00F9 (decimal 249)
+   defining Unicode char U+00FA (decimal 250)
+   defining Unicode char U+00FB (decimal 251)
+   defining Unicode char U+00FC (decimal 252)
+   defining Unicode char U+00FD (decimal 253)
+   defining Unicode char U+00FE (decimal 254)
+   defining Unicode char U+00FF (decimal 255)
+   defining Unicode char U+0102 (decimal 258)
+   defining Unicode char U+0103 (decimal 259)
+   defining Unicode char U+0104 (decimal 260)
+   defining Unicode char U+0105 (decimal 261)
+   defining Unicode char U+0106 (decimal 262)
+   defining Unicode char U+0107 (decimal 263)
+   defining Unicode char U+010C (decimal 268)
+   defining Unicode char U+010D (decimal 269)
+   defining Unicode char U+010E (decimal 270)
+   defining Unicode char U+010F (decimal 271)
+   defining Unicode char U+0110 (decimal 272)
+   defining Unicode char U+0111 (decimal 273)
+   defining Unicode char U+0118 (decimal 280)
+   defining Unicode char U+0119 (decimal 281)
+   defining Unicode char U+011A (decimal 282)
+   defining Unicode char U+011B (decimal 283)
+   defining Unicode char U+011E (decimal 286)
+   defining Unicode char U+011F (decimal 287)
+   defining Unicode char U+0130 (decimal 304)
+   defining Unicode char U+0131 (decimal 305)
+   defining Unicode char U+0132 (decimal 306)
+   defining Unicode char U+0133 (decimal 307)
+   defining Unicode char U+0139 (decimal 313)
+   defining Unicode char U+013A (decimal 314)
+   defining Unicode char U+013D (decimal 317)
+   defining Unicode char U+013E (decimal 318)
+   defining Unicode char U+0141 (decimal 321)
+   defining Unicode char U+0142 (decimal 322)
+   defining Unicode char U+0143 (decimal 323)
+   defining Unicode char U+0144 (decimal 324)
+   defining Unicode char U+0147 (decimal 327)
+   defining Unicode char U+0148 (decimal 328)
+   defining Unicode char U+014A (decimal 330)
+   defining Unicode char U+014B (decimal 331)
+   defining Unicode char U+0150 (decimal 336)
+   defining Unicode char U+0151 (decimal 337)
+   defining Unicode char U+0152 (decimal 338)
+   defining Unicode char U+0153 (decimal 339)
+   defining Unicode char U+0154 (decimal 340)
+   defining Unicode char U+0155 (decimal 341)
+   defining Unicode char U+0158 (decimal 344)
+   defining Unicode char U+0159 (decimal 345)
+   defining Unicode char U+015A (decimal 346)
+   defining Unicode char U+015B (decimal 347)
+   defining Unicode char U+015E (decimal 350)
+   defining Unicode char U+015F (decimal 351)
+   defining Unicode char U+0160 (decimal 352)
+   defining Unicode char U+0161 (decimal 353)
+   defining Unicode char U+0162 (decimal 354)
+   defining Unicode char U+0163 (decimal 355)
+   defining Unicode char U+0164 (decimal 356)
+   defining Unicode char U+0165 (decimal 357)
+   defining Unicode char U+016E (decimal 366)
+   defining Unicode char U+016F (decimal 367)
+   defining Unicode char U+0170 (decimal 368)
+   defining Unicode char U+0171 (decimal 369)
+   defining Unicode char U+0178 (decimal 376)
+   defining Unicode char U+0179 (decimal 377)
+   defining Unicode char U+017A (decimal 378)
+   defining Unicode char U+017B (decimal 379)
+   defining Unicode char U+017C (decimal 380)
+   defining Unicode char U+017D (decimal 381)
+   defining Unicode char U+017E (decimal 382)
+   defining Unicode char U+200C (decimal 8204)
+   defining Unicode char U+2013 (decimal 8211)
+   defining Unicode char U+2014 (decimal 8212)
+   defining Unicode char U+2018 (decimal 8216)
+   defining Unicode char U+2019 (decimal 8217)
+   defining Unicode char U+201A (decimal 8218)
+   defining Unicode char U+201C (decimal 8220)
+   defining Unicode char U+201D (decimal 8221)
+   defining Unicode char U+201E (decimal 8222)
+   defining Unicode char U+2030 (decimal 8240)
+   defining Unicode char U+2031 (decimal 8241)
+   defining Unicode char U+2039 (decimal 8249)
+   defining Unicode char U+203A (decimal 8250)
+   defining Unicode char U+2423 (decimal 9251)
+)
+Now handling font encoding OT1 ...
+... processing UTF-8 mapping file for font encodingOT1
+
+(/usr/share/texmf/tex/latex/base/ot1enc.dfu
+File: ot1enc.dfu 2006/03/30 v1.1i UTF-8 support for inputenc
+   defining Unicode char U+00A1 (decimal 161)
+   defining Unicode char U+00A3 (decimal 163)
+   defining Unicode char U+00B8 (decimal 184)
+   defining Unicode char U+00BF (decimal 191)
+   defining Unicode char U+00C5 (decimal 197)
+   defining Unicode char U+00C6 (decimal 198)
+   defining Unicode char U+00D8 (decimal 216)
+   defining Unicode char U+00DF (decimal 223)
+   defining Unicode char U+00E6 (decimal 230)
+   defining Unicode char U+00EC (decimal 236)
+   defining Unicode char U+00ED (decimal 237)
+   defining Unicode char U+00EE (decimal 238)
+   defining Unicode char U+00EF (decimal 239)
+   defining Unicode char U+00F8 (decimal 248)
+   defining Unicode char U+0131 (decimal 305)
+   defining Unicode char U+0141 (decimal 321)
+   defining Unicode char U+0142 (decimal 322)
+   defining Unicode char U+0152 (decimal 338)
+   defining Unicode char U+0153 (decimal 339)
+   defining Unicode char U+2013 (decimal 8211)
+   defining Unicode char U+2014 (decimal 8212)
+   defining Unicode char U+2018 (decimal 8216)
+   defining Unicode char U+2019 (decimal 8217)
+   defining Unicode char U+201C (decimal 8220)
+   defining Unicode char U+201D (decimal 8221)
+)
+Now handling font encoding OMS ...
+... processing UTF-8 mapping file for font encodingOMS
+
+(/usr/share/texmf/tex/latex/base/omsenc.dfu
+File: omsenc.dfu 2006/03/30 v1.1i UTF-8 support for inputenc
+   defining Unicode char U+00A7 (decimal 167)
+   defining Unicode char U+00B6 (decimal 182)
+   defining Unicode char U+00B7 (decimal 183)
+   defining Unicode char U+2020 (decimal 8224)
+   defining Unicode char U+2021 (decimal 8225)
+   defining Unicode char U+2022 (decimal 8226)
+)
+Now handling font encoding OMX ...
+... no UTF-8 mapping file for font encoding OMX
+Now handling font encoding U ...
+... no UTF-8 mapping file for font encoding U
+   defining Unicode char U+00A9 (decimal 169)
+   defining Unicode char U+00AA (decimal 170)
+   defining Unicode char U+00AE (decimal 174)
+   defining Unicode char U+00BA (decimal 186)
+   defining Unicode char U+02C6 (decimal 710)
+   defining Unicode char U+02DC (decimal 732)
+   defining Unicode char U+200C (decimal 8204)
+   defining Unicode char U+2026 (decimal 8230)
+   defining Unicode char U+2122 (decimal 8482)
+   defining Unicode char U+2423 (decimal 9251)
+))
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2005/09/27 v1.99g Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2005/09/27 v1.99g Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 43.
+))
+(/usr/share/texmf/tex/generic/babel/babel.sty
+Package: babel 2005/11/23 v3.8h The Babel package
+
+(/usr/share/texmf/tex/generic/babel/italian.ldf
+Language: italian 2005/11/17 v1.2r Italian support from the babel system
+
+(/usr/share/texmf/tex/generic/babel/babel.def
+File: babel.def 2005/11/23 v3.8h Babel common definitions
+\babel@savecnt=\count88
+\U@D=\dimen103
+)
+Package babel Info: Making " an active character on input line 91.
+))
+(/usr/share/texmf/tex/latex/csquotes/csquotes.sty
+Package: csquotes 2006/11/09 v3.6 Quotation facilities
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks16
+)
+\csq@gtype=\count89
+\csq@glevel=\count90
+\csq@qlevel=\count91
+\csq@lastsf=\count92
+\csq@tshold=\count93
+\csq@ltxeverypar=\toks17
+Package csquotes Info: Trying to load configuration file `csquotes.cfg'...
+Package csquotes Info: ... configuration file loaded successfully.
+
+(/usr/share/texmf/tex/latex/csquotes/csquotes.cfg
+File: csquotes.cfg 2006/11/09 v3.6 Quotation configuration
+)
+Package csquotes Info: Enabling multilingual support.
+)
+(/usr/share/texmf/tex/latex/tocloft/tocloft.sty
+Package: tocloft 2003/09/26 v2.3c parameterised ToC, etc., typesetting
+
+
+Package tocloft Note: The document has chapter divisions.
+
+\cftparskip=\skip43
+\cftbeforetoctitleskip=\skip44
+\cftaftertoctitleskip=\skip45
+\cftbeforepartskip=\skip46
+\cftpartnumwidth=\skip47
+\cftpartindent=\skip48
+\cftbeforechapskip=\skip49
+\cftchapindent=\skip50
+\cftchapnumwidth=\skip51
+\cftbeforesecskip=\skip52
+\cftsecindent=\skip53
+\cftsecnumwidth=\skip54
+\cftbeforesubsecskip=\skip55
+\cftsubsecindent=\skip56
+\cftsubsecnumwidth=\skip57
+\cftbeforesubsubsecskip=\skip58
+\cftsubsubsecindent=\skip59
+\cftsubsubsecnumwidth=\skip60
+\cftbeforeparaskip=\skip61
+\cftparaindent=\skip62
+\cftparanumwidth=\skip63
+\cftbeforesubparaskip=\skip64
+\cftsubparaindent=\skip65
+\cftsubparanumwidth=\skip66
+\cftbeforeloftitleskip=\skip67
+\cftafterloftitleskip=\skip68
+\cftbeforefigskip=\skip69
+\cftfigindent=\skip70
+\cftfignumwidth=\skip71
+\c@lofdepth=\count94
+\c@lotdepth=\count95
+\cftbeforelottitleskip=\skip72
+\cftafterlottitleskip=\skip73
+\cftbeforetabskip=\skip74
+\cfttabindent=\skip75
+\cfttabnumwidth=\skip76
+) (/usr/share/texmf/tex/latex/mh/mathtools.sty
+Package: mathtools 2004/10/10 v1.01a mathematical typesetting tools (MH)
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 2005/08/06 v4.2 Infix arithmetic (KKT,FJ)
+\calc@Acount=\count96
+\calc@Bcount=\count97
+\calc@Adimen=\dimen104
+\calc@Bdimen=\dimen105
+\calc@Askip=\skip77
+\calc@Bskip=\skip78
+LaTeX Info: Redefining \setlength on input line 75.
+LaTeX Info: Redefining \addtolength on input line 76.
+\calc@Ccount=\count98
+\calc@Cskip=\skip79
+)
+(/usr/share/texmf/tex/latex/mh/mhsetup.sty
+Package: mhsetup 2004/10/10 v1.0b programming setup (MH)
+)
+(/usr/share/texmf/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2000/07/18 v2.13 AMS math features
+\@mathmargin=\skip80
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01
+
+(/usr/share/texmf/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0
+\@emptytoks=\toks18
+\ex@=\dimen106
+))
+(/usr/share/texmf/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d
+\pmbraise@=\dimen107
+)
+(/usr/share/texmf/tex/latex/amsmath/amsopn.sty
+Package: amsopn 1999/12/14 v2.01 operator names
+)
+\inf@bad=\count99
+LaTeX Info: Redefining \frac on input line 211.
+\uproot@=\count100
+\leftroot@=\count101
+LaTeX Info: Redefining \overline on input line 307.
+\classnum@=\count102
+\DOTSCASE@=\count103
+LaTeX Info: Redefining \ldots on input line 379.
+LaTeX Info: Redefining \dots on input line 382.
+LaTeX Info: Redefining \cdots on input line 467.
+\Mathstrutbox@=\box26
+\strutbox@=\box27
+\big@size=\dimen108
+LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
+\macc@depth=\count104
+\c@MaxMatrixCols=\count105
+\dotsspace@=\muskip10
+\c@parentequation=\count106
+\dspbrk@lvl=\count107
+\tag@help=\toks19
+\row@=\count108
+\column@=\count109
+\maxfields@=\count110
+\andhelp@=\toks20
+\eqnshift@=\dimen109
+\alignsep@=\dimen110
+\tagshift@=\dimen111
+\tagwidth@=\dimen112
+\totwidth@=\dimen113
+\lineht@=\dimen114
+\@envbody=\toks21
+\multlinegap=\skip81
+\multlinetaggap=\skip82
+\mathdisplay@stack=\toks22
+LaTeX Info: Redefining \[ on input line 2666.
+LaTeX Info: Redefining \] on input line 2667.
+)
+\g_MT_multlinerow_int=\count111
+\l_MT_multwidth_dim=\dimen115
+)
+(/usr/share/texmf/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count112
+\float@exts=\toks23
+\float@box=\box28
+\@float@everytoks=\toks24
+\@floatcapt=\box29
+)
+(/usr/share/texmf/tex/latex/caption/caption.sty
+Package: caption 2007/01/07 v3.0k Customising captions (AR)
+
+(/usr/share/texmf/tex/latex/caption/caption3.sty
+Package: caption3 2007/01/07 v3.0k caption3 kernel (AR)
+\captionmargin=\dimen116
+\captionmarginx=\dimen117
+\captionwidth=\dimen118
+\captionindent=\dimen119
+\captionparindent=\dimen120
+\captionhangindent=\dimen121
+)
+Package caption Info: float package v1.3 (or newer) detected on input line 275.
+
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2006/02/20 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2007/01/18 v1.5 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: pdftex.def on input line 90.
+
+(/usr/share/texmf/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2007/01/08 v0.04d Graphics/color for pdfTeX
+\Gread@gobject=\count113
+))
+\Gin@req@height=\dimen122
+\Gin@req@width=\dimen123
+)
+(/usr/share/texmf/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
+
+(/usr/share/texmf/tex/latex/config/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package xcolor Info: Driver file: pdftex.def on input line 225.
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1337.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1341.
+Package xcolor Info: Model `RGB' extended on input line 1353.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1355.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1356.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1357.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1358.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1359.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1360.
+)
+(/usr/share/texmf/tex/latex/listings/listings.sty
+\lst@mode=\count114
+\lst@gtempboxa=\box30
+\lst@token=\toks25
+\lst@length=\count115
+\lst@currlwidth=\dimen124
+\lst@column=\count116
+\lst@pos=\count117
+\lst@lostspace=\dimen125
+\lst@width=\dimen126
+\lst@newlines=\count118
+\lst@lineno=\count119
+\c@lstlisting=\count120
+\lst@maxwidth=\dimen127
+
+(/usr/share/texmf/tex/latex/listings/lstpatch.sty
+File: lstpatch.sty 2004/10/17 1.3b (Carsten Heinz)
+)
+(/usr/share/texmf/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2004/09/07 1.3 (Carsten Heinz)
+\c@lstnumber=\count121
+\lst@skipnumbers=\count122
+\lst@framebox=\box31
+)
+(/usr/share/texmf/tex/latex/listings/listings.cfg
+File: listings.cfg 2004/09/05 1.3 listings configuration
+))
+Package: listings 2004/10/17 1.3b (Carsten Heinz)
+
+(/usr/share/texmf/tex/latex/setspace/setspace.sty
+Package: setspace 2000/12/01 6.7 Contributed and Supported LaTeX2e package
+
+Package: `setspace' 6.7 <2000/12/01>
+) (/usr/share/texmf/tex/latex/natbib/natbib.sty
+Package: natbib 2007/02/05 8.0 (PWD)
+\bibhang=\skip83
+\bibsep=\skip84
+LaTeX Info: Redefining \cite on input line 602.
+\c@NAT@ctr=\count123
+)
+(/usr/share/texmf/tex/latex/babelbib/babelbib.sty
+Package: babelbib 2005/11/13 v1.20 babelbib: multilingual bibliographies (HH)
+)
+(/usr/share/texmf/tex/latex/hyperref/hyperref.sty
+Package: hyperref 2007/02/07 v6.75r Hypertext links for LaTeX
+\@linkdim=\dimen128
+\Hy@linkcounter=\count124
+\Hy@pagecounter=\count125
+
+(/usr/share/texmf/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2007/02/07 v6.75r Hyperref: PDFDocEncoding definition (HO)
+Now handling font encoding PD1 ...
+... no UTF-8 mapping file for font encoding PD1
+)
+(/usr/share/texmf/tex/latex/config/hyperref.cfg
+File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
+)
+(/usr/share/texmf/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2006/08/22 v2.4 Connects package keyval with LaTeX options (
+HO)
+)
+Package hyperref Info: Option `breaklinks' set `true' on input line 2238.
+Package hyperref Info: Hyper figures OFF on input line 2288.
+Package hyperref Info: Link nesting OFF on input line 2293.
+Package hyperref Info: Hyper index ON on input line 2296.
+Package hyperref Info: Plain pages OFF on input line 2303.
+Package hyperref Info: Backreferencing OFF on input line 2308.
+
+Implicit mode ON; LaTeX internals redefined
+Package hyperref Info: Bookmarks ON on input line 2444.
+(/usr/share/texmf/tex/latex/ltxmisc/url.sty
+\Urlmuskip=\muskip11
+Package: url 2005/06/27  ver 3.2  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 2599.
+\Fld@menulength=\count126
+\Field@Width=\dimen129
+\Fld@charsize=\dimen130
+\Choice@toks=\toks26
+\Field@toks=\toks27
+Package hyperref Info: Hyper figures OFF on input line 3102.
+Package hyperref Info: Link nesting OFF on input line 3107.
+Package hyperref Info: Hyper index ON on input line 3110.
+Package hyperref Info: backreferencing OFF on input line 3117.
+Package hyperref Info: Link coloring OFF on input line 3122.
+\Hy@abspage=\count127
+\c@Item=\count128
+\c@Hfootnote=\count129
+)
+*hyperref using default driver hpdftex*
+(/usr/share/texmf/tex/latex/hyperref/hpdftex.def
+File: hpdftex.def 2007/02/07 v6.75r Hyperref driver for pdfTeX
+\Fld@listcount=\count130
+)
+Package hyperref Info: Option `colorlinks' set `true' on input line 43.
+
+(/usr/share/texmf/tex/latex/oberdiek/hypcap.sty
+Package: hypcap 2006/02/20 v1.5 Adjusting anchors of captions (HO)
+) (./relazione.aux)
+\openout1 = `relazione.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 47.
+LaTeX Font Info:    ... okay on input line 47.
+
+(/usr/share/texmf/tex/latex/ragged2e/ragged2e.sty
+Package: ragged2e 2003/03/25 v2.04 ragged2e Package (MS)
+
+(/usr/share/texmf/tex/latex/everysel/everysel.sty
+Package: everysel 1999/06/08 v1.03 EverySelectfont Package (MS)
+LaTeX Info: Redefining \selectfont on input line 125.
+)
+\CenteringLeftskip=\skip85
+\RaggedLeftLeftskip=\skip86
+\RaggedRightLeftskip=\skip87
+\CenteringRightskip=\skip88
+\RaggedLeftRightskip=\skip89
+\RaggedRightRightskip=\skip90
+\CenteringParfillskip=\skip91
+\RaggedLeftParfillskip=\skip92
+\RaggedRightParfillskip=\skip93
+\JustifyingParfillskip=\skip94
+\CenteringParindent=\skip95
+\RaggedLeftParindent=\skip96
+\RaggedRightParindent=\skip97
+\JustifyingParindent=\skip98
+)
+Package caption Info: hyperref package v6.74m (or newer) detected on input line
+ 47.
+Package caption Info: hypcap package v1.0 (or newer) detected on input line 47.
+
+Package caption Info: listings package v1.2 (or newer) detected on input line 4
+7.
+
+babelbib: Set bibliography fall-back language to italian
+(/usr/share/texmf/tex/latex/babelbib/italian.bdf
+File: italian.bdf 2005/11/13 v1.20 babelbib: multilingual bibliographies (HH)
+
+babelbib extension \btxifchangecaseoff added to \extrasitalian
+)
+babelbib: Load BibTeX extensions \bibsitalian for italian
+babelbib: Set language for keywords in the bibliography fixed to italian
+babelbib: Set language for keywords in the bibliography fixed to italian
+Package hyperref Info: Link coloring ON on input line 47.
+(/usr/share/texmf/tex/latex/hyperref/nameref.sty
+Package: nameref 2006/12/27 v2.28 Cross-referencing by name of section
+
+(/usr/share/texmf/tex/latex/oberdiek/refcount.sty
+Package: refcount 2006/02/20 v3.0 Data extraction from references (HO)
+)
+\c@section@level=\count131
+)
+LaTeX Info: Redefining \ref on input line 47.
+LaTeX Info: Redefining \pageref on input line 47.
+ (./relazione.out)
+(./relazione.out)
+\@outlinefile=\write3
+\openout3 = `relazione.out'.
+
+ (./frontespizio.tex
+<img/logo_unipi.pdf, id=195, 288.07625pt x 294.09875pt>
+File: img/logo_unipi.pdf Graphic file (type pdf)
+
+<use img/logo_unipi.pdf>
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 24.
+ (/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+) [1
+
+
+{/usr/share/texmf/fonts/map/pdftex/updmap/pdftex.map} <./img/logo_unipi.pdf>]) 
+[2
+
+
+]
+(./relazione.toc [1])
+\tf@toc=\write4
+\openout4 = `relazione.toc'.
+
+ [2] (./cap/cap1-introduzione.tex
+Capitolo 1.
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.11 
+      [1
+
+
+
+
+]pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has
+ been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.25 
+      [2] <img/ubicazione_fw.png, id=280, 429.605pt x 306.14375pt>
+File: img/ubicazione_fw.png Graphic file (type png)
+
+<use img/ubicazione_fw.png> [3]) (./cap/cap2-progettazione.tex [4 <./img/ubicaz
+ione_fw.png>]
+Capitolo 2.
+[5
+
+
+
+] [6] [7]
+Underfull \vbox (badness 1490) has occurred while \output is active []
+
+ [8]
+[9]
+Underfull \vbox (badness 2126) has occurred while \output is active []
+
+ [10
+
+])
+(./cap/cap3-implementazione.tex [11] [12
+
+
+]
+Capitolo 3.
+[13
+
+] [14] <img/PF_Ring_DNA.png, id=372, 646.415pt x 390.45876pt>
+File: img/PF_Ring_DNA.png Graphic file (type png)
+
+<use img/PF_Ring_DNA.png> [15 <./img/PF_Ring_DNA.png (PNG copy)>] [16]
+<img/arch.png, id=385, 722.7pt x 542.025pt>
+File: img/arch.png Graphic file (type png)
+ <use img/arch.png> [17 <./img/arch.png (PNG copy)>] [18] [19] [20] [21] [22] [
+23] [24]
+Underfull \vbox (badness 3068) has occurred while \output is active []
+
+ [25]
+[26] (/usr/share/texmf/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2004/09/07 1.3 (Carsten Heinz)
+) (./codice/exampleConf.xml))
+(./cap/cap4-validazione.tex [27
+
+] [28
+
+
+]
+Capitolo 4.
+[29
+
+] [30]
+Overfull \hbox (52.63126pt too wide) in paragraph at lines 43--52
+ [] 
+ []
+
+[31
+
+] [32]
+Overfull \hbox (52.63126pt too wide) in paragraph at lines 76--87
+ [] 
+ []
+
+
+Overfull \hbox (52.63126pt too wide) in paragraph at lines 94--105
+ [] 
+ []
+
+[33
+
+] [34
+
+]
+Overfull \hbox (52.63126pt too wide) in paragraph at lines 138--145
+ [] 
+ []
+
+[35
+
+]
+
+pdfTeX warning: pdflatex (file ./img/kpps.pdf): PDF inclusion: found PDF versio
+n <1.5>, but at most version <1.4> allowed
+<img/kpps.pdf, id=562, 794.97pt x 614.295pt>
+File: img/kpps.pdf Graphic file (type pdf)
+ <use img/kpps.pdf>
+Overfull \hbox (7.48402pt too wide) in paragraph at lines 159--160
+ [] 
+ []
+
+[36
+
+ <./img/kpps.pdf
+
+pdfTeX warning: pdflatex (file ./img/kpps.pdf): PDF inclusion: Page Group detec
+ted which pdfTeX can't handle. Ignoring it.
+>]
+
+pdfTeX warning: pdflatex (file ./img/sess.pdf): PDF inclusion: found PDF versio
+n <1.5>, but at most version <1.4> allowed
+<img/sess.pdf, id=582, 794.97pt x 614.295pt>
+File: img/sess.pdf Graphic file (type pdf)
+ <use img/sess.pdf>
+Overfull \hbox (7.48402pt too wide) in paragraph at lines 169--170
+ [] 
+ []
+
+[37
+
+ <./img/sess.pdf
+
+pdfTeX warning: pdflatex (file ./img/sess.pdf): PDF inclusion: Page Group detec
+ted which pdfTeX can't handle. Ignoring it.
+>]
+
+pdfTeX warning: pdflatex (file ./img/perf.pdf): PDF inclusion: found PDF versio
+n <1.5>, but at most version <1.4> allowed
+<img/perf.pdf, id=602, 794.97pt x 614.295pt>
+File: img/perf.pdf Graphic file (type pdf)
+ <use img/perf.pdf>
+Overfull \hbox (7.48402pt too wide) in paragraph at lines 179--180
+ [] 
+ []
+
+) (./cap/cap5-relatedworks.tex [38
+
+ <./img/perf.pdf
+
+pdfTeX warning: pdflatex (file ./img/perf.pdf): PDF inclusion: Page Group detec
+ted which pdfTeX can't handle. Ignoring it.
+>]
+Capitolo 5.
+[39
+
+
+
+] [40] [41] [42] [43] [44] [45] [46] [47]
+Overfull \hbox (2.32765pt too wide) in paragraph at lines 198--199
+[]\T1/cmr/m/it/12 L7-Bridge \T1/cmr/m/n/12 in-ve-ce, uti-liz-zan-do nD-PI, per-
+met-te di ana-liz-za-re mag-gio-ri quan-
+ []
+
+[48]) (./cap/cap6-conclusioni.tex [49] [50
+
+
+]
+Capitolo 6.
+[51
+
+]
+Underfull \vbox (badness 3713) has occurred while \output is active []
+
+ [52]
+[53]
+Underfull \vbox (badness 2762) has occurred while \output is active []
+
+ [54])
+[55] [56
+
+
+] (./relazione.bbl
+babelbib: Using the BibTeX style's default font for `name'.
+babelbib: Using the BibTeX style's default font for `lastname'.
+babelbib: Using the BibTeX style's default font for `title'.
+babelbib: Using the BibTeX style's default font for `jtitle'.
+babelbib: Using the BibTeX style's default font for `etal'.
+babelbib: Using the BibTeX style's default font for `journal'.
+babelbib: Using the BibTeX style's default font for `volume'.
+babelbib: Using the BibTeX style's default font for `ISBN'.
+babelbib: Using the BibTeX style's default font for `ISSN'.
+babelbib: Using the BibTeX style's default font for `url'.
+babelbib: Using the BibTeX style's default font for `numeral'.
+
+Underfull \hbox (badness 1189) in paragraph at lines 27--35
+\T1/cmr/m/n/12 301, 1999.  [][]$\T1/cmtt/m/n/12 http : / / dcn . ssu . ac . kr 
+/ ~softgear / Linux % 20Network %
+ []
+
+[57
+
+]
+Underfull \hbox (badness 2326) in paragraph at lines 107--115
+[]\T1/cmr/m/n/12 L.M. Gar-cia: \T1/cmr/m/it/12 Pro-gram-ming wi-th Lib-p-cap - 
+Snif-fing the Net-work
+ []
+
+
+Underfull \hbox (badness 2828) in paragraph at lines 107--115
+\T1/cmr/m/it/12 from our own ap-pli-ca-tion\T1/cmr/m/n/12 .  Ha-kin9 - Com-pu-t
+er Se-cu-ri-ty Ma-
+ []
+
+
+Underfull \hbox (badness 4403) in paragraph at lines 107--115
+\T1/cmr/m/n/12 ga-zi-ne, 2008.  [][]$\T1/cmtt/m/n/12 http : / / repo . mynoobli
+fe . org / Developpement / C /
+ []
+
+
+Underfull \hbox (badness 1796) in paragraph at lines 133--146
+[]\T1/cmr/m/n/12 B. Hu-bert, T. Graf, G. Max-well, R. van Mook, M. van Oo-
+ []
+
+
+Underfull \hbox (badness 1742) in paragraph at lines 133--146
+\T1/cmr/m/n/12 ste-rhout, P. Schroe-der, J. Spaans e P. Lar-roy: \T1/cmr/m/it/1
+2 Li-nux ad-van-ced
+ []
+
+
+Underfull \hbox (badness 1681) in paragraph at lines 133--146
+\T1/cmr/m/it/12 rou-ting & traf-fic con-trol\T1/cmr/m/n/12 .  Nel \T1/cmr/m/it/
+12 Ot-ta-wa Li-nux Sym-po-sium\T1/cmr/m/n/12 , pa-gi-
+ []
+
+
+Underfull \hbox (badness 1895) in paragraph at lines 133--146
+\T1/cmr/m/n/12 na 213, 2002.  [][]$\T1/cmtt/m/n/12 http : / / www . linuxsympos
+ium . org / archives / OLS /
+ []
+
+[58]
+Underfull \hbox (badness 10000) in paragraph at lines 155--161
+[]\T1/cmr/m/n/12 Ipoque: \T1/cmr/m/it/12 PA-CE - Pro-to-col and Ap-pli-ca-tion 
+Clas-si-fi-ca-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 155--161
+\T1/cmr/m/it/12 tion En-gi-ne\T1/cmr/m/n/12 .  [][]$\T1/cmtt/m/n/12 http : / / 
+www . ipoque . com / en / products /
+ []
+
+[59]
+Underfull \hbox (badness 2197) in paragraph at lines 225--231
+[]\T1/cmr/m/n/12 T. Por-ter: \T1/cmr/m/it/12 The pe-rils of deep pac-ket in-spe
+c-tion\T1/cmr/m/n/12 .  Se-cu-ri-ty Fo-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 225--231
+\T1/cmr/m/n/12 cus, 2005.  [][]$\T1/cmtt/m/n/12 http : / / www . symantec . com
+ / connect / articles /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--245
+[]\T1/cmr/m/n/12 Qosmos: \T1/cmr/m/it/12 ixEn-gi-ne - Deep Pac-ket In-spec-tion
+ and Me-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--245
+\T1/cmr/m/it/12 ta-da-ta Ex-trac-tion SDK\T1/cmr/m/n/12 .  [][]$\T1/cmtt/m/n/12
+ http : / / www . qosmos . com /
+ []
+
+
+Underfull \hbox (badness 1478) in paragraph at lines 264--273
+\T1/cmr/m/it/12 cee-dings of the 5th an-nual Li-nux Sho-w-ca-se & Con-fe-ren-ce
+\T1/cmr/m/n/12 , pa-gi-
+ []
+
+
+Underfull \hbox (badness 1231) in paragraph at lines 275--282
+[]\T1/cmr/m/n/12 M. Sh-ree-d-har e G. Var-ghe-se: \T1/cmr/m/it/12 Ef-fi-cient f
+air queuing using de-fi-cit
+ []
+
+[60]
+Underfull \hbox (badness 4378) in paragraph at lines 366--373
+[]\T1/cmr/m/n/12 G. Zhang \T1/cmr/m/it/12 et al.\T1/cmr/m/n/12 : \T1/cmr/m/it/1
+2 EL938 Re-port: Pac-ket Sche-du-ling\T1/cmr/m/n/12 .  2002.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 366--373
+[][]$\T1/cmtt/m/n/12 http : / / eeweb . poly . edu / aatcn / pres _ reps / Gzha
+ng _ packet _
+ []
+
+[61]) [62] (./cap/app1-codice.tex
+Appendice A.
+
+Underfull \hbox (badness 10000) in paragraph at lines 3--4
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5--6
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 7--8
+
+ []
+
+) [63
+
+
+
+] (./relazione.aux) ) 
+Here is how much of TeX's memory you used:
+ 8602 strings out of 256216
+ 115324 string characters out of 1917072
+ 382472 words of memory out of 1500000
+ 11486 multiletter control sequences out of 10000+200000
+ 20659 words of font info for 48 fonts, out of 1200000 for 2000
+ 645 hyphenation exceptions out of 8191
+ 35i,9n,52p,1350b,1248s stack positions out of 5000i,500n,6000p,200000b,15000s
+ </home/jacopo/.texlive2007/texmf-var/fonts/pk/ljfour/jkna
+ppen/ec/ecrm0600.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/pk/ljfour/jk
+nappen/ec/ecbx1440.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/pk/ljfour/
+jknappen/ec/ecsl1200.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/pk/ljfou
+r/jknappen/ec/ecti1200.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/pk/ljf
+our/jknappen/ec/ecrm1200.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/pk/l
+jfour/jknappen/ec/ecbx1200.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/pk
+/ljfour/jknappen/ec/ectt1200.600pk> </home/jacopo/.texlive2007/texmf-var/fonts/
+pk/ljfour/jknappen/ec/ecbx1728.600pk> </home/jacopo/.texlive2007/texmf-var/font
+s/pk/ljfour/jknappen/ec/ecrm1728.600pk> </home/jacopo/.texlive2007/texmf-var/fo
+nts/pk/ljfour/jknappen/ec/ecbx2488.600pk> </home/jacopo/.texlive2007/texmf-var/
+fonts/pk/ljfour/jknappen/ec/eccc1440.600pk> </home/jacopo/.texlive2007/texmf-va
+r/fonts/pk/ljfour/jknappen/ec/eccc1728.600pk></usr/share/texmf/fonts/type1/blue
+sky/cm/cmex10.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmmi12.pfb></usr/sha
+re/texmf/fonts/type1/bluesky/cm/cmr12.pfb></usr/share/texmf/fonts/type1/bluesky
+/cm/cmr8.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmsy10.pfb>
+Output written on relazione.pdf (67 pages, 1046328 bytes).
+PDF statistics:
+ 1496 PDF objects out of 1728 (max. 8388607)
+ 228 named destinations out of 1000 (max. 131072)
+ 428 words of extra memory for PDF output out of 10000 (max. 10000000)
+

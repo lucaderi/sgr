@@ -1,0 +1,659 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+<title>GeoPacketVisualizer Version 0.1 Result Page</title>
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">
+	google.load('visualization', '1', {packages: ['geomap', 'table']});
+
+function drawVisualization() {
+	var data = new google.visualization.DataTable();
+	var array= new Array();
+
+
+	var emptyTable = new google.visualization.DataTable();
+
+	emptyTable.addRows(1);
+	emptyTable.addColumn('number', 'LATITUDE', 'Latitude');
+	emptyTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	emptyTable.addColumn('number', 'IP Addrs', 'Value');
+	emptyTable.addColumn('string', 'City', 'Hover');
+
+	emptyTable.setValue(0,0,0.00);
+	emptyTable.setValue(0,1,0.00);
+	emptyTable.setValue(0,2,0);
+	emptyTable.setValue(0,3,'None');
+
+	data.addColumn('string', 'Code');
+	data.addColumn('number', 'IP Addrs');
+	data.addColumn('string', 'Country');
+	data.addRows(13);
+
+	data.setValue(0, 0, 'IT');
+	data.setValue(0, 1, 17992);
+	data.setValue(0, 2,'Italy');
+
+	var ITTable = new google.visualization.DataTable();
+	ITTable.addColumn('number', 'LATITUDE', 'Latitude');
+	ITTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	ITTable.addColumn('number', 'IP Addrs', 'Value');
+	ITTable.addColumn('string', 'City', 'Hover');
+	ITTable.addRows(12);
+	
+	array['IT']=ITTable;
+	
+
+	ITTable.setValue(0,0,43.833302);
+	ITTable.setValue(0,1,10.483200);
+	ITTable.setValue(0,2,14679);
+	ITTable.setValue(0,3,'Lucca');
+
+
+	ITTable.setValue(1,0,45.049999);
+	ITTable.setValue(1,1,7.666700);
+	ITTable.setValue(1,2,369);
+	ITTable.setValue(1,3,'Turin');
+
+
+	ITTable.setValue(2,0,41.900002);
+	ITTable.setValue(2,1,12.483200);
+	ITTable.setValue(2,2,1834);
+	ITTable.setValue(2,3,'Rome');
+
+
+	ITTable.setValue(3,0,45.466702);
+	ITTable.setValue(3,1,9.200000);
+	ITTable.setValue(3,2,127);
+	ITTable.setValue(3,3,'Milan');
+
+
+	ITTable.setValue(4,0,45.549999);
+	ITTable.setValue(4,1,9.300000);
+	ITTable.setValue(4,2,235);
+	ITTable.setValue(4,3,'Brugherio');
+
+
+	ITTable.setValue(5,0,44.483299);
+	ITTable.setValue(5,1,11.333300);
+	ITTable.setValue(5,2,12);
+	ITTable.setValue(5,3,'Bologna');
+
+
+	ITTable.setValue(6,0,43.833302);
+	ITTable.setValue(6,1,11.200000);
+	ITTable.setValue(6,2,328);
+	ITTable.setValue(6,3,'Sesto Fiorentino');
+
+
+	ITTable.setValue(7,0,0.000000);
+	ITTable.setValue(7,1,0.000000);
+	ITTable.setValue(7,2,18);
+	ITTable.setValue(7,3,'Unknown');
+	ITTable.setTableProperty('unk', 7);
+
+
+	ITTable.setValue(8,0,43.933300);
+	ITTable.setValue(8,1,12.250000);
+	ITTable.setValue(8,2,367);
+	ITTable.setValue(8,3,'Serra');
+
+
+	ITTable.setValue(9,0,45.583302);
+	ITTable.setValue(9,1,9.200000);
+	ITTable.setValue(9,2,21);
+	ITTable.setValue(9,3,'Nova Milanese');
+
+
+	ITTable.setValue(10,0,46.466702);
+	ITTable.setValue(10,1,11.250000);
+	ITTable.setValue(10,2,1);
+	ITTable.setValue(10,3,'Appiano');
+
+
+	ITTable.setValue(11,0,45.016701);
+	ITTable.setValue(11,1,7.583300);
+	ITTable.setValue(11,2,1);
+	ITTable.setValue(11,3,'Beinasco');
+
+	data.setValue(1, 0, 'US');
+	data.setValue(1, 1, 6984);
+	data.setValue(1, 2,'United States');
+
+	var USTable = new google.visualization.DataTable();
+	USTable.addColumn('number', 'LATITUDE', 'Latitude');
+	USTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	USTable.addColumn('number', 'IP Addrs', 'Value');
+	USTable.addColumn('string', 'City', 'Hover');
+	USTable.addRows(14);
+	
+	array['US']=USTable;
+	
+
+	USTable.setValue(0,0,37.307301);
+	USTable.setValue(0,1,-121.856903);
+	USTable.setValue(0,2,1996);
+	USTable.setValue(0,3,'San Jose');
+
+
+	USTable.setValue(1,0,37.280300);
+	USTable.setValue(1,1,-121.956703);
+	USTable.setValue(1,2,880);
+	USTable.setValue(1,3,'Campbell');
+
+
+	USTable.setValue(2,0,39.919498);
+	USTable.setValue(2,1,-105.085602);
+	USTable.setValue(2,2,24);
+	USTable.setValue(2,3,'Broomfield');
+
+
+	USTable.setValue(3,0,37.419201);
+	USTable.setValue(3,1,-122.057404);
+	USTable.setValue(3,2,1345);
+	USTable.setValue(3,3,'Mountain View');
+
+
+	USTable.setValue(4,0,42.374100);
+	USTable.setValue(4,1,-71.107201);
+	USTable.setValue(4,2,665);
+	USTable.setValue(4,3,'Cambridge');
+
+
+	USTable.setValue(5,0,40.751701);
+	USTable.setValue(5,1,-73.997200);
+	USTable.setValue(5,2,73);
+	USTable.setValue(5,3,'New York');
+
+
+	USTable.setValue(6,0,47.660599);
+	USTable.setValue(6,1,-122.291901);
+	USTable.setValue(6,2,118);
+	USTable.setValue(6,3,'Seattle');
+
+
+	USTable.setValue(7,0,37.459000);
+	USTable.setValue(7,1,-122.178101);
+	USTable.setValue(7,2,121);
+	USTable.setValue(7,3,'Menlo Park');
+
+
+	USTable.setValue(8,0,30.524799);
+	USTable.setValue(8,1,-97.679497);
+	USTable.setValue(8,2,92);
+	USTable.setValue(8,3,'Round Rock');
+
+
+	USTable.setValue(9,0,40.296799);
+	USTable.setValue(9,1,-111.676102);
+	USTable.setValue(9,2,73);
+	USTable.setValue(9,3,'Orem');
+
+
+	USTable.setValue(10,0,42.648899);
+	USTable.setValue(10,1,-71.165497);
+	USTable.setValue(10,2,37);
+	USTable.setValue(10,3,'Andover');
+
+
+	USTable.setValue(11,0,38.909698);
+	USTable.setValue(11,1,-77.023102);
+	USTable.setValue(11,2,1268);
+	USTable.setValue(11,3,'Washington');
+
+
+	USTable.setValue(12,0,44.488899);
+	USTable.setValue(12,1,-88.070503);
+	USTable.setValue(12,2,280);
+	USTable.setValue(12,3,'Green Bay');
+
+
+	USTable.setValue(13,0,0.000000);
+	USTable.setValue(13,1,0.000000);
+	USTable.setValue(13,2,12);
+	USTable.setValue(13,3,'Unknown');
+	USTable.setTableProperty('unk', 13);
+
+	data.setValue(2, 0, 'ZA');
+	data.setValue(2, 1, 892);
+	data.setValue(2, 2,'South Africa');
+
+	var ZATable = new google.visualization.DataTable();
+	ZATable.addColumn('number', 'LATITUDE', 'Latitude');
+	ZATable.addColumn('number', 'LONGITUDE', 'Longitude');
+	ZATable.addColumn('number', 'IP Addrs', 'Value');
+	ZATable.addColumn('string', 'City', 'Hover');
+	ZATable.addRows(3);
+	
+	array['ZA']=ZATable;
+	
+
+	ZATable.setValue(0,0,0.000000);
+	ZATable.setValue(0,1,0.000000);
+	ZATable.setValue(0,2,737);
+	ZATable.setValue(0,3,'Unknown');
+	ZATable.setTableProperty('unk', 0);
+
+
+	ZATable.setValue(1,0,-26.183300);
+	ZATable.setValue(1,1,28.316700);
+	ZATable.setValue(1,2,140);
+	ZATable.setValue(1,3,'Benoni');
+
+
+	ZATable.setValue(2,0,-33.916698);
+	ZATable.setValue(2,1,18.416700);
+	ZATable.setValue(2,2,15);
+	ZATable.setValue(2,3,'Cape Town');
+
+	data.setValue(3, 0, 'MA');
+	data.setValue(3, 1, 854);
+	data.setValue(3, 2,'Morocco');
+
+	var MATable = new google.visualization.DataTable();
+	MATable.addColumn('number', 'LATITUDE', 'Latitude');
+	MATable.addColumn('number', 'LONGITUDE', 'Longitude');
+	MATable.addColumn('number', 'IP Addrs', 'Value');
+	MATable.addColumn('string', 'City', 'Hover');
+	MATable.addRows(2);
+	
+	array['MA']=MATable;
+	
+
+	MATable.setValue(0,0,0.000000);
+	MATable.setValue(0,1,0.000000);
+	MATable.setValue(0,2,519);
+	MATable.setValue(0,3,'Unknown');
+	MATable.setTableProperty('unk', 0);
+
+
+	MATable.setValue(1,0,29.216700);
+	MATable.setValue(1,1,-9.500000);
+	MATable.setValue(1,2,335);
+	MATable.setValue(1,3,'Ifrane');
+
+	data.setValue(4, 0, 'AR');
+	data.setValue(4, 1, 617);
+	data.setValue(4, 2,'Argentina');
+
+	var ARTable = new google.visualization.DataTable();
+	ARTable.addColumn('number', 'LATITUDE', 'Latitude');
+	ARTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	ARTable.addColumn('number', 'IP Addrs', 'Value');
+	ARTable.addColumn('string', 'City', 'Hover');
+	ARTable.addRows(1);
+	
+	array['AR']=ARTable;
+	
+
+	ARTable.setValue(0,0,-34.587502);
+	ARTable.setValue(0,1,-58.672501);
+	ARTable.setValue(0,2,617);
+	ARTable.setValue(0,3,'Buenos Aires');
+
+	data.setValue(5, 0, 'IE');
+	data.setValue(5, 1, 599);
+	data.setValue(5, 2,'Ireland');
+
+	var IETable = new google.visualization.DataTable();
+	IETable.addColumn('number', 'LATITUDE', 'Latitude');
+	IETable.addColumn('number', 'LONGITUDE', 'Longitude');
+	IETable.addColumn('number', 'IP Addrs', 'Value');
+	IETable.addColumn('string', 'City', 'Hover');
+	IETable.addRows(1);
+	
+	array['IE']=IETable;
+	
+
+	IETable.setValue(0,0,0.000000);
+	IETable.setValue(0,1,0.000000);
+	IETable.setValue(0,2,599);
+	IETable.setValue(0,3,'Unknown');
+
+	data.setValue(6, 0, 'ES');
+	data.setValue(6, 1, 467);
+	data.setValue(6, 2,'Spain');
+
+	var ESTable = new google.visualization.DataTable();
+	ESTable.addColumn('number', 'LATITUDE', 'Latitude');
+	ESTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	ESTable.addColumn('number', 'IP Addrs', 'Value');
+	ESTable.addColumn('string', 'City', 'Hover');
+	ESTable.addRows(3);
+	
+	array['ES']=ESTable;
+	
+
+	ESTable.setValue(0,0,37.883301);
+	ESTable.setValue(0,1,-4.766800);
+	ESTable.setValue(0,2,2);
+	ESTable.setValue(0,3,'Córdoba');
+
+
+	ESTable.setValue(1,0,0.000000);
+	ESTable.setValue(1,1,0.000000);
+	ESTable.setValue(1,2,298);
+	ESTable.setValue(1,3,'Unknown');
+	ESTable.setTableProperty('unk', 1);
+
+
+	ESTable.setValue(2,0,41.383301);
+	ESTable.setValue(2,1,2.183300);
+	ESTable.setValue(2,2,167);
+	ESTable.setValue(2,3,'Barcelona');
+
+	data.setValue(7, 0, 'CN');
+	data.setValue(7, 1, 396);
+	data.setValue(7, 2,'China');
+
+	var CNTable = new google.visualization.DataTable();
+	CNTable.addColumn('number', 'LATITUDE', 'Latitude');
+	CNTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	CNTable.addColumn('number', 'IP Addrs', 'Value');
+	CNTable.addColumn('string', 'City', 'Hover');
+	CNTable.addRows(3);
+	
+	array['CN']=CNTable;
+	
+
+	CNTable.setValue(0,0,36.668301);
+	CNTable.setValue(0,1,116.997200);
+	CNTable.setValue(0,2,1);
+	CNTable.setValue(0,3,'Jinan');
+
+
+	CNTable.setValue(1,0,41.570301);
+	CNTable.setValue(1,1,120.458603);
+	CNTable.setValue(1,2,394);
+	CNTable.setValue(1,3,'Chaoyang');
+
+
+	CNTable.setValue(2,0,32.061699);
+	CNTable.setValue(2,1,118.777802);
+	CNTable.setValue(2,2,1);
+	CNTable.setValue(2,3,'Nanjing');
+
+	data.setValue(8, 0, 'GB');
+	data.setValue(8, 1, 114);
+	data.setValue(8, 2,'United Kingdom');
+
+	var GBTable = new google.visualization.DataTable();
+	GBTable.addColumn('number', 'LATITUDE', 'Latitude');
+	GBTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	GBTable.addColumn('number', 'IP Addrs', 'Value');
+	GBTable.addColumn('string', 'City', 'Hover');
+	GBTable.addRows(2);
+	
+	array['GB']=GBTable;
+	
+
+	GBTable.setValue(0,0,51.433300);
+	GBTable.setValue(0,1,-1.000000);
+	GBTable.setValue(0,2,82);
+	GBTable.setValue(0,3,'Reading');
+
+
+	GBTable.setValue(1,0,51.500000);
+	GBTable.setValue(1,1,-0.116700);
+	GBTable.setValue(1,2,32);
+	GBTable.setValue(1,3,'London');
+
+	data.setValue(9, 0, 'SE');
+	data.setValue(9, 1, 95);
+	data.setValue(9, 2,'Sweden');
+
+	var SETable = new google.visualization.DataTable();
+	SETable.addColumn('number', 'LATITUDE', 'Latitude');
+	SETable.addColumn('number', 'LONGITUDE', 'Longitude');
+	SETable.addColumn('number', 'IP Addrs', 'Value');
+	SETable.addColumn('string', 'City', 'Hover');
+	SETable.addRows(1);
+	
+	array['SE']=SETable;
+	
+
+	SETable.setValue(0,0,59.333302);
+	SETable.setValue(0,1,18.049999);
+	SETable.setValue(0,2,95);
+	SETable.setValue(0,3,'Stockholm');
+
+	data.setValue(10, 0, 'DE');
+	data.setValue(10, 1, 83);
+	data.setValue(10, 2,'Germany');
+
+	var DETable = new google.visualization.DataTable();
+	DETable.addColumn('number', 'LATITUDE', 'Latitude');
+	DETable.addColumn('number', 'LONGITUDE', 'Longitude');
+	DETable.addColumn('number', 'IP Addrs', 'Value');
+	DETable.addColumn('string', 'City', 'Hover');
+	DETable.addRows(1);
+	
+	array['DE']=DETable;
+	
+
+	DETable.setValue(0,0,48.150002);
+	DETable.setValue(0,1,11.583300);
+	DETable.setValue(0,2,83);
+	DETable.setValue(0,3,'Munich');
+
+	data.setValue(11, 0, 'FR');
+	data.setValue(11, 1, 33);
+	data.setValue(11, 2,'France');
+
+	var FRTable = new google.visualization.DataTable();
+	FRTable.addColumn('number', 'LATITUDE', 'Latitude');
+	FRTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	FRTable.addColumn('number', 'IP Addrs', 'Value');
+	FRTable.addColumn('string', 'City', 'Hover');
+	FRTable.addRows(1);
+	
+	array['FR']=FRTable;
+	
+
+	FRTable.setValue(0,0,48.866699);
+	FRTable.setValue(0,1,2.333300);
+	FRTable.setValue(0,2,33);
+	FRTable.setValue(0,3,'Paris');
+
+	data.setValue(12, 0, 'BG');
+	data.setValue(12, 1, 2);
+	data.setValue(12, 2,'Bulgaria');
+
+	var BGTable = new google.visualization.DataTable();
+	BGTable.addColumn('number', 'LATITUDE', 'Latitude');
+	BGTable.addColumn('number', 'LONGITUDE', 'Longitude');
+	BGTable.addColumn('number', 'IP Addrs', 'Value');
+	BGTable.addColumn('string', 'City', 'Hover');
+	BGTable.addRows(1);
+	
+	array['BG']=BGTable;
+	
+
+	BGTable.setValue(0,0,42.683300);
+	BGTable.setValue(0,1,23.316700);
+	BGTable.setValue(0,2,2);
+	BGTable.setValue(0,3,'Sofia');
+	var geomap = new google.visualization.GeoMap(document.getElementById('GeoMappa'));
+
+	var options={};
+	options['width'] = '640px';
+	options['height'] = '480px';
+	options['showLegend'] = true;
+	options['region'] = 'world';
+	options['dataMode'] = 'regions';
+
+	geomap.draw(data, options);
+	var table = new google.visualization.Table(document.getElementById('table'));
+
+	var viewTable= new google.visualization.DataView(data);
+	viewTable.setColumns([2,1,0]);
+	table.draw(viewTable, null);
+
+	google.visualization.events.addListener(geomap, 'regionClick', clickHandler);
+	google.visualization.events.addListener(geomap, 'zoomOut', zoomOut);
+	google.visualization.events.addListener(table, 'select', tableClick );
+	var table2 = new google.visualization.Table(document.getElementById('table2'));
+
+function clickHandler(msg) {
+	alert('You selected the region ' +msg['region']);
+	options['region']= msg['region'];
+	options['showZoomOut']=true;
+	options['colors'] = [0x9999FF, 0x0000FF, 0x000066];
+	options['dataMode'] = 'markers';
+
+	if(array[msg['region']]!= undefined){
+	var view= new google.visualization.DataView(array[msg['region']]);
+	view.setColumns([3, 2]);
+	var countryV=new google.visualization.DataView(array[msg['region']]);
+	var toHide=(array[msg['region']]).getTableProperty('unk');
+	if(toHide!=null){
+	countryV.hideRows([toHide]);
+}
+	table2.draw(view,null);
+	geomap.draw(countryV, options);
+	}else{
+	geomap.draw(emptyTable, options);
+	var temp=document.getElementById('table2');
+	temp.removeChild(temp.firstChild);
+	}
+}
+function tableClick() {
+	var temp=table.getSelection();
+	var arrayAss=new Object()
+	arrayAss['region']=data.getFormattedValue(temp[0].row, 0);
+	clickHandler(arrayAss);
+}
+function zoomOut(){
+	options['region']= 'world';
+	options['showZoomOut']=false;
+	options['colors'] = [0xE0FFD4, 0xA5EF63, 0x50AA00, 0x267114];
+	options['dataMode']='regions';
+	table.setSelection();
+	geomap.setSelection();
+	geomap.draw(data,options);
+	var temp=document.getElementById('table2');
+	temp.removeChild(temp.firstChild);
+}
+}
+
+	google.setOnLoadCallback(drawVisualization);
+</script><style type="text/css">
+<!--
+.style1 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: large;
+	font-style: normal;	font-weight: bold;
+	color: #666666;
+}
+.style2 {
+		font-family: Arial, Helvetica, sans-serif;
+	font-size: medium;
+	font-style: normal;
+	font-weight: normal;
+	color: #000000;
+}
+.style3 {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: small;
+	font-style: italic;
+	font-variant: normal;
+}
+.style4 {
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: large;
+	font-style: normal;
+	font-weight: normal;
+}
+.table1 {
+	border-collapse: collapse;
+	border-top-width: 2px;
+	border-right-width: 2px;
+	border-bottom-width: 2px;
+	border-left-width: 2px;
+	border-top-color: #666666;
+	border-right-color: #666666;
+	border-bottom-color: #666666;
+	border-left-color: #666666;
+}
+.table2 {
+	border-color: #000000;
+	border-collapse: collapse;
+	padding-right: 3px;
+	padding-left: 3px;
+}
+.table3 {
+	border-collapse: collapse;
+	height: 50px;
+}
+-->
+</style>
+</head>
+
+<body style="font-family: Arial;border: 0 none;">
+	<table width="100%" border="1" cellpadding="0" cellspacing="0" class="table1" >
+<tr class="table1">
+	<td align="center" class="table1" scope="col"><span class="style1">GeoPacketVisualizer version 0.1</span>
+	</td>
+	</tr>
+</table>
+<p class="style2">Click on a region of the map or on a row of the table to see the information collected on that region</p>
+<p class="style2">&nbsp;</p>
+<table cellspacing="5">
+	<tr>
+	<td colspan="2"><div id="GeoMappa" style="width: 700px; height: 480px;"></div>
+</td>
+	</tr>
+<tr>
+
+	<td height="50" colspan="2">&nbsp;</td>
+	</tr>
+<tr>
+	<td valign="top"><div id="table" style="width: 300px;"></div>
+	</td>
+
+	<td valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0" class="table3">
+	<tr>
+	<td></td>
+	</tr>
+</table>
+
+<div id="table2" style="width: 220px;"> </div></td>
+</tr>
+</table>
+<p class="style2">&nbsp;</p>
+<p class="style4">GeoPacketVisualizer report:</p>
+<table width="60%" border="1" cellpadding="0" cellspacing="0" class="table2" >
+	<tr><th width="80%" class="table2" scope="col">Packets</th>
+	<th width="20%" align="right" class="table2" scope="col"><div align="center">Number</div></th>
+</tr>
+<tr>
+	<td width="80%" class="table2" scope="col">Processed</td>
+	<td width="20%" align="right" class="table2" scope="col">14778</td>
+</tr>
+<tr>
+	<td width="80%" class="table2" scope="row">With unimplemented protocol</td>
+	<td width="20%" align="right" class="table2" scope="row">0</td>
+</tr>
+<tr>
+	<th width="80%" class="table2" scope="row">IP addresses</th>
+	<th width="20%" align="right" class="table2" scope="row"><div align="center">Number</div></th>
+</tr>
+<tr>
+	<td width="80%" class="table2" scope="row">Total considered for analysis</td>
+	<td width="20%" align="right" class="table2" scope="row">29556</td>
+</tr>
+<tr>
+	<td width="80%" class="table2" scope="row">Of unknown countries</td>
+	<td width="20%" align="right" class="table2" scope="row">428</td>
+</tr>
+<tr>
+	<td width="80%" class="table2" scope="row">Of unknown cities</td>
+	<td width="20%" align="right" class="table2" scope="row">2183</td>
+</tr>
+</table>
+	<p>&nbsp;</p>
+
+<p class="style3">GeoPacketVisualizer by Gianluca Medici 275788, courtesy of Google Visualization &copy;2009 Google and GeoLite City</p>
+<p class="style3">Other software used: libpcap, UtHash</p>
+</body>
+</html>

@@ -1,0 +1,99 @@
+********** IDENTIFY FLOWS **********
+   Copyright (C) 2017  Edoardo Maione edoardo.maione@gmail.com
+   
+	IdentifyFlow is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	IdentifyFlow is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	see <http://www.gnu.org/licenses/>.
+
+********* DESCRIPTION *********
+
+This little tool help you to subdivide your capture from scapy, and identify flows from it.
+The core of this software is a package "FlowTools", containing the object "FlowCollector"
+
+FlowCollector istance, contain a dictionary "collector", in which is located all flows detected(identify fom an univoke key), and hits relative packet count.
+Flow collector have many useful metod, to do many operation:
+	
+	>> [__init__(verbose=False)]
+	Create a new istance of FlowCollector, specify if you want print all packet added into this object
+	
+	>> [getFlowKey(pkt)]
+	Produce a Key to identify a Flow of the packet. 
+													<<< !!! Key is a Tuple!!! >>> , containing one or more fields
+    It use: Ether.type + IPv4.proto(if there is) + IPv6.flow(if there is) + IPv4/IPv6 Addresses src and dst(if there are) + TCP/UDP Ports src and dst(if there are)
+    Otherwise, use packet.summary() metod(from scapy), to generate it
+    Return a Tuple:
+    # (2048, '131.114.33.20', '10.101.16.182', 17, 53, 45292)
+	
+	>> [add(pkt)]
+	Create a new flow istance into the structure, if there are not any with his key; otherwise, increment a counter of hits relative flow +1
+	If verbose was True on costructor metod, on '+1' return string:
+	# "Flow: +key+ : new packet -> +pkt.summary()+"
+	else, return
+	# ""
+	If create a new Istance of Flow, return string:
+	# New Flow: +key+
+	#     First Packet -> +pkt.summary()+
+	
+	>> [ getFlows(key || pkt || ipv4  ||  ipv6 || proto) ] 
+	Search a Flow/Flows with given key or pkt, IPv4 or IPv6 adress, or Protocol, using keys of saved Flows
+    It use ONLY one argument to find Flow, in order: key -> pkt -> IPv4 -> IPv6 -> Protocol
+    Return a String whith find flows
+    Format string:
+    #	"Flow Found: "
+    #	"     ***  + key "
+    #	"     ***  + key "
+    #	"     ***  + key "
+    # ...
+    
+    >> [ biggestFlow() ]
+    Return string:
+    # "Biggest Flow:  +key+  whith -> +max+ Packets"
+    
+    >> [ show() ]
+    Print all flows collected.
+    Format output: 
+    # ***Flow Key: +key+ 
+	#	Packets count: +num+
+	# ***Flow Key: +key+ 
+	#	Packets count: +num+
+	# ... 
+	
+	
+	
+********** INSTALL AND USE INFORMATION **********
+
+To use this tool, you must have installed python2.7.
+In addition, install "scapy" package, find at:		" https://thepacketgeek.com/tag/scapy/ "
+and INCLUDE directory "FlowTools" in your project:
+adding 	
+		"import scapy"
+		"from scapy.all import * "
+		 ... other useful stuff from scapy ...
+		"from FlowTools.flowCollector import FlowCollector"
+
+and run with "Super User" rights
+
+	[ Exaple Code]
+	# 
+	# pkts = sniff(count=capLen)
+	# flowTab = FlowCollector(verbose=v)
+    # 
+    # for p in pkts:
+    #     print flowTab.add(p)
+    #     pkts.remove(p)
+    #
+    ... and use all useful method you want
+    # flowTab.show()
+    # flowTab. ...
+    # ...
+
+Otherwise, if you want test this piece of software, you can run 'prova.py', with option -v if want see verbose behavior, 
+that execute a capture of 100 pakets, and test all methods in FlowCollector object(with random adresses get in a captures)
+

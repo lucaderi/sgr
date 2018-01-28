@@ -1,0 +1,380 @@
+\section{Monitoraggio remoto}
+
+\subsection{Le reti stanno cambiando}
+\begin{tabular}{p{.28\textwidth}p{.333\textwidth}p{.313\textwidth}}
+  Internet:
+  \begin{itemize}
+  \item La sicurezza di rete inizierà ad essere un elemento più critico nel futuro.
+  \item Le reti aziendali diventeranno reti pubbliche.
+  \end{itemize}
+  &
+  Telefonia:
+  \begin{itemize}
+  \item Il supporto alla telefonia attraverso reti wired e wireless saranno un elemento chiave delle reti future.
+  \item La rete diventerà sempre e dovunque una risorsa.
+  \end{itemize}
+  &
+  Comunicazioni dinamiche:
+  \begin{itemize}
+  \item Il supporto ad un ampio numero di applicazioni sarà l'elemento chiave del futuro: convergenza.
+  \item I dati della rete saranno la rete.
+  \end{itemize}
+\end{tabular}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/La_rete_sta_cambiando.eps}
+  \caption{La rete sta cambiando}
+\end{figure}
+
+\subsection{Verso il monitoraggio remoto}
+\begin{itemize}
+\item Le reti moderne sono distribuite tra varie costruzioni, amministrate da persone differenti con varie competenze (sicurezza, analizzatore di traffico, amministratore di database).
+\item \`E necessario raccogliere le statistiche del traffico su ogni tronco della rete e spedirle ad un (limitato) numero di collezionatori, in modo da produrre una vista globale.
+\item Qualche capacità di analisi distribuita è necessaria perché una rete centralizzata non è scalabile e non supporta gli errori.
+\item Sistemare gli analizzatori di traffico (ad esempio sonde basate su pcap) non è sempre fattibile perché:
+  \begin{itemize}
+  \item I server non sempre permettono l'installazione di generici software non testati (ad esempio, la licenza può obbligare di installare su di un server Oracle solo applicazioni certificate da Oracle).
+  \item I server moderni hanno spesso molte interfacce di rete (1 Gb principale più failover per i dati e 100 Mbit per l'accesso al server). Su questi server è necessario installare delle sonde multi-interfacce.
+  \item Monitorare una 1 GE richiede 2xGE (una per ogni RX\footnote{Comunicazione in entrata (receive).} dell'originale GE).
+  \end{itemize}
+\item Soluzione: usare le capacità di analisi del traffico delle apparecchiature di rete.
+\item Svantaggi:
+  \begin{itemize}
+  \item Non tutte le apparecchiature sono fornite di capacità di analisi del traffico (ad esempio molti router ADSL non le hanno).
+  \item Anche se supportate, non sempre queste capacità possono essere abilitate (forte impatto sulla CPU e la memoria).
+  \item Le capacità di monitoraggio base fornite dai sistemi operativi di default sono piuttosto limitate e quindi è necessario una scheda personalizzata.
+  \item Le schede personalizzate per l'analisi del traffico non sono economiche.
+  \end{itemize}
+\item Ecco i prezzi di qualche scheda di monitoraggio in commercio (il software va comprato a parte):\\
+  \begin{tabular}{|c|c|}
+    \hline
+    Prodotto & Prezzo (solo scheda)\\
+    \hline
+    Cisco MSFC-2 & 46'000 \$\\
+    \hline
+    Juniper PM-PIC & 30'000 \$\\
+    \hline
+  \end{tabular}
+\end{itemize}
+
+\subsection{RMON: Monitoraggio remoto usando SNMP}
+\begin{itemize}
+\item Presente su molte medio/alte apparecchiature di rete: spesso queste sono povere/limitate implementazioni.
+\item Qualche produttore vende delle sonde stand-alone. Quelle preferite sono quelle che:
+  \begin{itemize}
+  \item sono piene implementazioni del protocollo.
+  \item non aggiungono altro carico al router.
+  \end{itemize}
+\item Esistono due versioni di RMON, RMON1 (RMON v1) e RMON2 (RMON v2). Mentre RMON1 è specializzato solo per i primi 2 livelli della pila ISO/OSI, RMON2 si concentra sui livelli dal 3 al 6.
+\item Non tutte le implementazioni (in particolare quelle embedded nei router/switch) supportano l'intero standard ma solo alcuni selezionati gruppi SNMP.
+\item Insieme con Cisco NetFlow è l'industriale, ``fidato'', standard di monitoraggio.
+\end{itemize}
+
+\subsubsection{Cosa può fare RMON}
+\begin{itemize}
+\item Raccogliere dati e periodicamente inviarli a dei centri di gestione, i quali potenzialmente riducono il traffico sui link \gls{WAN} e spostano l'overhead sui centri di gestione.
+\item Riportano ciò che fanno gli host della rete, quanto ``parlano'', e verso chi.
+\item ``Vedere'' tutto il traffico \gls{LAN}, l'utilizzo della \gls{LAN}, e non solo il traffico verso o attraverso il router.
+\item Filtra e cattura i pacchetti (quindi non c'è bisogno di controllare o  inserire un analizzatore \gls{LAN}): è in pratica uno sniffer remoto che può catturare il traffico in real-time (finché non finisce la memoria integrata).
+\item Automaticamente raccoglie i dati, confronta le soglie, e spedisce segnali al centro di gestione - il quale scarica molto del lavoro che potrebbe impantanare il centro di gestione.
+\end{itemize}
+
+\subsubsection{RMON verso SNMP}
+\begin{itemize}
+\item Il protocollo SNMP viene usato per configurare e controllare una sonda. Generalmente la gestione con le interfacce grafiche utente (GUI - Graphic User Interface) nasconde la complessità della configurazione basata su SNMP.
+\item Usando SNMP le applicazioni di amministrazione possono ricevere le statistiche e il traffico salvato in modo da registrare le statistiche di una rete con la possibilità di selezionarne una parte.
+\item SNMP e RMON differiscono nel modo in cui raccolgono le statistiche sul traffico:
+  \begin{itemize}
+  \item Con SNMP vengono fatte delle richieste periodiche: richiede una query al dispositivo SNMP per prendere le statistiche di rete (lo stato della rete viene preso dal manager).
+  \item RMON, in modo diverso, riduce il lavoro del manager raccogliendo e salvando le statistiche in contatori o buckets pronte per essere ricevute da un centro di amministrazione.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{RMON1 filtri e canali}
+\begin{itemize}
+\item I pacchetti ricevuti possono essere filtrati. I filtri sono semplici espressioni di valori/maschere (come indirizzo IP, rete e maschera).
+\item Un canale RMON è definito come un'insieme di coppie di filtri: uno sui dati (sul pacchetto) e uno sullo stato (sulle informazioni del pacchetto, come ad esempio la dimensione).
+\item Un pacchetto viene accettato da un canale quando:
+  \begin{itemize}
+  \item ha una corrispondenza con almeno una coppia di filtri ({\tt acceptMatched channel}).
+  \item almeno un filtro di tutte le coppie di filtri fallisce il test ({\tt acceptFailed channel}).
+  \end{itemize}
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/RMON_1_filtri_canali.eps}
+  \caption{RMON: {\tt acceptMatched channel}. Nell'{\tt acceptFailed channel}, le porte AND diventano OR e la porta OR diventa AND.}
+\end{figure}
+
+\subsubsection{I gruppi di monitoraggio RMON1}
+\begin{tabular}{|p{0.1214\textwidth}|p{0.377\textwidth}|p{0.43\textwidth}|}
+  \hline
+  Gruppi & Funzioni & Elementi\\
+  \hline
+  Statistics & Contiene le statistiche misurate dalla sonda per ogni interfaccia monitorata su questo dispositivo. & Pacchetti scartati, pacchetti spediti, byte spediti (``ottetti''), pacchetti di \glstext{broadcast}, pacchetti \glstext{multicast}.\\
+  \hline
+  History & Registra alcune statistiche campione dalla rete e le salva per essere prelevate più tardi. & Periodo campione, numero di campioni, i campioni.\\
+  \hline
+  Alarm & Periodicamente preleva dei campioni statistici dalla sonda e li confronta con delle soglie configurate precedentemente. Se la variabile monitorata supera una soglia, allora si genera un evento. & Tipo di allarme, soglia inferiore, soglia superiore.\\
+  \hline
+  Host & Contiene le statistiche associate ad ogni host scoperto in rete. & Indirizzo dell'host e byte ricevuti e trasmessi sia su \glstext{broadcast} che su \glstext{multicast} e pacchetti errati.\\
+  \hline
+  HostTopN & Prepara tabelle che descrivono i top-host (quelli che usano di più la rete) in una lista ordinata per un tipo di statistica sull'intervallo specificato dal centro di gestione. Perciò queste statistiche sono dipendenti dalla velocità. & Statistiche, host, inizio e fine del periodo campione, velocità di base, durata.\\
+  \hline
+  Matrix & Salva le statistiche sulle conversazioni tra due indirizzi settati. Come il dispositivo determina una nuova conversazione, crea una nuova entry nella tabella. & Tipo di filtro per i bit (maschera o non maschera), espressione del filtro (livello di bit), espressione condizionale (and, or, not) verso gli altri filtri.\\
+  \hline
+  Filters & Abilita dei filtri sui pacchetti. I pacchetti che passano il filtro formano un flusso di dati che può essere catturato oppure che può generare eventi. & Tipo di filtro per i bit (maschera o non maschera), espressione del filtro (livello di bit), espressione condizionale (and, or, not) verso gli altri filtri.\\
+  \hline
+  Packet Capture & Abilita la cattura dei pacchetti dopo che sono passati da un canale. & Dimensione del buffer per la cattura dei pacchetti, intero stato (allarme), numero dei pacchetti catturati.\\
+  \hline
+  Events & Controlla la generazione e la notifica degli eventi del dispositivo. & Tipo di evento, descrizione, il tempo di ultimo invio dell'evento.\\
+  \hline
+\end{tabular}
+
+\subsubsection{Il gruppo ``alarm'' di RMON1}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/RMON_allarmi.eps}
+  \caption{RMON: allarmi}
+\end{figure}
+
+\begin{itemize}
+\item Un evento viene generato ogni volta che viene superata una soglia (o superiore o inferiore) o quando un valore sopra (o sotto) la soglia ritorna nei limiti.
+\item Le soglie possono essere misurate o con un valore specifico (assoluto) oppure come differenza tra il valore attuale e l'ultimo valore misurato (valore delta).
+\end{itemize}
+
+\subsubsection{Statistiche ethernet di RMON}
+\begin{description}
+\item[Pacchetti:] un unità di dati formattati per la trasmissione sulla rete.
+\item [Pacchetti \glstext{multicast}:] comunicazione tra un singolo mittente e più destinatari nella rete.
+\item [Pacchetti \glstext{broadcast}:] un pacchetto trasmesso a tutti gli host della ethernet.
+\item [Eventi di scarto:] un superamento del limite della porta. La porta logica non è in grado di ricevere i pacchetti alla piena velocità della linea e quindi inizia a scartarne qualcuno.
+\item [Frammenti:] un pezzo di un pacchetto. Qualche volta un pacchetto di comunicazione che viene spedito in rete deve essere spezzato temporaneamente in frammenti; il pacchetto dovrebbe essere riassemblato quando raggiunge la destinazione.
+\item [Jabber:] pacchetti ricevuti di dimensione maggiore a 1518 ottetti e che contengono anche errori di allineamento.
+\item [Pacchetti sovradimensionati:] pacchetti di dimensione maggiore a 1518 ottetti ma che sono ben formati.
+\end{description}
+
+\subsubsection{Utilizzo della rete con RMON}
+\begin{itemize}
+\item Molti amministratori usano i contatori di RMON per calcolare l'utilizzo della rete.
+\item L'utilizzo della rete può essere calcolata per tutte le porte dello switch ad intervalli regolari. Queste informazioni possono essere raccolte durante l'arco della giornata per poi generare un profilo dell'utilizzo dello switch o dell'hub.
+\end{itemize}
+
+$\%utilizzo\ della\ rete = \frac{(\#pacchetti \times 160) + (\#ottetti \times 8)}{(velocit\grave{a}\ della\ porta) \times (secondi)} \times 100$
+
+\subsubsection{Caso di studio: intervallo di campionamento del contatore}
+
+Esempio 1: (intervallo di campionamento di 10 secondi, valore di soglia 20, intervallo di test di 10 secondi)
+
+\begin{tabbing}
+  Soglia attuale da controllare: \= 0000 \= 0000 \= 0000\kill
+  Tempo: \> 0 \> 10 \> 20\\
+  Valore: \> 0 \> 19 \> 32\\
+  Delta: \> \> 19 \> 13\\
+  Soglia attuale da controllare: \> \> 19 \> 13
+\end{tabbing}
+\bigskip
+Esempio 2: (intervallo di campionamento di 5 secondi, valore di soglia 20, intervallo di test di 10 secondi)
+\begin{tabbing}
+  Soglia attuale da controllare: \= 0000 \= 0000 \= 0000 \= 0000 \= 0000\kill
+  Tempo: \> 0 \> 5 \> 10 \> 15 \> 20\\
+  Valore: \> 0 \> 10 \> 19 \> 30 \> 32\\
+  Delta: \> \> 10 \> 9 \> 11 \> 2\\
+\end{tabbing}
+
+\begin{itemize}
+\item Il valore campione istanziato dal MIB deve essere fatto due volte per ogni intervallo di campionamento, altrimenti il superamento della soglia potrebbe non essere rilevato quando gli intervalli si sovrappongono.
+\item Prelevare i valori velocemente (fast polling) ha questi svantaggi:
+  \begin{itemize}
+  \item Vengono collezionati molti dati.
+  \item Si incrementa il carico dell'agent SNMP.
+  \item Vengono rilevati molti cambiamenti (questo può portare a dei falsi positivi).
+  \end{itemize}
+\item Prelevare i valori lentamente (slow polling) ha questi svantaggi:
+  \begin{itemize}
+  \item Qualche allarme può essere perso (inesattezza).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Sonde migliorate in stile RMON}
+\begin{itemize}
+\item Ogni router/switch (spaziando da quelli Cisco a quelli basati su Linux) hanno la capacità di definire delle liste di accesso controllato (ACL - Access Control List) per evitare in maniera preventiva un selezionato flusso di traffico.
+\item Le ACL con la politica di ``accesso'' possono essere usate molto bene per controllare il traffico.
+\item Svantaggi:
+  \begin{itemize}
+  \item Le ACL sono limitate agli IP laddove RMON no (ad esempio IPX, NeBEUI).
+  \item Su molti sistemi, le ACL impattano sulla CPU.
+  \item Il numero totale di ACL, per porta, è limitato.
+  \item Spesso le ACL si limitano a controllare l'header del pacchetto (non il carico utile, il payload).
+  \end{itemize}
+\end{itemize}
+
+Esempi di definizione delle ACL:
+\begin{itemize}
+\item Cisco\\
+  {\footnotesize {\tt access-list 102 permit icmp any any}}
+\item Juniper
+  {\footnotesize
+\begin{verbatim}
+    filter HTTPcounter {
+      from {
+        destination-address {
+          10.10.20/24;
+          10.40.30/25;
+          11.11/8;
+        }
+        destination-port [http https];
+      }
+      then {
+        count Count-Http;
+        accept
+\end{verbatim}
+  }
+\item Linux (iptables)
+  {\footnotesize
+\begin{verbatim}
+# /sbin/iptables -xnvL
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+   pkts       bytes                target   prot opt  in   out       source        destination
+ 236675   169960206   RH-Firewall-1-INPUT    all  --   *     *    0.0.0.0/0          0.0.0.0/0
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+   pkts       bytes                target   prot opt  in   out       source        destination
+      0           0   RH-Firewall-1-INPUT    all  --   *     *    0.0.0.0/0          0.0.0.0/0
+
+Chain OUTPUT (policy ACCEPT 262868 packets, 233122676 bytes)
+   pkts       bytes                target   prot opt  in   out       source        destination
+
+Chain RH-Firewall-1-INPUT (2 references)
+   pkts       bytes                target   prot opt  in   out       source        destination
+  68169    81214627                ACCEPT    all  --  lo     *    0.0.0.0/0          0.0.0.0/0
+    677       53751                ACCEPT   icmp  --   *     *    0.0.0.0/0          0.0.0.0/0
+      0           0                ACCEPT    esp  --   *     *    0.0.0.0/0          0.0.0.0/0
+      0           0                ACCEPT     ah  --   *     *    0.0.0.0/0          0.0.0.0/0
+\end{verbatim}
+  }
+\end{itemize}
+
+\begin{itemize}
+\item I contatori sono in genere accessibili via SNMP con l'aiuto di un'interfaccia a riga di comando (\gls{CLI}).
+\item I MIB proprietari abilitano la lettura dei valori anche in remoto.
+\item La Cisco ha recentemente introdotto una nuova tecnologia chiamata ``Static NetFlow'' che abilita i router ad emettere i flussi per ogni ACL definita.
+\item Il ``ClearFlow'' della Extreme Network è una tecnologia simile, ma con inoltre la capacità di lanciare degli allarmi settando delle soglie sui valori dei contatori.
+\end{itemize}
+
+\subsection{NBAR: statistiche sul traffico in stile RMON}
+\begin{itemize}
+\item Cisco NBAR (Network Based Application Recognition) è un motore per la classificazione del traffico con il supporto a \gls{QoS} (cioè possono modellare il traffico in base alle statistiche).
+\item Esegue l'analisi dei modelli di traffico in real-time (con l'analisi del payload) e scopre i protocolli.
+\item Esempio di NBAR: fermare il traffico KaZaA e dare priorità al traffico di video conferenza.
+\item Ha la capacità di classificare le applicazioni che hanno:
+  \begin{itemize}
+  \item I numeri di porta UDP o TCP staticamente assegnati.
+  \item Protocolli che non sono TCP o UDP IP.
+  \item Numeri di porta UDP o TCP assegnati dinamicamente durante la connessione.
+  \item Classificazione basata su una ispezione profonda del pacchetto: NBAR può guardare all'interno di un pacchetto per identificare le applicazioni.
+  \item Traffico HTTP via URL, nome dell'host o tipo MIME usando le espressioni regolari (*, ?, [ ]), Citrix ICA traffic, classificazione in base al tipo di payload RTP.
+  \item Attualmente supporta 88 protocolli/applicazioni.
+  \end{itemize}
+\item Le statistiche di NBAR possono essere lette usando SNMP (Cisco NBAR Protocol Discovery MIB).
+\item Attenzione:
+  \begin{itemize}
+  \item Tecnologia proprietaria: disponibile solo sulle apparecchiature Cisco con una recente versione di IOS\footnote{Il software Cisco IOS è la piattaforma che consente l'implementazione dei servizi di rete e abilita le applicazioni di networking basate su infrastrutture Cisco Systems.}
+  \item Forte impatto sulla CPU dei router (più di NetFlow).
+  \item Non riconosce tutti i protocolli.
+  \item Difficile da configurare, in particolare se associato con l'amministrazione di \gls{QoS}/Larghezza di banda.
+  \end{itemize}
+\end{itemize}
+
+{\footnotesize
+\begin{verbatim}
+Router# conf t
+Router(config)# ip cef
+Router(config)# int eth0/0
+Router(config-if)# ip nbar protocol-discovery
+Router(config-if)# exit
+Router(config)# int se0/0
+Router(config-if)# ip nbar protocol-discovery
+
+Router# show ip nbar protocol discovery int eth0/0 top 3
+
+FastEthernet0/0
+Input                    Output
+Protocol                 Packet Count             Packet Count
+Byte Count               Byte Count
+5 minute bit rate (bps)  5 minute bit rate (bps)
+------------------------ ------------------------ ------------------------
+ftp                      64175242                 45153848
+89351513113              2484576000
+1073000                  28000
+http                     58194017                 32519125
+82356099996              1958417833
+
+Router# show policy-map int eth0/0
+
+Ethernet0/0
+Service-policy input: dscp_mark
+
+Class-map: stream (match-any)
+130521 packets, 97066868 bytes
+5 minute offered rate 0 bps, drop rate 0 bps
+Match: protocol rtp
+0 packets, 0 bytes
+5 minute rate 0 bps
+Match: protocol rtspplayer
+117857 packets, 79344153 bytes
+5 minute rate 0 bps
+Match: protocol netshow
+12664 packets, 17722715 bytes
+5 minute rate 0 bps
+Match: ip dscp ef
+0 packets, 0 bytes
+5 minute rate 0 bps
+QoS Set
+\end{verbatim}
+}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figure/NBAR.eps}
+  \caption{NBAR}
+\end{figure}
+
+\bigskip
+
+\subsection{Misurazioni del flusso in real-time (RTFM - Real-Time Flow Measurement)}
+\begin{minipage}{0.7\textwidth}
+  \begin{itemize}
+  \item Un ``Meter'' veramente flessibile e potente.
+    \begin{itemize}
+    \item Insiemi di regole programmabili.
+    \item Può servire molti utenti.
+    \item Si può programmare il comportamento al sovraccarico.
+    \end{itemize}
+  \item Il ``Reader'' può prendere i sondaggi.
+  \item Realizzato sul MIB SNMP Meter.
+  \item Esiste un'implementazione free software NeTraMet.
+  \item I produttori non lo accettano volentieri, sebbene sia standard.
+  \item Complicato da usare (troppo potente).
+  \item Specificato dalle RFC 2720-2742.
+  \end{itemize}
+\end{minipage}%
+\begin{minipage}[r]{0.3\textwidth}
+  \includegraphics{figure/RTFM.eps}
+\end{minipage}
+
+% LocalWords:  wired wireless collezionatori pcap Oracle Gb failover Mbit GE RX
+% LocalWords:  xGE receive router Cisco MSFC Juniper PM PIC RMON SNMP embedded
+% LocalWords:  switch NetFlow l'overhead host parlano' sniffer GUI Graphic WAN
+% LocalWords:  Interface query buckets acceptMatched channel acceptFailed Alarm
+% LocalWords:  Statistics ottetti' broadcast multicast History dell'host Matrix
+% LocalWords:  HostTopN entry and not Filters Packet Capture Events alarm'
+% LocalWords:  ethernet
+% LocalWords:  riassemblato Jabber dell'hub velocit istanziato MIB polling List
+% LocalWords:  dell'agent Access Control IPX NeBEUI l'header payload access any
+% LocalWords:  list permit icmp iptables Command Line Static ClearFlow' Extreme
+% LocalWords:  NBAR Based Application Recognition QoS KaZaA UDP TCP URL MIME
+% LocalWords:  Citrix ICA traffic RTP Protocol IOS networking Systems RTFM Flow
+% LocalWords:  Measurement Reader' NeTraMet RFC

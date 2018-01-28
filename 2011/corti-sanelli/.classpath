@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.16.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/home/lib/log4jdoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/mibble-parser-2.9.2.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/home/karonte/Dropbox/GR/SNMPTwitter/lib/MibbleDoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/snmp.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/home/lib/SNMPDoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/twitter4j-core-2.2.2.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/home/lib/t4jdoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

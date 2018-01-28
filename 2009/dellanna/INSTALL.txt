@@ -1,0 +1,151 @@
+PACKET COLLECTIONS INSTALL GUIDE
+
+
+Scritta da: Andrea Dell'Anna
+e-mail: dellanna@di.unipi.it
+data: 24 Giugno 2009
+
+
+INTRODUZIONE:
+Packet collections e' una suit di sorgenti, script di installazione (per la compilazione dei programmi Packet Flow, Packet Capture e 
+della libreria Jpcap) e di file web per la visualizzazione dei risultati ottenuti.
+
+
+INCLUDE:
+* BUILDCHANGELOG.txt		      - Changelog dei cambiamenti effettuati riguardo lo script di installazione build.xml
+* build.xml                           - Script Ant per l'installazione di Packet Capture, Packet Flow e Jpcap
+* COPING                              - GNU lesser general public license riguardante la libreria Jpcap
+* install/jpcapsrc/*                  - Sorgenti della libreria jpcap utilizzabili per una compilazione "ad hoc" di jpcap.jar e libjpcap.so 
+* install/src/pktcapsrc/*             - Sorgenti del programma Packet Capture
+* install/src/pktflowsrc/*	      - Sorgenti del programma Packet Flow
+* INSTALL.txt                         - Guida all'installazione di Packet Capture, Packet Flow e Jpcap
+* pktflowgui/flows/*		      - Directory in cui sono salvati i file xml contenenti i flussi di rete ricevuti da Packet Flow
+* pktflowgui/graph/*		      -	Directory in cui sono salvati i grafici in formato png relativi ai flussi di rete ricevuti da Packet Flow
+* pktflowgui/pktflow.html	      - Pagina html autoaggiornante per la visualizzazione dei flussi di rete del programma Packet Flow e dei grafici RRD ad essi 							associati
+	
+
+
+CHANGELOG:
+I pacchetti precompilati in ./install/precompiledlibs sono stati eliminati in quanto obsoleti. La libreria Jpcap infatti puo' essere compilata ad hoc attraverso il target
+  >ant make_jpcap
+
+
+REQUISITI:
+*JDK or JRE >= 5.0
+  see http://netresearch.ics.uci.edu/kfujii/jpcap/doc/install.html
+*libpcap
+  see http://netresearch.ics.uci.edu/kfujii/jpcap/doc/install.html
+*Apache Ant
+  see http://ant.apache.org/bindownload.cgi (for windows users mostly)
+
+
+
+
+
+***JPCAP v0.7
+
+Jpcap e' un "binder" Java basato sulla libreria libpcap. Jpcap permette quindi l'interfacciamento di programmi Java con la suddetta libreria.
+Il package jpcap mette a disposizione varie classi per la cattura e la "forgiatura" di pacchetti.
+Il package jpcap.packet invece mette a disposizione una serie di classi che gestiscono le varie tipologie di pacchetti catturati, sollevando il programmatore
+dalla responsabilita' di scrivere una "routine ad hoc" per il riconoscimento dei pacchetti.
+La libreria e' formata da due file: Jpcap.jar e libjpcap.so. 
+
+
+INSTALLAZIONE:
+
+> ant make_jpcap 
+  * compila la libreria jpcap.jar e libjpcap.so e le salva nella directory ./libjpcap
+
+> ant uninstall_all
+  * disinstalla tutte le applicazioni e la libreria jpcap
+
+
+
+
+
+***PKTCAP v1.0:
+
+Pktcap e' un semplice programma, scritto in linguaggio java, per la cattura di pacchetti su interfacce di rete (sniffer).
+Pktcap mostra tutte le interfacce di rete (logiche e fisiche) della macchina e aspetta finche' un'interfaccia non e' stata scelta dall'utente.
+Dopodiche' inizia a "sniffare" i pacchetti che transitano sull'interfaccia scelta, mostrando qualche informazione a video.
+
+
+INSTALLAZIONE:
+
+> ant make_pktcap
+  * compila la libreria pktcap.jar e genera lo script pktcap.sh usando le librerie jpcap.jar e libjpcap.so compilate in ./jpcaplib 
+
+> ant -Djpcap_jar=<jpcap.jar lib path> -Djpcap_lib=<libjpcap.so lib path> make_pktcap
+  * compila la libreria pktcap.jar e genera lo script pktcap.sh specificando esplicitamente i path da cui prendere jpcap.jar e libjpcap.so (attenzione NON inserire 
+    jpcap.jar e libjpcap.so nei path, sono richieste solo le directory)
+
+> ant uninstall_pktcap
+  * cancella pktcap.jar e pktcap.sh
+
+
+UTILIZZO:
+> pktcap.sh        - il programma parte senza godere dei diritti di root (inutile)
+> sudo ./pktcap.sh - il programma parte con i privilegi necessari ad una corretta esecuzione
+
+
+NOTE:
+*Pktcap non prevede procedura di terminazione.
+ Il programma per terminare deve essere esplicitamente killato (CTRL^c)
+*Al contrario della versione 1.0, lo script di installazione v1.2.1 esegue il target make_pktcap cercando le librerie jpcap.jar e libjpcap.so in ./libjpcap e non piu' in install/precompiledlibs, dove sono salvate le librerie pre-compilate.
+
+
+
+
+
+***PKTFLOW v1.2.0:
+
+Pktflow e' un semplice programma, scritto in linguaggio Java, per la gestione di flussi di rete bidirezionali.
+Un flusso di rete e' caratterizzato da una chiave che lo identifica univocamente (protocollo di trasporto, ip sorgente, ip destinatario, porta sorgente, porta destinatario) e da una serie di informazioni associate ad esso (numero di pacchetti/byte, timestamp primo/ultimo pacchetto ricevuto da entrambe le direzioni src->dst, dst->src).
+Pktflow genera flussi catturando pacchetti da un interfaccia di rete sottostante attraverso la libreria Jpcap. 
+Pktflow estende quindi le funzionalita' messe a disposizione da Pktcap. Infatti la schermata introduttiva del programma e' identica a quella di PktCap, in modo da permettere all'utente di scegliere l'interfaccia che vuole.
+Pktflow interagisce con un RRD flows.rrd effettuando ogni minuto l'update di un contatore di flussi "spirati" in maniera tale da permettere la generazione di statistiche di rete sui dati.
+Una volta che i flussi sono "spirati" si puo' scegliere o di stampare a video le informazioni ad essi associate o salvarle nel file pktflowgui/flows/flows.xml.
+In quest'ultimo caso i flussi potranno essere visualizzati dalla pagina html pktflowgui/pktflow.html. 
+
+
+INSTALLAZIONE:
+
+> ant make_pktflow
+  * compila la libreria pktflow.jar e genera lo script pktflow.sh usando le librerie jpcap.jar e libjpcap.so compilate in ./jpcaplib 
+
+> ant -Djpcap_jar=<jpcap.jar lib path> -Djpcap_lib=<libjpcap.so lib path> make_pktflow
+  * compila la libreria pktflow.jar e genera lo script pktflow.sh specificando esplicitamente i path da cui prendere jpcap.jar e libjpcap.so (attenzione NON inserire 
+    jpcap.jar e libjpcap.so nei path, sono richieste solo le directory)
+
+> ant uninstall_pktflow
+  * cancella pktflow.jar e pktflow.sh
+
+
+UTILIZZO:
+> pktflow.sh        - il programma parte senza godere dei diritti di root (inutile)
+> sudo ./pktflow.sh - il programma parte con i privilegi necessari ad una corretta esecuzione
+
+
+NOTE:
+*Pktflow non prevede procedura di terminazione.
+ Il programma per terminare deve essere esplicitamente killato (CTRL^c)
+*Al contrario della versione 1.0, lo script di installazione v1.2.1 esegue il target make_pktflow cercando le librerie jpcap.jar e libjpcap.so in ./libjpcap e non piu' in install/precompiledlibs, dove sono salvate le librerie pre-compilate.
+
+
+ISSUE:
+*Pktflow e' in grado di scegliere l'interfaccia di rete da monitorare, tuttavia salva indistintamente i dati riguardanti i flussi nel RRD flows.rrd, che quindi non e' in grado di distinguere da 
+quale interfaccia provengano i pacchetti e quindi i flussi.
+
+
+
+
+
+***PKTFLOWGUI v1.1.0
+
+Packet Flow GUI e' un'interfaccia grafica basata sul web visualizzabile dal file ./pktflowgui/pktflow.html.
+La pagina e' divisa in due parti.
+La prima parte mostra i grafici relativi alla velocita' dei flussi ricevuti da Packet Flow (espressi in flows/second) relativi all'ultima ora e all'ultimo giorno.
+La seconda parte della pagina stampa a video i flussi salvati nel file pktflowgui/flows/flows.xml da Packet Flow applicando il foglio di stile xslt ./pktflowgui/flows/tabletemplate.xsl.
+Per offrire all'utente una visulizzazione dei dati "real time" la pagina dispone di uno script javascript che effettua il refresh automatico ogni 5 secondi.
+Il refresh puo' essere abilitato o disabilitato attraverso i bottoni "Start refresh" "Stop refresh"
+

@@ -1,0 +1,149 @@
+    body {
+        
+       height:100%!important;
+    }
+    
+    #main-container {
+        
+        width: 1250px;
+        margin: 0 auto;
+        height:100%;
+        background-color:#eee;
+    }
+    
+    #main-title-img {
+        
+        width: 120px;
+        height: 60px;
+        margin-left: 30px;
+    }
+        
+    #main-title-text {
+        
+        font-weight: bold;
+        font-size: medium;
+        margin-left: 15px;
+    }
+        
+    #first-charts-container {
+            
+        width: 98%;
+        height: 350px;
+        margin-top: 20px;
+        margin-left: 25px;
+    }
+   
+   #dc-packets-types-chart{
+    
+        width: 50%;
+    }
+    
+    #dc-packets-len-chart {
+        
+        width: 50%;
+    }
+    
+    #second-charts-container {
+        
+        width: 98%;
+        height: 350px;
+        margin-top: 50px;
+        margin-left: 25px;
+    }
+    
+    #dc-ip-packets-chart{
+        
+        width: 25%;
+    }
+    
+    #dc-ip-bytes-chart{
+        
+        width: 25%;
+    }
+    
+    #charts-container-sub-1 {
+        
+        float:left;
+        width:50%;
+    }
+
+    #third-charts-container {
+        
+        width: 98%;
+        height: 270px;
+        margin-top: 10px;
+        margin-left: 25px;
+    }
+    
+    #fourth-charts-container {
+        
+        width: 98%;
+        height: 600px;
+        margin-left: 25px;
+        margin-top: 10px;
+    }
+    
+    #dc-detected-protos-chart{
+        
+        height:550px;
+    }
+    
+    #fifth-charts-container {
+        
+        width: 100%;
+        margin-top:40px;
+        height: 100%;
+    }
+    
+    #dc-datatable-2 {
+        
+        height: 100%;
+    }
+    
+    #sixth-charts-container {
+        
+        width: 100%;
+        margin-top: 40px;
+        height: 100%;
+    }
+    
+    #dc-datatable-3 {
+        
+        height: 100%;
+    }
+  
+    .table {
+    
+        margin-left: 25px;
+        width: 96% !important; 
+    }
+      
+    .table2 {
+        
+        background-color:#eee!important;
+        padding-left:25px!important;
+        width:100%!important;      
+    }
+    
+    .table3 {
+        
+        background-color:#eee!important;
+        padding-left:25px!important;
+        width:100%!important; 
+    }
+    
+    .clear-both {
+       
+       clear: both;
+    }
+    
+    .charts-titles {
+        
+        text-align: center;
+        font-weight: bold; 
+    }
+    
+    #load_JSON_btn {
+        
+        margin-left: 30px;
+    }

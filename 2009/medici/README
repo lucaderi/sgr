@@ -1,0 +1,31 @@
+					GeoPacketVisualizer 0.1
+
+ 
+This software was independently developed by Gianluca Medici, using mostly open source tools.
+
+GeoPacketVisualizer is a program that allow people to visualize on a world map(Google Chart) the distribution of the ips discovered.
+
+The program itself is a simple single-threaded C model that analyse a pcap file to discover all the ips contained; after terminating the analysis it will enter in server web mode, waiting to receive a connection on the default port 3001 by a web browser, once received it will send back by http the result of the analysis that will be presented with the aid of the AJAX tools offered by Google, the program will then terminate but the result will still be accessible and interactionable. 
+
+The GeoLocalization of the ip addressed is made possible by another piece of software: 
+GeoLite City, a free software witch offer a fast database to discover the placement of a certain ip; the information made available by GeoLite City and used for building the map and the tables attached are: country, city, Latitude, Longitude. Thanks to these last two informations I was able to refine the Google Chart map up to visualize the towns(represented as dots) where the ips are supposedly placed, this allows to confront the distribution of the ip calls originated or directed to any discovered town for any region on the database. The presence of the Latitude and Longitude permit to use the region mode of the Google Chart without having a Google Maps account.
+
+At the moment GeoPacketVisualizer support only some of the protocols able to wrap an ip datagram, these are: ethernet, ppp, linux Cooked. It is however very simple to add support fo a new link protocol, you just need the C structure of the header of the frame type you wish to implement(or the length of the displacement until the ip datagram) and then add it on the analizer.h, if the frame_Header size+ ip_header size are more that 36 bytes, change the MAXSNAPLEN(in GeoVis.c) accordingly; after that add a new 'if..' for your protocol inside analyze.c -> processPacket(..); this is in fact the function called by pcap_dispatch for each packet discovered in the savefile.
+
+Being that simple the program require:
+Linux environment	(any with gcc and make)
+libpcap	 		(v 1.0.0 tested)
+GeoIP			(v 1.4.6 tested)
+GeoLite City database	(any, the newer the better)
+Web Browser with javascript enabled and Flash plugin
+
+No installation is provided just run make to compile the source and then run ./GeoPacketVisualizer -p [locationOfThePcapSavefile]
+
+the default placement of the GeoLite City database is /usr/local/share/GeoIP/GeoLiteCity.dat, you can change that with the option -g, other options are described running
+./GeoPacketVisualizer -?
+
+Remember to be connected on the internet and to run your web browser on the appropriate port 3001
+Have fun!
+For any kind of comments, info or else gianluca_medici@tin.it
+
+GeoPacketVisualizer was developed using Linux, Eclipse and some hints from ntop's source, other software involved in the making of this program was libpcap, GeoIp and UtHash.

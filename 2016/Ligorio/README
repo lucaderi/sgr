@@ -1,0 +1,14 @@
+README "sonda"
+
+- La cartella "cJSON-master" contiene la libreria utilizzata per il
+  parsing in JSON.
+
+- Eseguire tutte le regole del makefile con il comando "make".
+
+- Eseguire il set per la modalita' monitor sull'interfaccia
+  di rete che verra' utilizzata per la cattura.
+
+- Lanciare il programma "sonda" con diritti di amministratore
+  specificando l'opzione -i seguita dal nome dell'interfaccia precedentemente
+  scelta e l'opzione -v se è richiesto un output più dettagliato.
+  Es.: "sudo ./sonda -i wlp2s0 -v"

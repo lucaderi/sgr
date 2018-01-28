@@ -1,0 +1,6 @@
+First start CommandRedisAnalizer that shows the presence of read that not contains Redis command,
+then start the RedisQueriesStat that shows the stats of all the upperCase strings command.
+
+1) Is ok get the redis-server read to parse the command?
+2) Is ok recognize a command based on the presence or not of lowercase characters?
+3) Should I add more functionality?

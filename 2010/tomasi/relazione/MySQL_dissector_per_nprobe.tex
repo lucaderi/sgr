@@ -1,0 +1,109 @@
+% ##### INIZIO PREAMBOLO ##### %
+
+% ----- Stile del documento (tipo, margini, etc..) ----- %
+
+% Tipo di documento
+\documentclass[a4paper, twoside, titlepage, 11pt]{article}
+
+% Setto i margini (il bindingoffset è lo spazio per la rilegatura)
+\usepackage[includehead, headheight=1cm, headsep=0.5cm, top=2cm, bottom=2cm, left=2cm, right=2cm, bindingoffset=0.5cm]{geometry}
+
+% Per gli spazi di interlinea
+\usepackage{setspace}
+\onehalfspacing
+
+% Per i caption (ad esempio i titoli delle figure)
+\usepackage[bf,footnotesize]{caption}
+
+% ----- Fine stile del documento ----- %
+
+
+% ----- Intestazioni ----- %
+
+% Header di default delle pagine
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ \ #1}}
+\fancyhf{}
+\fancyhead[LE,RO]{\bfseries\thepage}
+\fancyhead[RE,LO]{\bfseries\rightmark}
+
+% Header per le pagine della TOC
+\fancypagestyle{toc}{ \fancyhf{} \pagenumbering{roman} \fancyhead[LO,RE]{\bf{Indice}} \fancyhead[LE,RO]{\bfseries \thepage}}
+
+% Header per le pagine della bibliografia
+\fancypagestyle{bibliografia}{ \fancyhf{} \fancyhead[LO,RE]{\bf{Bibliografia e sitografia}} \fancyhead[LE,RO]{\bfseries \thepage}}
+
+% ----- Fine intestazioni ----- %
+
+
+% ----- Internazionalizzazione ----- %
+
+% Per l'italiano (ad esempio per la sillabazione)
+\usepackage[italian]{babel}
+
+% Per poter usare i caratteri speciali italiani (vedi lettere accentate)
+\usepackage[latin1]{inputenc}
+
+% ----- Fine internazionalizzazione ----- %
+
+
+% ----- Immagini o tabelle ----- %
+
+% Per inserire file .eps
+\usepackage[dvips]{graphicx}
+
+% Per i flottanti
+\usepackage{floatflt}
+
+\usepackage{verbatim}
+% ----- Fine immagini o tabelle ----- %
+
+
+% ----- Per gli indici ----- %
+
+% Per l'indice analitico
+\usepackage{makeidx}
+\makeindex
+
+% Per avere l'indice analitico cliccabile (deve essere l'ultimo pacchetto caricato)
+%\usepackage[colorlinks=true, pdfborder={0 0 0}]{hyperref}
+
+% ----- Fine indici ----- %
+
+% ----- Info sul documento ----- %
+
+\title{Plugin MySQL dissector per nProbe}
+\author{Emanuele Tomasi}
+
+% ----- Fine info sul documento ----- %
+
+
+% ##### FINE PREAMBOLO ##### %
+
+
+
+% ##### INIZIO DOCUMENTO ##### %
+
+\begin{document}
+
+% ----- PRIMA PAGINA (il titolo del documento) ----- %
+\maketitle
+
+% ----- SECONDA PAGINA (l'indice TOC) ----- %
+\newpage
+\thispagestyle{toc}
+\tableofcontents
+
+% ----- L'ARTICOLO ----- %
+\newpage
+\pagenumbering{arabic}
+
+\input{includes/nprobe}
+\input{includes/mysql}
+\input{includes/mysql_dissector}
+
+% ----- Fine ----- %
+\end{document}
+
+% ##### FINE DOCUMENTO ##### %

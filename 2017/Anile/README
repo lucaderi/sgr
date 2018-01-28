@@ -1,0 +1,66 @@
+#
+#		DNSmonitor
+#   Copyright (C) 2017  Simone Anile simone.anile@gmail.com
+#
+#		This file is part of DNSmonitor.
+#
+#   DNSmonitor is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   DNSmonitor is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with DNSmonitor.  If not, see <http://www.gnu.org/licenses/>.
+#
+Per una descrizione piu' approfondita leggere Relazione.pdf
+*** Introduzione ***
+DNSmonitor e' un piccolo tool che monitora la rete
+e avvisa (tramite log e/o mail)
+l'amministratore in caso di comportamenti sospetti.
+Questi sono richieste ripetute a pagine non consentite (o pagine non trovate)
+dal DNS configurato, ad esempio se il DNS blocca pagine
+contenenti malware, e un host fa richieste ripetute ad esse, il tool inviera'
+un avviso.
+
+*** Mail ***
+Se configurato correttamente invia anche mail di avviso. Per questa funzione
+e' richiesto il pacchetto sendemail:
+
+sudo apt install sendemail
+
+*** Log ***
+Per il corretto funzionamento e' richiesta anche la presenza (nella stessa
+posizione) dell'eseguibile una cartella "logs".
+
+*** Avvio ***
+E' possibile avviare (e compilare) usando due script:
+start.sh avvia il tool senza configurazione mail
+startv.sh avvia il tool senza configurazione mail ma in modalita' verbose
+startm.sh avvia il tool con la configurazione mail e in modalita' verbose
+
+In caso di problemi con l'avvio degli script:
+
+chmod +x *.sh
+
+per usare le mail si puo' compilare:
+
+gcc dnsa.c utils.c pagine.c -o dnsa -lpcap -lpthread
+
+e successivamente avviare con i parametri descritti nell'help:
+
+./dnsa -h
+
+Per indicare un'interfaccia sulla quale avviare il monitoraggio:
+
+./dnsa -i <interfaccia>
+
+*** Altre dipendenze ***
+
+libpcap:
+
+sudo apt-get install libpcap-dev

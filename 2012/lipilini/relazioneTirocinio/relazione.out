@@ -1,0 +1,47 @@
+\BOOKMARK [0][-]{chapter.1}{Introduzione}{}
+\BOOKMARK [1][-]{section.1.1}{Uno sguardo d'insieme}{chapter.1}
+\BOOKMARK [1][-]{section.1.2}{Il progetto L7-Bridge}{chapter.1}
+\BOOKMARK [1][-]{section.1.3}{Struttura della relazione di tirocinio}{chapter.1}
+\BOOKMARK [0][-]{chapter.2}{Progettazione}{}
+\BOOKMARK [1][-]{section.2.1}{Le motivazioni del progetto}{chapter.2}
+\BOOKMARK [1][-]{section.2.2}{Principali problemi affrontati}{chapter.2}
+\BOOKMARK [2][-]{subsection.2.2.1}{Il Deep Packet Inspection}{section.2.2}
+\BOOKMARK [2][-]{subsection.2.2.2}{Il Quality of Service}{section.2.2}
+\BOOKMARK [0][-]{chapter.3}{Implementazione}{}
+\BOOKMARK [1][-]{section.3.1}{Le scelte di base}{chapter.3}
+\BOOKMARK [2][-]{subsection.3.1.1}{I PF\137RING}{section.3.1}
+\BOOKMARK [2][-]{subsection.3.1.2}{La libreria nDPI}{section.3.1}
+\BOOKMARK [2][-]{subsection.3.1.3}{L'architettura del sistema}{section.3.1}
+\BOOKMARK [1][-]{section.3.2}{Gestione dei flussi}{chapter.3}
+\BOOKMARK [1][-]{section.3.3}{Gestione delle regole}{chapter.3}
+\BOOKMARK [1][-]{section.3.4}{Il sistema garante del QoS}{chapter.3}
+\BOOKMARK [0][-]{chapter.4}{Validazione}{}
+\BOOKMARK [1][-]{section.4.1}{Metodologia di test}{chapter.4}
+\BOOKMARK [1][-]{section.4.2}{Test sulla flowHashTable e libreria nDPI}{chapter.4}
+\BOOKMARK [1][-]{section.4.3}{Test sul gestore delle regole}{chapter.4}
+\BOOKMARK [1][-]{section.4.4}{Test sul gestore del QoS}{chapter.4}
+\BOOKMARK [1][-]{section.4.5}{Test sull'intero sistema}{chapter.4}
+\BOOKMARK [0][-]{chapter.5}{Related Work}{}
+\BOOKMARK [1][-]{section.5.1}{Soluzioni per il DPI}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.1.1}{Ipoque PACE}{section.5.1}
+\BOOKMARK [2][-]{subsection.5.1.2}{Qosmos ixEngine}{section.5.1}
+\BOOKMARK [2][-]{subsection.5.1.3}{L7-Filter}{section.5.1}
+\BOOKMARK [1][-]{section.5.2}{Soluzioni per il Traffic Shaping}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.2.1}{MasterShaper}{section.5.2}
+\BOOKMARK [2][-]{subsection.5.2.2}{Trickle}{section.5.2}
+\BOOKMARK [2][-]{subsection.5.2.3}{QFQ : Quick Fair Queueing}{section.5.2}
+\BOOKMARK [1][-]{section.5.3}{Soluzioni per firewall applicativi}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.3.1}{Netfilter}{section.5.3}
+\BOOKMARK [2][-]{subsection.5.3.2}{pfSense}{section.5.3}
+\BOOKMARK [2][-]{subsection.5.3.3}{SonicWALL Firewall}{section.5.3}
+\BOOKMARK [0][-]{chapter.6}{Conclusioni}{}
+\BOOKMARK [1][-]{section.6.1}{Sviluppi futuri}{chapter.6}
+\BOOKMARK [2][-]{subsection.6.1.1}{Scan probabilistico per il DPI}{section.6.1}
+\BOOKMARK [2][-]{subsection.6.1.2}{Velocizzare il tracking dei flussi}{section.6.1}
+\BOOKMARK [2][-]{subsection.6.1.3}{Migliorie alla gestione delle regole}{section.6.1}
+\BOOKMARK [2][-]{subsection.6.1.4}{Lockless shaping}{section.6.1}
+\BOOKMARK [2][-]{subsection.6.1.5}{Il prossimo passo per L7-Bridge}{section.6.1}
+\BOOKMARK [1][-]{section.6.2}{Competenze acquisite}{chapter.6}
+\BOOKMARK [1][-]{section.6.3}{Conclusioni}{chapter.6}
+\BOOKMARK [0][-]{section*.11}{Bibliografia}{}
+\BOOKMARK [0][-]{appendix.A}{Dove reperire il codice}{}

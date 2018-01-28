@@ -1,0 +1,11 @@
+START MYSQL SERVER:
+- mysqld_safe --datadir=/var/lib/mysql --pid-file=/var/run/mysql/mysql.pid (check directory)
+
+CAPTURE WITH WIRESHARK:
+- run wireshark and capture loopback device
+
+CAPTURE WITH TCPDUMP:
+- tcpdump -i lo -s0 -w /tmp/file_dump.pcap
+
+START MYSQL CLIENT:
+- mysql --protocol=TCP

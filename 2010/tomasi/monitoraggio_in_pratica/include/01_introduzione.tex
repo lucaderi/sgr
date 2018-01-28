@@ -1,0 +1,402 @@
+\section{Introduzione}
+\subsection{Esigenze del monitoraggio}
+\begin{itemize}
+\item Garantire la disponibilità delle funzioni di rete.
+  \begin{itemize}
+  \item Gestione dei servizi (disponibilità, tempi di risposta) necessari a far fronte cambiamenti ai tecnologici e ad un incremento dei dati.
+    \begin{itemize}
+    \item Sicurezza dei servizi attraverso il controllo dei componenti di sicurezza.
+    \item Prevenzione degli errori (umani) e identificazione/recupero dei colli di bottiglia.
+    \end{itemize}
+  \item Reazione automatica o semi-automatica alle anomalie.
+    \begin{itemize}
+    \item Modifica della configurazione, in real-time, in caso di errori.
+    \item Attivazione di componenti ridondanti in caso di errori.
+    \end{itemize}
+  \end{itemize}
+\item Reazione dinamica ai cambiamenti dell'ambiente e della rete.
+  \begin{itemize}
+  \item Cambiamenti riguardanti applicazioni, utenti, componenti, servizi.
+  \item Adattamento dinamico della larghezza di banda di trasmissione disponibile secondo le richieste fatte dal sistema gestionale.
+  \end{itemize}
+\item Controllo della rete.
+  \begin{itemize}
+  \item Collezione e (compressa) rappresentazione delle informazioni di rete importanti.
+  \item Definizione e manutenzione di un database delle configurazioni di rete.
+  \item Quando è possibile, centralizzazione del controllo sulle periferiche e delle funzioni implementate (central management console).
+  \item Integrazione di procedure gestionali su ambienti eterogenei.
+  \end{itemize}
+\item Miglioramento delle condizioni di lavoro degli amministratori di sistema/rete.
+  \begin{itemize}
+  \item Migliorare e standardizzare gli strumenti disponibili.
+  \item Identificare e implementare una graduale automazione delle funzioni di amministrazione.
+  \item Buona integrazione degli strumenti nelle sequenze operazionali esistenti.
+  \end{itemize}
+\item Andare verso la standardizzazione.
+  \begin{itemize}
+  \item Transizione delle esistenti, spesso proprietarie soluzioni, verso un ambiente standardizzato.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Vari attori, varie metriche}
+\begin{itemize}
+\item Utenti finali verso (Internet) Service Provider.
+  \begin{itemize}
+  \item Utente finale (dial-up o xDSL) verso AOL\footnote{La America On Line (AOL) è il più importante \gls{ISP} del mondo.}.
+    \begin{itemize}
+    \item Utenza internet (nessun servizio).
+    \item Per lo più traffico \gls{P2P}, Email, WWW.
+    \end{itemize}
+  \item ntop.org verso Telecom Italia.
+    \begin{itemize}
+    \item Fornisce servizi (es. DNS, mail, WWW).
+    \item Connesso ad un \gls{ISP} regionale (no ramo globale).
+    \end{itemize}
+  \item Interroute/Level3 verso Telecom Italia.
+    \begin{itemize}
+    \item Necessità di acquistare la larghezza di banda necessaria per utenti nazionali.
+    \item Necessita di firmare uno \gls{SLA} per i consumatori influenzati dal contratto \gls{SLA} con il vettore globale.
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\subsection{Esigenze degli utenti finali}
+\begin{itemize}
+\item Monitorare la performance delle applicazioni.
+  \begin{itemize}
+  \item Come mai le pagine web ci mettono così tanto a caricarsi?
+  \item Perché il video in \glstext{multicast} non è fluido?
+  \end{itemize}
+  \begin{itemize}
+  \item Controllare che lo \gls{SLA} aspettato può essere fornito dall'infrastruttura di rete disponibile.
+    \begin{itemize}
+    \item Ho sufficiente larghezza di banda e risorse di rete per le mie necessità e aspettative?
+    \end{itemize}
+  \item La scarsa performance è ``normale'' o ci sono degli attacchi o attività sospette?
+    \begin{itemize}
+    \item C'è un virus che prende molte delle risorse disponibili?
+    \item C'è qualcuno che scarica molti file ad alte priorità (cioè monopolizza la larghezza di banda)?
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\subsection{Esigenze del service provider}
+\begin{itemize}
+\item Monitorare lo \gls{SLA} e le attività di rete correnti.
+\item Applicare lo \gls{SLA} e controllare le eventuali violazioni.
+\item Individuare problemi o errori di rete.
+\item Ridisegnare la rete e i suoi servizi basandosi sui feedback degli utenti e sui risultati del monitoraggio.
+\item Fare delle previsioni per pianificare l'uso futuro della rete e quindi implementare le estensioni prima che sia troppo tardi (scavare per mettere cavi o fibre prende molto tempo).
+\end{itemize}
+
+\subsection{I problemi}
+\begin{itemize}
+\item Gli utenti finali e l'\gls{ISP} parlano linguaggi differenti.
+  \begin{itemize}
+  \item Gli utenti finali capiscono i servizi di rete.
+    \begin{itemize}
+    \item Outlook non può aprire la mia mailbox.
+    \item Mozilla non è capace di connettersi a Google.
+    \end{itemize}
+  \item L'\gls{ISP} parla di reti.
+    \begin{itemize}
+    \item Gli annunci \gls{BGP} contengono dati sbagliati.
+    \item La connessione internet principale è al 90\% occupata.
+    \item C'è bisogno di firmare un contratto con l'\gls{AS} XYZ per risparmiare la larghezza di banda.
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\subsection{Applicazioni per l'analisi del traffico: qualche esigenza}
+\begin{itemize}
+\item Cosa: misurazione del volume e della velocità delle applicazioni host analizzando le conversazioni.\\
+  Perché: identificare la crescita e gli eventi anomali che occorrono in rete.
+\item Cosa: gruppi di traffico personalizzabili attraverso gruppi logici (es: compagnie, classi di utenti), geografia (es: regioni), sottoreti.\\
+  Perché: associare il traffico con le entità business e il trend di crescita per i gruppi (i dati aggregati non sono molto importanti in questo contesto: si ha bisogno di analizzare i dati a livello utente).
+\item Cosa: filtri parametrizzabili e eccezioni basate sul traffico di rete.\\
+  Perché: i filtri possono essere associati alle notifiche di allarmi di eventi anomali occorsi in rete.
+\item Cosa: periodi di tempo personalizzabili in modo da aiutare il report giornaliero (cosa è successo nella giornata).\\
+  Perché: analizzare i dati in base al calendario aiuta ad identificare i problemi (es: il \gls{DHCP} finisce gli indirizzi ogni lunedì mattina tra le 9 e le 10, ma il problema non si presenta durante tutto il resto della settimana).
+\end{itemize}
+
+\subsection{Ulteriori problemi di misurazione}
+\begin{itemize}
+\item Le apparecchiature di rete hanno una limitata capacità di misurazione (un router deve prima switchare i pacchetti).
+  \begin{itemize}
+  \item Sono limitate a pochi protocolli selezionati.
+  \item Eseguono misurazioni aggregate (ad esempio per interfacce).
+  \item Solo alcune possono essere usate per misurazioni di rete (ad esempio un router è troppo carico da nuovi compiti, lo switch di livello 2 non è amministrabile via SNMP).
+  \item Reti ad alta velocità introducono nuovi problemi: gli strumenti di misurazione non possono far fronte all'alta velocità.
+  \item C'è la necessità di sviluppare costantemente nuovi servizi e applicazioni (ad esempio il video sui telefoni 3G).
+  \item Molti servizi non sono pensati per essere monitorati.
+  \item Molto del traffico internet viene consumato da quelle applicazioni (\gls{P2P}) che sono pensate per rendere difficile l'individuazione e l'accounting.
+  \item I servizi internet moderni sono:
+    \begin{itemize}
+    \item Mobili e quindi non legati ad un posto o ad un indirizzo IP.
+    \item Criptati e basati su porte dinamiche TCP/UDP (nessuna impronta digitare, cioè il mappaggio 1:1 tra porta e servizio).
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\subsection{Monitorare le capacità delle attrezzature di rete}
+\begin{itemize}
+\item Sistemi finali (ad esempio PC Windows).
+  \begin{itemize}
+  \item Completamente sotto il controllo dell'utente.
+  \item Semplici strumenti (solo installazione di nuove applicazioni).
+  \end{itemize}
+\item Apparecchiature di rete standard (ad esempio i router ADSL).
+  \begin{itemize}
+  \item Accesso limitato ai soli operatori di rete.
+  \item Scarse capacità di misurazione.
+  \item Solo dati aggregati (ad esempio per interfaccia).
+  \end{itemize}
+\item Apparecchiature personalizzate (Measurement Gears).
+  \begin{itemize}
+  \item Capaci di collezionare dati specifici.
+  \item Problemi di dislocamento a volte ne impediscono l'installazione dove fluisce molto traffico.
+  \end{itemize}
+\end{itemize}
+
+\subsection{I problemi}
+\begin{itemize}
+\item Gli utenti chiedono la misurazione dei servizi.
+\item Gli strumenti di rete forniscono misurazioni semplici e aggregate.
+\item Non si può sempre installare gli strumenti dove si vuole (problemi di cablaggio, problemi di privacy).
+\item Nuovi protocolli nascono ogni mese e gli strumenti di misurazione sono statici e lenti ad evolversi.
+\end{itemize}
+
+\subsection{Terminologia per il benchmark}
+
+\begin{itemize}
+\item Le metriche per il traffico sono spesso non standardizzate, al contrario delle metriche della vita quotidiana (ad esempio i litri, i kg, etc\ldots).
+\item Le misurazioni proprietarie sono spesso fatte in maniera differente tra loro rendendo i risultati difficili da comparare.
+\item Le RFC 1242 ``Benchmarking Terminology for Network Interconnection Devices'' definiscono qualche metrica comune usata nella misurazione del traffico.
+\end{itemize}
+
+\subsubsection{RFC 1242: qualche definizione}
+\begin{itemize}
+\item Throughput.
+\item Latenza (latency).
+\item Velocità di perdita di frame (frame loss rate).
+\item Dimensione dei frame a livello di data link (datalink frame size).
+\item Back-to-back.
+\item etc\ldots.
+\end{itemize}
+Le RFC sono veramente generali, non ``formali/precise''
+
+\subsubsection{Le RFC 2285: ``Benchmarking Terminology for \glsentrytext{LAN} Switching Devices''}
+\begin{itemize}
+\item Estende le RFC 1242 aggiungendo definizioni che possono essere usate in altre RFC, includendo:
+  \begin{itemize}
+  \item Burst del traffico (traffic burst).
+  \item Carico/sovraccarico della rete (network load/overload).
+  \item Velocità di forwarding (forwarding rate).
+  \item Frame errati (errored frame).
+  \item \Glstext{broadcast}.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Le RFC 2432: ``Terminology for IP \glsentryname{multicast} Benchmarking''}
+\begin{itemize}
+\item RFC peculiari, mirate alla misurazione del traffico \glstext{multicast}.
+\item Qualche metrica:
+  \begin{itemize}
+  \item Forwarding e throughput (ad esempio Aggregated \Glstext{multicast} Throughput).
+  \item Overhead (ad esempio Group Join/Leave Delay).
+  \item Capacità (ad esempio \Glstext{multicast} Group Capacity).
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{RFC 1944 e 2544: Metodologie di benchmarking per i dispositivi di rete interconnessi}
+{\bf Le RFC 1944:} Definisce come fare le misurazioni del traffico di rete:
+  \begin{itemize}
+  \item Come testare le architetture (dove sistemare i sistemi sotto test).
+  \item Dimensione dei pacchetti usati per le misurazioni.
+  \item Gli indirizzi IP da assegnare ai SUT (System Under Test - sistemi sotto test).
+  \item Protocolli IP da usare per il test (ad esempio UDP, TCP).
+  \item Uso del burst del traffico durante le misurazioni (burst verso traffico costante).
+  \end{itemize}
+In parole povere definisce l'ambiente di testing da usare per l'analisi del traffico di rete.
+\bigskip\\
+{\bf Le RFC 2544:}
+Definisce e specifica come:
+\begin{itemize}
+\item Verificare e valutare i risultati dei test.
+\item Metriche di misurazione comuni definite nelle RFC 1242 come:
+  \begin{itemize}
+  \item Throughput.
+  \item Latenza (latency).
+  \item Perdita di frame (frame loss).
+  \end{itemize}
+\item Gestire i ``modificatori dei test'' come:
+  \begin{itemize}
+  \item Traffico di \glstext{broadcast} (come questo traffico influenza i risultati).
+  \item Durata del test (quanto tempo dovrebbe durare il test).
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Altre RFC per le metodologie di benchmarking (BM - Benchmarking Methodology)}
+\begin{itemize}
+\item 2647/3511: BM per le performance dei firewall.
+\item 2761/3116: BM per l'\gls{ATM}.
+\item 2889: BM per i dispositivi di \gls{LAN} switching.
+\item 3918: BM per IP \Glstext{multicast}.
+\end{itemize}
+
+\subsection{Metriche di misurazione comuni}
+\begin{itemize}
+\item Misurazione della performance:
+  \begin{itemize}
+  \item Disponibilità.
+  \item Tempo di risposta.
+  \item Accuratezza.
+  \item Throughput.
+  \item Utilizzo.
+  \item Latenza e Jitter.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Disponibilità}
+\begin{itemize}
+\item La disponibilità può essere espressa come la percentuale di tempo che un sistema di rete, componente o applicazione, è disponibile per un utente.
+\item \`E basata sull'affidabilità del componente di rete individuale.
+\end{itemize}
+
+\[\%disponibilit\grave{a} = \frac{MTFB}{MTFB + MTTR} \times 100\]
+\\
+MTFB = mean time betwen failures (tempo medio tra i fallimenti).\\
+MTRR = mean time for repair following failure (tempo medio per rimediare ai fallimenti).
+
+Si noti che, indipendentemente dal tempo medio tra i fallimenti, più è basso il tempo medio per rimediare ai fallimenti e più la disponibilità arriva verso il 100\%. Ovviamente però, se il tempo medio tra i fallimenti tende a 0, allora anche la disponibilità tende a zero (si hanno continui fallimenti).
+
+\subsubsection{Tempo di risposta}
+\begin{itemize}
+\item Il tempo di risposta è il tempo che impiega un sistema a reagire ad un input (ad esempio, in una transizione interattiva, potrebbe essere definito come il tempo tra l'ultimo tasto premuto da un utente e l'inizio dell'apparizione del risultato sul display del computer).
+\item \`E desiderabile che sia breve.
+\item \`E importante che il tempo di risposta sia breve per le applicazioni interattive (ad esempio telnet/ssh), mentre per le applicazioni batch (ad esempio il trasferimento di un file) questo requisito non è necessario.
+\end{itemize}
+
+\subsubsection{Throughput}
+\begin{itemize}
+\item Metrica per misurare la quantità di dati che possono essere inviati su di un link in una specificata quantità di tempo.
+\item Spesso viene usata per dare una stima sulla disponibilità della larghezza di banda di un link (più è alto il throughput più è alta la disponibilità).
+\item Da notare che la larghezza di banda e il throughput sono cose molto differenti. Il throughput è una misura che si basa sull'applicazione.
+\item Esempi:
+  \begin{itemize}
+  \item Il numero di transazioni di un certo tipo in uno specifico periodo di tempo.
+  \item Il numero di sessioni utente per una data applicazione in un certo periodo di tempo.
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{Utilizzo}
+\begin{itemize}
+\item L'utilizzo è una stima a grana più sottile rispetto al throughput. Si riferisce alla percentuale di tempo che una risorsa viene usata in un determinato periodo di tempo.
+\item Spesso un basso utilizzo indica che qualcosa non sta andando come aspettato (ad esempio si può avere poco traffico perché il file server è crashato).
+\end{itemize}
+
+\subsubsection{Latenza e Jitter}
+\begin{itemize}
+\item Sono espresse in ms (millisecondi).
+\item Latenza: la quantità di tempo che impiega un pacchetto per andare dalla sorgente alla destinazione. \`E molto importante per le applicazioni interattive che necessitano di scambiarsi molti dati in un breve periodo di tempo (ad esempio giochi online). Ovviamente più è alta la latenza e più le applicazioni peggiorano in performance.
+\item Jitter: la variazione del ritardo di tempo con il quale arrivano i pacchetti inviati in una sola direzione. \`E molto importante nelle applicazioni multimediali (ad esempio telefonate internet o video in \glstext{broadcast}).
+\end{itemize}
+Se la latenza è costante in media ma il jitter è molto alto, allora vuol dire che ci sono dei pacchetti che arrivano rapidamente uno dopo l'altro e dei pacchetti che arrivano molto più lentamente. Questo fa si che, se ad esempio si sta guardando un video via internet, questo vada ``a scatti''.
+
+\subsubsection{Larghezza di banda}
+\begin{itemize}
+\item Intervallo di misura (Time committed - Tc): l'intervallo di tempo o ``l'intervallo della larghezza di banda'' usato per controllare il burst del traffico.
+\item Burst committed (Bc): il massimo numero di bit che la rete garantisce di trasferire durante un qualsiasi Tc.
+\item CIR (Committed Information Rate): la velocità garantita della rete in condizioni normali. Il CIR viene misurato in bit per secondo ed è una delle chiavi della negoziazione per le tariffe metriche. $CIR = \frac{Bc}{Tc}$.
+\item Burst excess (Be): il numero di bit che si tenta di trasmettere dopo il raggiungimento del valore di Bc.
+\item Velocità massima di trasferimento (Maximum data Rate - MaxR) misurata in bit per secondi. $MaxR = \frac{Bc + Be}{Bc} \times CIR = \frac{Bc + Be}{Tc}$.
+\end{itemize}
+
+Ad esempio:
+
+\begin{math}
+\begin{cases}
+  Tc = 10\ \textrm{ms}\\
+  Bc = 7680\ \textrm{b}\\
+  Be = 320\ \textrm{b}
+\end{cases}
+\Longrightarrow
+\begin{cases}
+  CIR = \frac{Bc}{Tc} = \frac{7680\ \textrm{b}}{0.01\ \textrm{s}} = 768\ \textrm{Kbps} \qquad \textrm{(velocità garantita, quella per cui si paga)}\\
+  \\
+  MaxR = \frac{Bc + Be}{Tc} = \frac{(7680 + 320)\ \textrm{b}}{0.01\ \textrm{s}} = 800\ \textrm{Kbps} \qquad \textrm{(massima velocità possibile)}
+\end{cases}
+\end{math}
+
+\subsection{Misurazioni per link}
+\begin{itemize}
+\item Metriche disponibili per un link (\# = cardinalità, numero di).
+  \begin{itemize}
+  \item \#pacchetti, \#byte, \#pacchetti scartati su di una specifica interfaccia nell'ultimo minuto.
+  \item \#flussi, \#pacchetti per flussi.
+  \end{itemize}
+\item Non fornisce statistiche globali della rete.
+\item Usato dagli \gls{ISP} per misurare il traffico.
+\item Esempi:
+  \begin{itemize}
+  \item SNMP MIBs.
+  \item RTFM (Real-Time Flow Measurement).
+  \item Cisco NetFlow.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Misurazioni End-to-End}
+\begin{itemize}
+\item La performance della rete è diversa dalla performance delle applicazioni.
+  \begin{itemize}
+  \item Wire-time verso web-server performance.
+  \end{itemize}
+\item Molte delle misurazioni di rete sono di natura end-to-end.
+\item Statistiche per percorso.
+  \begin{itemize}
+  \item Sono percorsi simmetrici? Generalmente non lo sono (problemi di routing).
+  \item Come si deve comportare la rete per sondare grandi/piccoli pacchetti?
+  \end{itemize}
+\item \`E necessario per dedurre le misurazioni della performance per-link.
+\end{itemize}
+
+\subsection{Approcci al monitoraggio}
+\begin{itemize}
+\item Attive.
+  \begin{itemize}
+  \item Iniettare (inject) traffico in rete e controllare come questa reagisce (ad esempio, ping).
+  \end{itemize}
+\item Passive.
+  \begin{itemize}
+  \item Monitorare il traffico di rete al solo scopo di misurazione (ad esempio la stretta di mano a tre vie del TCP per misurare il \gls{RTT} della rete).
+  \end{itemize}
+\item Le misurazioni attive sono spesso end-to-end, mentre le misurazioni passive sono limitate ai link interessati dalla cattura del traffico.
+\item Non ne esiste uno buono o uno cattivo, entrambi gli approcci sono buoni a seconda dei casi:
+  \begin{itemize}
+  \item Il monitoraggio passivo sugli switch può essere un problema.
+  \item Non si può sempre iniettare il traffico che si vuole. Ad esempio, su di un link satellitare (rete satellitare) si può solo ricevere quello che è stato iniettato dal produttore del satellite.
+  \end{itemize}
+\item Generalmente la soluzione migliore è di combinare entrambi gli approcci e confrontare i risultati.
+\end{itemize}
+
+\subsection{Misurazioni inline e offline}
+\begin{itemize}
+\item Misurazioni inline: metodi basati su di un protocollo che fluisce sulla stessa rete dove sono prese le misurazioni (ad esempio SNMP)
+\item Misurazioni offline: metodi che usano reti differenti per la lettura delle misurazioni (ad esempio, leggere i contatori del traffico usando una porta seriale o una rete/VLAN (virtaul LAN)) amministrata.
+\end{itemize}
+
+% LocalWords:  central Service dial xDSL AOL Line ntop org DNS Interroute Level
+% LocalWords:  SLA Agreement multicast normale' service Outlook mailbox virtaul
+% LocalWords:  Mozilla Google BGP l'AS Autonomus System L'Autonomous routing to
+% LocalWords:  XYZ host sottoreti parametrizzabili report DHCP router switchare
+% LocalWords:  switch SNMP l'accounting TCP UDP mappaggio Measurement Gears RFC
+% LocalWords:  benchmark Benchmarking Terminology for Interconnection Devices'
+% LocalWords:  Throughput latency loss datalink size Back back Switching Burst
+% LocalWords:  traffic burst load overload forwarding errored Broadcast Group
+% LocalWords:  throughput Aggregated Overhead Join Leave Delay Capacity SUT BM
+% LocalWords:  benchmarking Under testing broadcast Methodology firewall ms ATM
+% LocalWords:  Asynchronous Transfer switching Jitter MTFB MTTR
+% LocalWords:  disponibilit mean betwen failures MTRR repair following failure
+% LocalWords:  telnet ssh crashato jitter scatti' committed Tc banda' Bc CIR
+% LocalWords:  Information excess MaxR Kbps MIBs RTFM Flow Cisco NetFlow Wire
+% LocalWords:  inject roud trip Trip RTT client inline offline VLAN

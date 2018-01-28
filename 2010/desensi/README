@@ -1,0 +1,22 @@
+===Introduction===
+
+This is ffProbe v1.0, a probe for NetFlow v5 implemented using a multithreaded pipeline.
+See the doc directory and ffProbe.pdf for more documentation.
+
+===Prerequisites===
+
+ffProbe requires the installation of libpcap (http://www.tcpdump.org)
+
+===How to compile===
+
+Briefly:
+
+  make all                -- compile ffProbe
+  sudo make install       -- install ffProbe, if desired
+
+  ffProbe -h              -- for help screen
+  ffProbe -i <interface>  -- for start capturing from an interface
+
+  sudo make unistall      -- uninstall ffProbe
+
+

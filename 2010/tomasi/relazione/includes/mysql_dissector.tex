@@ -1,0 +1,162 @@
+\section{Il plugin \emph{MySQL Protocol Dissector}}
+Dopo il background acquisito su \emph{nProbe} e sul protocollo MySQL si può passare a vedere il plugin \emph{MySQL protocol dissector}.
+
+\subsection{Le informazioni esportate}
+Attualmente il plugin è in grado di esportare le seguenti informazioni sul traffico MySQL (sono i nomi univoci da passare a \emph{nProbe} come parte del \emph{template}):
+
+\begin{description}
+\item[{\footnotesize MYSQL\_SERVER\_VERSION:}] la versione del server MySQL. Viene passata dal server al client nel \emph{greeting packet}.
+\item[{\footnotesize MYSQL\_USERNAME:}] il nome dell'utente che si è collegato al server. Viene passato dal client al server nel \emph{login packet}.
+\item[{\footnotesize MYSQL\_DB:}] il database al quale si è attualmente collegati. Ci sono due modi in cui il client seleziona un database: se server e client gestiscono il protocollo di versione superiore o uguale al 4.1, il client può selezionare un database direttamente nel \emph{login packet}; altrimenti il client invia un \emph{command packet} il cui comando è \emph{use database}.
+\item[{\footnotesize MYSQL\_REQUEST:}] la versione human-readable della richiesta fatta dal client. Come detto, il primo byte del \emph{command packet} identifica il comando che il client chiede di eseguire al server. Qui viene esportata una versione più leggibile di questa richiesta così, ad esempio, se il primo byte vale 0x03, e cioè se il client sta chiedendo al server di eseguire una query al database, l'informazione esportata sarà la stringa: ``Query''.
+\item[{\footnotesize MYSQL\_QUERY:}] l'eventuale query che deve essere eseguita. Sono tutti i byte successivi al primo del \emph{command packet} nel caso in cui il primo byte valga 0x03.
+\item[{\footnotesize MYSQL\_REQUEST:}] la risposta del server. E' il \emph{field\_count} (il primo byte) del \emph{result packet} che, come si è visto, ha significati differenti a seconda della richiesta fatta dal client.
+\end{description}
+
+Queste informazioni vengono esportate dal plugin ad ogni \emph{result packet}. Se l'handshake viene catturato tutto correttamente si può quindi sapere la versione del server MySQL, l'username dell'utente, l'eventuale database selezionato nel \emph{login packet} e la risposta del server che informa il client se la connessione è stata accettata o meno. Durante l'esecuzione normale di richiesta-risposta tra client e server invece, si possono analizzare la richiesta fatta dal client con l'eventuale query e il suo esisto.
+
+\subsection{L'analisi del traffico}
+Dalle specifiche del protocollo MySQL e dalle informazioni che il plugin è in grado di esportare, si nota che tutto ciò che serve si trova all'inizio del pacchetto. Per risolvere il problema della frammentazione del pacchetto MySQL in più pacchetti TCP e di tutto quello che ne consegue (ritrasmissione dei pacchetti TCP errati, riordino dei pacchetti TCP, etc\ldots), il plugin tiene in memoria solo il primo (o meglio parte del primo) degli eventuali pacchetti TCP diretti dal client al server, o viceversa.
+
+Il plugin riconosce la fine di una serie di pacchetti TCP quando la direzione cambia; questo perché il server non risponde sino a che tutti i pacchetti TCP non gli sono stati recapitati con successo (ovvero fino a che non ha ricostruito tutto il pacchetto MySQL), e viceversa, il client non richiede l'esecuzione di un altro comando se non ha letto tutte le risposte del server. Sino a che la direzione del ``discorso'' non cambia, il plugin si preoccupa solo di controllare che il pacchetto TCP che la sonda cattura non sia precedente a quello che lui pensa essere il primo della serie; questo avviene quando la rete mischia i pacchetti TCP facendoli arrivare in disordine alla sonda. Quando poi la direzione cambia, il plugin effettua l'analisi del pacchetto in memoria ed eventualmente esegue l'esportazione delle informazioni. Vale la pena notare che il pacchetto precedente non è sempre quello con il numero di sequenza minore, infatti, il numero di sequenza è un numero positivo intero ma a 32 bit, il fatto che sia limitato superiormente implica che prima o poi questo numero ricomincerà dall'inizio e, se questo avviene, il primo pacchetto non è più quello che ha il numero di sequenza più piccolo in assoluto, ma quello con il numero di sequenza più piccolo tra quelli più grandi. Per tenere conto di questa eventualità, il controllo effettuato dal plugin è il seguente:
+
+\begin{footnotesize}
+\begin{verbatim}
+if ( tcpSeqNum < p_data->tcp_info.firstPktSeqNum &&
+	     (tcpSeqNum + 8388608) > p_data->tcp_info.firstPktSeqNum )
+  /* E' un nuovo primo */
+\end{verbatim}
+\end{footnotesize}
+Si controlla che il numero di sequenza attuale ({\footnotesize \texttt{tcpSeqNum}}) sia effettivamente più piccolo di quello che il plugin pensa essere il primo pacchetto della serie ({\footnotesize \texttt{p\_data->tcp\_info.firstPktSeqNum}}). Inoltre si controlla che aggiungendo al numero di sequenza del pacchetto attuale, un numero relativamente grande ($2^{23} = 8388608$), questo risulti effettivamente più grande di quello salvato, cosa che non avviene nel caso in cui il numero di sequenza è stato resettato\footnote{Si ricordi che il numero di sequenza va di pari passo con i byte inviati. Un pacchetto MySQL come detto in precedenza non può essere più grande di $2^{24}$ byte quindi, nell'eventualità che il numero di sequenza sia stato resettato, aggiungendo $2^{23}$ a questo numero non lo farà mai essere più grande del più piccolo tra i più grandi.}.
+
+Ovviamente osservare il flusso del ``discorso'' implica che il plugin non è completamente stateless in quanto si aspetta di vedere un cambio di direzione. L'analisi del traffico TCP però è molto complicata e potrebbe portare via molte risorse. Si ricordi che il plugin gira su una sonda che potrebbe avere attivi innumerevoli flussi nello stesso periodo di tempo, i plugin non devono quindi ``rubare'' molte risorse per compiere il loro lavoro. L'algoritmo scelto è sembrato essere un buon compromesso tra efficienza e coerenza dei dati esportati, infatti, se ad esempio la sonda dovesse perdere l'unico pacchetto TCP che segna il cambio del ``discorso'', quello che succede è che il plugin pensa che la direzione non sia mai cambiata e quindi le informazioni che esporta in un dato momento potrebbero essere errate. Questo però non ha impatto sul futuro, dove se non ci sono altri errori di cattura, il plugin si riallineerà al ``discorso''.
+
+\subsubsection{In ritardo di uno}
+L'analisi del pacchetto viene effettuata, come detto, solo al cambio di direzione del ``discorso'' tra il client e il server. Nel momento in cui il flusso scade però, questo cambio di direzione non avviene, ed il plugin deve tener conto anche di questa eventualità. \emph{nProbe} invoca comunque le funzioni {\footnotesize \texttt{exportFcnt()}} e {\footnotesize \texttt{printFcnt()}} quando il flusso è scaduto e durante l'esecuzione di queste funzioni, quindi, va controllato se il pacchetto conservato in memoria è stato analizzato oppure no, altrimenti si rischia di esportare delle informazioni vecchie.
+
+\subsection{Le strutture dati private}
+Durante l'analisi del traffico MySQL si possono individuare tre tipi di dati distinti:
+
+\begin{description}
+\item[I dati statici della connessione MySQL:] quei dati che vengono scambiati durante l'handshake e che rimangono uguali per tutta la connessione\footnote{Tra queste informazioni il plugin mette anche l'username dell'utente collegato al database. In realtà esiste un comando chiamato \emph{change user} che permette di cambiare l'utente a connessione avviata.}.
+\item[I dati relativi alla connessione TCP:] sono i dati necessari a seguire il ``discorso'' a livello di pacchetti TCP.
+\item[I dati dinamici della connessione MySQL:] quali ad esempio, il comando richiesto dal client, l'eventuale query, la risposta al comando, etc\ldots.
+\end{description}
+Per ognuno di questi tipi di dati il plugin ha una struttura dati ben definita:
+
+\begin{scriptsize}
+\begin{verbatim}
+/* Informazioni statiche della connessione MySQL (prelevate durante l'handshake) */
+struct mysql_connection_info
+{
+  char *mysql_server_version;   /* la versione del server */
+  char *mysql_username;         /* l'username dell'utente collegato */
+  u_int16_t s_caps;             /* server capability */
+  u_int16_t c_caps;             /* client capability (client flag) */
+  u_int16_t c_ext_caps;         /* ciente extended capability (client extended flag) */
+};
+
+/* Informazioni del flusso TCP */
+struct mysql_tcp_info
+{
+  u_short src_port;                                  /* porta sorgente */
+  u_int32_t firstPktSeqNum;                          /* numero di sequenza del primo pacchetto */
+  u_char firstPktPayload[MYSQL_TCP_PKT_MAX_SIZE+1];  /* primo pacchetto del "discorso" (primi byte) */
+  int firstPktPayloadLen;                            /* dimensione, in byte, del primo pacchetto salvato */
+  u_char wasDissected;                               /* il pacchetto è stato analizzato (1) o no (0)? */
+};
+
+/* Struttura dati privata collegata al flusso
+ * (contiene le informazioni dinamiche della connessione MySQL).
+ */
+struct plugin_data
+{
+  char *mysql_db;                       /* il database attualmente in uso */
+  u_int8_t mysql_command;               /* comando di cui client chiede l'esecuzione */
+  char *mysql_query;                    /* eventuale query fatta dal client */
+  int16_t mysql_response;               /* risposta del server (si notino i 2 byte) */
+  struct mysql_connection_info c_info;  /* informazioni statiche sul flusso MySQL */
+  struct mysql_tcp_info tcp_info;       /* informazioni sul flusso TCP */
+};
+\end{verbatim}
+\end{scriptsize}
+Il plugin collega solo la struttura {\footnotesize \texttt{plugin\_data}} alla variabile {\footnotesize \texttt{pluginData}} della {\footnotesize \texttt{PluginInformation}} relativa al flusso (si veda \ref{dati_privati}), le altre strutture dati come si vede sono contenute in essa sotto forma di variabili.
+
+C'è un altra struttura dati che il plugin usa durante l'analisi del pacchetto MySQL, quella che contiene le informazioni sull'header:
+
+\begin{scriptsize}
+\begin{verbatim}
+/* Header del pacchetto MySQL */
+struct mysql_packet_header
+{
+  u_int32_t length; /* dimensione del pacchetto (solo 24 bit) */
+  u_char number;    /* numero di sequenza del pacchetto */
+};
+\end{verbatim}
+\end{scriptsize}
+
+\subsection{Il plugin in azione}
+Ecco l'output prodotto dall'esecuzione di \emph{nProbe} su un pacchetto MySQL grazie all'ausilio del plugin:
+
+\begin{scriptsize}
+\begin{verbatim}
+$> nprobe -p 1/1/1/1/0/1 -T "%PROTOCOL %IPV4_SRC_ADDR %IPV4_DST_ADDR %L4_SRC_PORT %L4_DST_PORT\
+   %MYSQL_SERVER_VERSION %MYSQL_USERNAME %MYSQL_DB %MYSQL_REQUEST %MYSQL_QUERY %MYSQL_RESPONSE"\
+   -P /tmp -i ../samples/mysql_complete.pcap
+05/Oct/2010 11:00:28 [nprobe.c:2548] Welcome to nprobe v.5.8.2 ($Revision: 1700 $) for\
+                                     x86_64-unknown-linux-gnu
+05/Oct/2010 11:00:28 [nprobe.c:2600] Dumping flow files every 60 sec into directory /tmp
+05/Oct/2010 11:00:28 [nprobe.c:2606] WARNING: -n parameter is missing. 127.0.0.1:2055 will be used.
+05/Oct/2010 11:00:28 [plugin.c:137] Loading plugins [.so] from ./plugins
+05/Oct/2010 11:00:28 [dbPlugin.c:72] Initializing DB plugin
+05/Oct/2010 11:00:28 [util.c:295] GeoIP: loaded AS config file GeoIPASNum.dat
+05/Oct/2010 11:00:28 [plugin.c:580] 1 plugin(s) enabled
+05/Oct/2010 11:00:28 [plugin.c:511] Enabling plugin MySQL Protocol Dissector
+05/Oct/2010 11:00:28 [engine.c:1695] Saving flows into temporary file '/tmp/2010/10/05/11/00.flows.temp'
+05/Oct/2010 11:00:29 [engine.c:1554] Flow file '/tmp/2010/10/05/11/00.flows' is now available
+
+$> sed -n '1 b print;/|56162|3306|/b print;d;:print {s/\([^|]*|\)\{5\}//;p;}' /tmp/2010/10/05/11/00.flows
+MYSQL_SERVER_VERSION|MYSQL_USERNAME|MYSQL_DB|MYSQL_REQUEST|MYSQL_QUERY|MYSQL_RESPONSE
+5.0.54|tfoerste||Query|select @@version_comment limit 1|1
+5.0.54|tfoerste||Query|SELECT DATABASE()|1
+5.0.54|tfoerste|test|Use Database||0
+5.0.54|tfoerste|test|Query|show databases|1
+5.0.54|tfoerste|test|Query|show tables|1
+5.0.54|tfoerste|test|Show Fields||3
+5.0.54|tfoerste|test|Query|create table foo (id BIGINT( 10 ) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,\
+                           animal VARCHAR(64) NOT NULL, name VARCHAR(64) NULL DEFAULT NULL) ENGINE = MYISAM|0
+5.0.54|tfoerste|test|Query|insert into foo (animal, name) values ("dog", "Goofy")|0
+5.0.54|tfoerste|test|Query|insert into foo (animal, name) values ("cat", "Garfield")|0
+5.0.54|tfoerste|test|Query|select * from foo|3
+5.0.54|tfoerste|test|Query|delete from foo where name like '%oo%'|0
+5.0.54|tfoerste|test|Query|delete from foo where id = 1|0
+5.0.54|tfoerste|test|Query|select count(*) from foo|1
+5.0.54|tfoerste|test|Query|select * from foo|3
+5.0.54|tfoerste|test|Query|delete from foo|0
+5.0.54|tfoerste|test|Query|drop table foo|0
+5.0.54|tfoerste|test|Quit||-1
+\end{verbatim}
+\end{scriptsize}
+
+Alcuni piccoli commenti sull'output:
+
+\begin{itemize}
+\item Per le prime due righe\footnote{Queste due query sono eseguite automaticamente dal client MySQL senza che l'utente abbia ancora iniziato a fare richieste.} di output manca il nome del database in uso, questo vuol dire che durante l'handshake il client non ha selezionato nessun database.
+\item La terza riga indica che l'utente ha chiesto di utilizzare il database \emph{test} e il server ha risposto con un \emph{Ok packet} (\emph{field\_count} = 0x00).
+\item Una query interessante è riportata dal seguente output:
+
+\begin{scriptsize}
+\begin{verbatim}
+5.0.54|tfoerste|test|Query|select * from foo|3
+\end{verbatim}
+\end{scriptsize}
+dal quale si riesce a capire che la tabella \emph{foo} contiene tre colonne (coerentemente con la \emph{CREATE TABLE} precedente), pur non essendo state direttamente selezionate dal client durante la \emph{SELECT}.
+\item L'ultima riga di output, riporta una risposta come '-1' mentre tutte le risposte del server vanno, come visto nel paragrafo \ref{result_packet}, da 0 (\emph{Ok packet}) a 255 (\emph{Error packet}). Il plugin riserva due byte per le risposte del server in modo da contenere non solo tutti i valori da 0 a 255 ma anche altri con significato speciale. Ogni volta che esporta delle informazioni, il plugin resetta alcuni dati delle strutture private ed uno di questi è proprio la variabile che contiene la risposta del server che viene settata ad un valore sconosciuto di '-1'; questo valore quindi indica che il server non ha risposto, ed in effetti, se si guarda la figura \ref{mysql-protocol}, si nota che alla richiesta di fine sessione da parte del client, il server non risponde ma chiude direttamente la connessione.
+\end{itemize}
+
+% LocalWords:  plugin MySQL Protocol Dissector nProbe protocol dissector client
+% LocalWords:  template VERSION greeting packet USERNAME DB command REQUEST TCP
+% LocalWords:  human readable query Query' field count result l'handshake l'username
+% LocalWords:  tcpSeqNum tcp info firstPktSeqNum stateless exportFcnt printFcnt
+% LocalWords:  change pluginData PluginInformation sull'header foo table SELECT
+% LocalWords:  Error

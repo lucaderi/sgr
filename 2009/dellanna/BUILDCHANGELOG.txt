@@ -1,0 +1,74 @@
+Versione 1.2.1
+	*Targets:
+		>aggiornato target uninstall_pktflow	/* Gestisce la cancellazione del RRD flows.rrd  */
+		>aggiornato target uninstall_all	/* Gestisce la cancellazione del RRD flows.rrd  */
+
+
+
+
+
+Versione 1.2.0
+	
+	*Targets:
+		+aggiunto target help
+		+aggiunto target make_pktflow		/* Compila l'applicazione Packet Flow */
+		+aggiunto target uninstall_pktflow	/* Disinstalla l'applicazione Packet Flow */
+		+aggiunto target uninstall_pktcap	/* Disinstalla l'applicazione Packet Capture */
+	
+		>cambiato target uninstall in uninstall_all		/* Disinstalla tutte le applicazioni e la libreria jpcap compilata in path locale  */
+		>cambiato e reimplementato target make in make_pktcap	/* Eliminati target intermedi  */
+		>reimplementato target make_jpcap			/* Eliminati target intermedi */
+	
+		/* Eliminazione di tutti i target intermedi finalizzati unicamente all'esecuzione dei target di compilazione finali */
+		-eliminato target clean	                 /* I file di build vengono cancellati direttamente dai target  */
+		-eliminato target init_jpcap_compile
+        	-eliminato target compile_jpcap
+        	-eliminato target jar_jpcap
+        	-eliminato target javah
+        	-eliminato target make_lib
+		-eliminato target init_compile
+
+
+ 	*Valori default proprieta':
+                property jpcap_jar=./jpcaplib	/* Link alla libreria java jpcap.jar  */
+                property pcap_lib=${jpcap_jar}	/* Link alla libreria nativa di supporto libjpcap.so  */
+
+		In fase di esecuzione Packet Capture e Packet Flow si "linkano" di default sulle librerie jpcap.jar e libjpcap.so ottenute dalle compilazioni dei sorgenti 
+		di jpcap attraverso il target make_jpcap. Questo vuol dire che deve essere eseguito il target make_jpcap prima di compilare Packet Capture o Packet Flow.
+		Non vengono piu' utilizzate le librerie precompilate in ./install/precompiledlibs/ 
+        	I path delle librerie possono essere cambiate in fase di compilazione digitando:
+
+                	ant -Djpcap_jar=<new jpcap.jar lib path> -Djpcap_lib=<new libjpcap.so lib path> make_pktcap 	/* Compilazione Packet Capture  */
+			ant -Djpcap_jar=<new jpcap.jar lib path> -Djpcap_lib=<new libjpcap.so lib path> make_pktflow 	/* Compilazione Packet Flow  */
+
+
+
+
+Versione 1.0
+
+	*Targets:
+		/* Suit di target per la compilazione in path locale della libreria jpcap */
+		target init_jpcap_compile
+		target compile_jpcap
+		target jar_jpcap
+		target javah
+		target make_lib
+		target make_jpcap
+
+		/* Suit di target per la disinstallazione degli eseguibili e dei file di lavoro */
+		target clean
+		target uninstall
+
+		/* Suit di target per la compilazione di Packet Capture */
+    		target init_compile
+		target make
+
+
+	*Valori default proprieta':
+		property jpcap_jar=./install/precompiledlibs/	/* Link alla libreria java jpcap.jar  */
+		property pcap_lib=${jpcap_jar}			/* Link alla libreria nativa di supporto libjpcap.so  */
+
+		In fase di esecuzione Packet Capture si "linka" di default sulle librerie jpcap.jar e libjpcap.so precompilate in path locale
+		I path delle librerie possono essere cambiate in fase di compilazione digitando:
+		
+			ant -Djpcap_jar=<new jpcap.jar lib path> -Djpcap_lib=<new libjpcap.so lib path>

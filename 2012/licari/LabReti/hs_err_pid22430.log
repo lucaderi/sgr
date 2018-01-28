@@ -1,0 +1,156 @@
+, tid=140617697867520
+#
+# JRE version: 6.0_24-b24
+# Java VM: OpenJDK 64-Bit Server VM (20.0-b12 mixed mode linux-amd64 compressed oops)
+# Derivative: IcedTea6 1.11.1
+# Distribution: Ubuntu 12.04 LTS, package 6b24-1.11.1-4ubuntu3
+# Problematic frame:
+# C  [libc.so.6+0x1411ba]  __nss_hosts_lookup+0x1107a
+#
+# If you would like to submit a bug report, please include
+# instructions how to reproduce the bug and visit:
+#   https://bugs.launchpad.net/ubuntu/+source/openjdk-6/
+# The crash happened outside the Java Virtual Machine in native code.
+# See problematic frame for where to report the bug.
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007fe414008000):  JavaThread "main" [_thread_in_native, id=22434, stack(0x00007fe41bde3000,0x00007fe41bee4000)]
+
+siginfo:si_signo=SIGBUS: si_errno=0, si_code=2 (BUS_ADRERR), si_addr=0x00007fe3dba50ff0
+
+Registers:
+RAX=0x00007fe3db9ada60, RBX=0x00007fe4140081d0, RCX=0x0000000000080000, RDX=0x00000000000a34f0
+RSP=0x00007fe41bee22a8, RBP=0x00007fe41bee22f0, RSI=0x00000000c89a3580, RDI=0x00007fe3dba51050
+R8 =0x00007fe3dbaada50, R9 =0x00000000c8a00010, R10=0x000000000000f87f, R11=0x00007fe41b47ef90
+R12=0x0000000000b97fb0, R13=0x0000000000100000, R14=0x00000000c2400010, R15=0x0000000006600000
+RIP=0x00007fe41b43f1ba, EFLAGS=0x0000000000010206, CSGSFS=0x0000000000000033, ERR=0x0000000000000006
+  TRAPNO=0x000000000000000e
+
+Top of Stack: (sp=0x00007fe41bee22a8)
+0x00007fe41bee22a8:   00007fe4196e1941 00007fe41bee23c8
+0x00007fe41bee22b8:   00007fe3db9ada60 00000000071a0000
+0x00007fe41bee22c8:   00000000b7f603c0 0000000000000000
+0x00007fe41bee22d8:   00000000b7f603c0 00007fe41bee23c8
+0x00007fe41bee22e8:   00007fe414008000 00007fe41bee2378
+0x00007fe41bee22f8:   00007fe411010d68 00007fe41bee2330
+0x00007fe41bee2308:   00007fe41400faf0 00007fe41bee2350
+0x00007fe41bee2318:   00007fe41a956700 00000000eb6b63d0
+0x00007fe41bee2328:   00007fe41bee2328 00000000b7f5fd10
+0x00007fe41bee2338:   00007fe41bee2338 0000000000000000
+0x00007fe41bee2348:   00007fe41bee23c8 00000000b7f610c0
+0x00007fe41bee2358:   0000000000000000 00000000b7f603c0
+0x00007fe41bee2368:   0000000000000000 00007fe41bee2398
+0x00007fe41bee2378:   00007fe41bee2410 00007fe41100585a
+0x00007fe41bee2388:   00000000b7f61058 00007fe41100df58
+0x00007fe41bee2398:   0000000007197fb0 0000000007197fb0
+0x00007fe41bee23a8:   00007fe3d54ada60 00000000eb825148
+0x00007fe41bee23b8:   0000000000000000 0000000000000000
+0x00007fe41bee23c8:   00000000c2400000 00007fe41bee23d0
+0x00007fe41bee23d8:   00000000b82896d9 00007fe41bee2450
+0x00007fe41bee23e8:   00000000b828d210 0000000000000000
+0x00007fe41bee23f8:   00000000b8289770 00007fe41bee2398
+0x00007fe41bee2408:   00007fe41bee2438 00007fe41bee2498
+0x00007fe41bee2418:   00007fe4110059b3 000000000eb517d0
+0x00007fe41bee2428:   000000000ed7b230 0000000000229a60
+0x00007fe41bee2438:   0000000007197fb0 0000000000000000
+0x00007fe41bee2448:   00000000c2400000 00000000eb825148
+0x00007fe41bee2458:   00007fe41bee2458 00000000b7f4f79d
+0x00007fe41bee2468:   00007fe41bee24b0 00000000b7f524c8
+0x00007fe41bee2478:   0000000000000000 00000000b7f4f7c0
+0x00007fe41bee2488:   00007fe41bee2438 00007fe41bee24a8
+0x00007fe41bee2498:   00007fe41bee2508 00007fe4110059b3 
+
+Instructions: (pc=0x00007fe41b43f1ba)
+0x00007fe41b43f19a:   48 81 ea 80 00 00 00 66 0f e7 47 f0 66 0f e7 4f
+0x00007fe41b43f1aa:   e0 66 0f e7 57 d0 66 0f e7 5f c0 66 0f e7 67 b0
+0x00007fe41b43f1ba:   66 0f e7 6f a0 66 0f e7 77 90 66 0f e7 7f 80 48
+0x00007fe41b43f1ca:   8d 7f 80 73 9f 48 83 fa c0 48 8d 92 80 00 00 00 
+
+Register to memory mapping:
+
+RAX=0x00007fe3db9ada60 is an unknown value
+RBX=0x00007fe4140081d0 is an unknown value
+RCX=0x0000000000080000 is an unknown value
+RDX=0x00000000000a34f0 is an unknown value
+RSP=0x00007fe41bee22a8 is pointing into the stack for thread: 0x00007fe414008000
+RBP=0x00007fe41bee22f0 is pointing into the stack for thread: 0x00007fe414008000
+RSI=0x00000000c89a3580 is an oop
+[B 
+ - klass: {type array byte}
+ - length: 119111600
+RDI=0x00007fe3dba51050 is an unknown value
+R8 =0x00007fe3dbaada50 is an unknown value
+R9 =0x00000000c8a00010 is an oop
+[B 
+ - klass: {type array byte}
+ - length: 119111600
+R10=0x000000000000f87f is an unknown value
+R11=0x00007fe41b47ef90: <offset 0x180f90> in /lib/x86_64-linux-gnu/libc.so.6 at 0x00007fe41b2fe000
+R12=0x0000000000b97fb0 is an unknown value
+R13=0x0000000000100000 is an unknown value
+R14=0x00000000c2400010 is an oop
+[B 
+ - klass: {type array byte}
+ - length: 119111600
+R15=0x0000000006600000 is an unknown value
+
+
+Stack: [0x00007fe41bde3000,0x00007fe41bee4000],  sp=0x00007fe41bee22a8,  free space=1020k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+C  [libc.so.6+0x1411ba]  __nss_hosts_lookup+0x1107a
+j  java.nio.Bits.copyFromByteArray(Ljava/lang/Object;JJJ)V+0
+j  java.nio.DirectByteBuffer.put([BII)Ljava/nio/ByteBuffer;+105
+j  java.nio.ByteBuffer.put([B)Ljava/nio/ByteBuffer;+5
+j  org.rrd4j.core.RrdNioBackend.write(J[B)V+22
+
+Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+j  java.nio.Bits.copyFromByteArray(Ljava/lang/Object;JJJ)V+0
+j  java.nio.DirectByteBuffer.put([BII)Ljava/nio/ByteBuffer;+105
+j  java.nio.ByteBuffer.put([B)Ljava/nio/ByteBuffer;+5
+j  org.rrd4j.core.RrdNioBackend.write(J[B)V+22
+J  org.rrd4j.core.RrdBackend.writeDouble(JDI)V
+j  org.rrd4j.core.RrdPrimitive.writeDouble(IDI)V+24
+j  org.rrd4j.core.RrdDoubleMatrix.<init>(Lorg/rrd4j/core/RrdUpdater;IIZ)V+39
+j  org.rrd4j.core.Archive.<init>(Lorg/rrd4j/core/RrdDb;Lorg/rrd4j/core/ArcDef;)V+296
+j  org.rrd4j.core.RrdDb.<init>(Lorg/rrd4j/core/RrdDef;Lorg/rrd4j/core/RrdBackendFactory;)V+189
+j  org.rrd4j.core.RrdDb.<init>(Lorg/rrd4j/core/RrdDef;)V+5
+j  reti.Executor.main([Ljava/lang/String;)V+1204
+v  ~StubRoutines::call_stub
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0x00007fe414158800 JavaThread "RRD4J Sync Pool [Thread-1]" daemon [_thread_blocked, id=22446, stack(0x00007fe41010b000,0x00007fe41020c000)]
+  0x00007fe41409a000 JavaThread "Low Memory Detector" daemon [_thread_blocked, id=22444, stack(0x00007fe41072c000,0x00007fe41082d000)]
+  0x00007fe414097800 JavaThread "C2 CompilerThread1" daemon [_thread_blocked, id=22443, stack(0x00007fe41082d000,0x00007fe41092e000)]
+  0x00007fe414094800 JavaThread "C2 CompilerThread0" daemon [_thread_blocked, id=22442, stack(0x00007fe41092e000,0x00007fe410a2f000)]
+  0x00007fe414086800 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=22441, stack(0x00007fe410a2f000,0x00007fe410b30000)]
+  0x00007fe414074000 JavaThread "Finalizer" daemon [_thread_blocked, id=22440, stack(0x00007fe410dfe000,0x00007fe410eff000)]
+  0x00007fe414072000 JavaThread "Reference Handler" daemon [_thread_blocked, id=22439, stack(0x00007fe410eff000,0x00007fe411000000)]
+=>0x00007fe414008000 JavaThread "main" [_thread_in_native, id=22434, stack(0x00007fe41bde3000,0x00007fe41bee4000)]
+
+Other Threads:
+  0x00007fe41406b800 VMThread [stack: 0x00007fe4180b4000,0x00007fe4181b5000] [id=22438]
+  0x00007fe41409c800 WatcherThread [stack: 0x00007fe41062b000,0x00007fe41072c000] [id=22445]
+
+VM state:not at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap
+ PSYoungGen      total 18432K, used 4400K [0x00000000eb6b0000, 0x00000000ecb40000, 0x0000000100000000)
+  eden space 15808K, 27% used [0x00000000eb6b0000,0x00000000ebafc070,0x00000000ec620000)
+  from space 2624K, 0% used [0x00000000ec8b0000,0x00000000ec8b0000,0x00000000ecb40000)
+  to   space 2624K, 0% used [0x00000000ec620000,0x00000000ec620000,0x00000000ec8b0000)
+ PSOldGen        total 158528K, used 116319K [0x00000000c2400000, 0x00000000cbed0000, 0x00000000eb6b0000)
+  object space 158528K, 73% used [0x00000000c2400000,0x00000000c9597fc0,0x00000000cbed0000)
+ PSPermGen       total 21248K, used 4811K [0x00000000b7e00000, 0x00000000b92c0000, 0x00000000c2400000)
+  object space 21248K, 22% used [0x00000000b7e00000,0x00000000b82b2d50,0x00000000b92c0000)
+
+Code Cache  [0x00007fe411000000, 0x00007fe411270000, 0x00007fe414000000)
+ total_blobs=225 nmethods=11 adapters=169 free_code_cache=49879488 largest_free_block=14400
+
+Dynamic libraries:
+00400000-00409000 r-xp 00000000 08:04 37201                

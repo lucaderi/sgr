@@ -1,0 +1,101 @@
+% ### PREAMBOLO ### %
+\documentclass[italian, a4paper, twoside, titlepage, 10pt]{article} % Tipo di documento
+
+% Margini (il bindingoffset è lo spazio per la rilegatura)
+\usepackage[includehead, headheight=1.5cm, headsep=0.5cm, top=2.3cm, bottom=1.3cm, left=1.4cm, right=1.4cm, bindingoffset=0.3cm]{geometry}
+
+\usepackage[breaklinks, colorlinks, linkcolor=blue]{hyperref} % Per gli hyperlink
+
+\usepackage{setspace} % Spazi di interlinea
+
+\usepackage[bf,footnotesize]{caption} % Caption (ad esempio i titoli delle figure)
+
+\usepackage{multicol} % multi-colonne
+
+\usepackage{longtable} % Tabelle su più pagine
+
+\usepackage{url} % Link
+
+\usepackage[dvips]{graphicx} % File .eps
+
+\usepackage{floatflt} % Flottanti
+
+\usepackage{verbatim} % Verbatim (scrivere senza formattazione)
+
+\usepackage{amsmath} % Formule matematiche un po' più complicate
+
+% == Glossario == %
+\usepackage[toc, description]{glossaries}
+\loadglsentries{include/Glossario}
+\makeglossaries
+\renewcommand*{\acrnameformat}[2]{#1 (#2)}
+\renewcommand*{\SetCustomDisplayStyle}[1]{%
+  \defglsdisplayfirst[#1]{##3 (##1##4)}%
+ }
+\SetCustomStyle
+% == \Glossario == %
+
+% == Headers == %
+% Header di default
+\usepackage{fancyhdr}
+\pagestyle{plain}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ \ #1}}
+
+% Header per l'articolo
+\fancypagestyle{articolo}{%
+  \fancyhf{}%
+  \pagenumbering{arabic}%
+  \fancyhead[LE,RO]{\bfseries\thepage}%
+  \fancyhead[RE,LO]{\bfseries\rightmark}%
+}
+
+% Header per le pagine della TOC
+\fancypagestyle{toc}{%
+  \fancyhf{}%
+  \pagenumbering{roman}%
+  \fancyhead[LO,RE]{\bf{Indice}}%
+  \fancyhead[LE,RO]{\bfseries \thepage}%
+}
+% == \Headers == %
+
+% == Internazionalizzazione == %
+\usepackage{babel} % Italiano (es. sillabazione)
+
+\usepackage[latin1]{inputenc} % Caratteri speciali italiani (es. lettere accentate)
+% == \Internazionalizzazione == %
+
+% == Info sul documento == %
+\title{Monitoraggio di rete, in pratica}
+\author{Luca Deri\\\footnotesize{Traduzione a cura di Emanuele Tomasi}}
+\date{}
+% == \Info sul documento == %
+% ### \PREAMBOLO ### %
+
+\begin{document}
+
+\maketitle % Prima pagina
+
+% La TOC
+\pagestyle{toc}
+\tableofcontents
+
+% L'articolo
+\newpage
+\pagestyle{articolo}
+\raggedbottom
+
+\input{include/00_intro.tex}
+\input{include/01_introduzione}
+\input{include/02_monitoraggio_SNMP}
+\input{include/03_monitoraggio_remoto}
+\input{include/04_monitoraggio_del_flusso}
+\input{include/05_sFlow}
+\input{include/06_misurazione_del_traffico_casi_di_studio}
+\input{include/07_commenti_finali}
+
+% Il glossario
+\newpage
+\pagenumbering{roman}
+\printglossary[style=altlistgroup]
+
+\end{document}

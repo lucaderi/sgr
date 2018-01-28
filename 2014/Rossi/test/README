@@ -1,0 +1,32 @@
+ .-') _              _ (`-.  
+(  OO) )            ( (OO  ) 
+/     '._  .-----. _.`     \ 
+|'--...__)'  .--./(__...--'' 
+'--.  .--'|  |('-. |  /  | | 
+   |  |  /_) |OO  )|  |_.' | 
+   |  |  ||  |`-'| |  .___.' 
+   |  | (_'  '--'\ |  |      
+   `--'    `-----' `--'      
+       Versione 1.0
+      By Rossi Matteo
+
+_ MODALITA D' USO _
+E possibile eseguire RitrasmissioniTCP in due modalità
+-offiline : la sonda esegue la verifica di eventuali ritrasmissioni, leggendo i pacchetti daun file.
+utilizzare l'opzione: readfile nomeFile
+Esempi:
+java -jar RitrasmissioniTCP.jar readfile /home/matteo/file.pcap
+
+-realtime : la sonda prevede di analizzare il traffico, sulla interfaccia indicata dall'utente
+utilizzare l'opzione : realtime interfaceName
+Esempi
+java -jar RitrasmissioniTCP.jar realtime wlan0  
+In questo caso si catturano i pacchetti provenienti dal wifi...
+java -jar RitrasmissioniTCP.jar realtime eth0
+Per leggerli dalla ethernet
+
+Si noti che i nomi delle interfacce possono cambiare a seconda dei driver ...
+
+_ TEST _
+Sotto linux è possibile eseguire lo script testRitrasmissioniTCP.sh per avere una dimostrazione pratica
+

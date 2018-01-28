@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="pktcap" default="help" basedir=".">
+    <description>
+        Script suit per la compilazione di Pktcap e Pktflow
+    </description>
+	
+	<echo>Script suit version 1.2.1</echo>
+	
+	
+<!-- Imposto le proprieta' dello script -->  
+    <!-- paths libreria jpcap -->
+	<property name="jpcap_jar" location="./jpcaplib" />	
+	<property name="jpcap_lib" location="${jpcap_jar}" />
+		
+<!-- Suit di disintallazione -->
+	<target name="uninstall_pktcap">
+		<delete file="./pktcap.jar" />
+		<delete file="./pktcap.sh"/>
+	</target>
+	
+	<target name="uninstall_pktflow">
+		<delete file="./pktflow.jar" />
+		<delete file="./pktflow.sh"/>
+		<delete file="./flows.rrd" />
+	</target>
+	
+	<target name="uninstall_all">
+	    <delete dir="./jpcaplib" />
+	    <delete file="./pktcap.jar" />
+		<delete file="./pktcap.sh"/>
+		<delete file="./pktflow.jar" />
+		<delete file="./pktflow.sh"/>
+		<delete file="./flows.rrd" />
+	</target>
+
+	
+<!-- Compilazione -->
+	<!-- Compilazione sorgenti jpcap-->
+	<target name="make_jpcap">
+		<mkdir dir="./bin" />
+		<mkdir dir="./jpcaplib" />
+		<javac srcdir="./install/jpcapsrc/java" destdir="./bin">
+			<compilerarg value="-Xlint:unchecked"/>
+			<compilerarg value="-Xlint:deprecation"/>
+		</javac>
+		<jar jarfile="./jpcaplib/jpcap.jar" basedir="bin" excludes="*.class"/>
+		<javah destdir="./install/jpcapsrc/c" classpath="./bin" force="true">
+			<class name="jpcap.JpcapCaptor"/>
+			<class name="jpcap.JpcapSender"/>
+			<class name="jpcap.JpcapWriter"/>
+		</javah>
+		<exec dir="./install/jpcapsrc/c" executable="make">
+			<arg value="clean"/>
+		</exec>
+		<exec dir="./install/jpcapsrc/c" executable="make" />
+		<copy file="./install/jpcapsrc/c/libjpcap.so" todir="./jpcaplib" overwrite="true"/>
+		<delete file="./install/jpcapsrc/c/libjpcap.so"/>	
+		<delete dir="./bin" />
+	</target>
+	
+	<!-- definizione macro per compilazione-->	
+	<macrodef name="java_compile">
+	    <attribute name="source" />
+		<attribute name="exec" />
+		<attribute name="main" />
+        <sequential>
+        	<mkdir dir="./build" />	
+        			
+        	<javac srcdir="./install/src/@{source}" destdir="./build">	
+        		<compilerarg value="-Xlint:unchecked"/>
+        	    <compilerarg value="-Xlint:deprecation"/>
+        	   	<classpath>
+        	    	<fileset dir="${jpcap_lib}"/>
+        	    </classpath>
+        	</javac>
+        	    	
+            <!-- Creazione jar Libreria -->
+       	    <jar destfile="./@{exec}.jar" filesetmanifest="mergewithoutmain">
+       	        <manifest>
+                   	<attribute name="Built-By" value="${user.name}"/>
+       	            <attribute name="Main-Class" value="@{main}"/>
+       	            <attribute name="Class-Path" value="."/>
+       	        </manifest>
+       	        <fileset dir="./build"/>
+       	      <!--  <zipfileset excludes="META-INF/*.SF" src="${jpcap_jar}/jpcap.jar"/> -->
+       	    </jar>
+        	    	
+       	  	<!-- Creazione script sh-->
+       	   	<delete file="./@{exec}.sh"/>
+       	   	<echo file="./@{exec}.sh" message="#!/bin/sh${line.separator}
+        			java -Djava.library.path=java.library.path:${jpcap_lib} -classpath ${jpcap_jar}/jpcap.jar:./@{exec}.jar @{main}" />
+          	<exec executable="chmod">
+          		<arg value="755"/>
+           		<arg value="@{exec}.sh"/>
+           	</exec>
+       		<delete dir="./build" />	   
+        </sequential>
+	</macrodef>
+	
+	<!-- Compilazione PktCap-->
+	<target name="make_pktcap">
+		<java_compile source="pktcapsrc" exec="pktcap" main="PktCap"/>		
+    </target>  
+	
+	<!-- Compilazione PktFlow -->
+	<target name="make_pktflow">
+		<java_compile source="pktflowsrc" exec="pktflow" main="PktFlow"/>
+	</target>
+	
+<!-- Visualizzazione di un help sulle scelte che puoi effettuare utilizzando questo script -->
+	<target name="help">
+		<echo>Elenco dei target eseguibili dallo script di installazione e delle proprieta' associabili ad essi.
+	
+	*Uso: 
+		ant [ -D&lt;proprieta1&gt;=&lt;valore1&gt; .. -D&lt;proprietaN&gt;=&lt;valoreN&gt; ] &lt;target&gt;
+	
+	*Proprieta':
+		jpcap_jar=&lt;new jpcap.jar path&gt;		Path della libreria jpcap.jar: se la proprieta' non e' specificata il valore di default e': ./jpcaplib 	
+		jpcap_lib=&lt;new libjpcap.so path&gt;	Path della libreria nativa libjpcap.so: se la proprieta' non e' specificata il valore di default e': ./jpcaplib
+
+	*Target:
+		ant / ant help		mostra questo messaggio
+		ant make_jpcap		installa la libreria jpcap composta da jpcap.jar e libjpcap.so nel path relativo: ./jpcaplib 
+		ant make_pktcap		installa l'applicazione Packet Capture nella directory corrente
+		ant make_pktflow	installa l'applicazione Packet Flow nella directory corrente
+		ant uninstall_pktcap	disinstalla l'applicazione Packet Capture
+		ant uninstall_pktflow	disinstalla l'applicazione Packet Flow
+		ant uninstall_all	disinstalla tutte le applicazioni e la libreria jpcap salvata nel path relativo ./jpcaplib</echo>
+	</target>
+</project>

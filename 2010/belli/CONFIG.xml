@@ -1,0 +1,70 @@
+<configuration>
+<communities>
+	<community id="community01" > 
+			<cidr>192.168.0.0/24</cidr>
+			<host>192.168.1.1</host>
+	</community>
+	<community id="community02" > 
+			<cidr>192.168.1.0/24</cidr>
+			<host>10.0.0.1</host>
+	</community>
+	
+</communities>
+<rules>
+
+<rule id="rule1" timing="" >
+	<function communityId="community01" offsetPercentage="100" type="SUM">
+	<measure type="Generated Traffic">
+		<portRange begin="80" end="80"/> 
+	</measure>
+	</function>
+	<exprOp type="GREATHER THAN"/>
+	<function communityId="community02" offsetPercentage="100" type="MAX" >
+	<measure type="Generated Traffic"/>
+	</function>
+</rule>
+
+<rule id="rule2" timing="" >
+	<foreach communityId="community01" offsetPercentage="100" >
+	<measure type="Generated Traffic">
+		<portRange begin="80" end="80"/> 
+	</measure>
+	</foreach>
+	<exprOp type="LESS THAN"/>
+	<constant>
+		15000
+	</constant>
+</rule>
+
+<rule id="rule3"  timing="" >
+	<rule id="rule4" timing="" >
+		<function type="SUM" communityId="community01" offsetPercentage="100">
+		<measure type="Generated Traffic">
+			<portRange begin="80" end="80"/> 
+		</measure>
+		</function>
+		<exprOp type="GREATHER THAN"/>
+		<function type="SUM" communityId="community02" offsetPercentage="100" >
+		<measure type="Generated Traffic">
+			<portRange begin="80" end="80"/>
+		</measure>
+		</function>
+	</rule>
+	<boolOp type="AND"/>
+	<rule id="rule5" timing="" >
+		<function type="SUM" communityId="community01" offsetPercentage="100" >
+		<measure type="Generated Traffic">
+			<portRange begin="80" end="80"/> 
+		</measure>
+		</function>
+		<exprOp type="GREATER THAN OR EQUAL TO"/>
+		<constant>
+			15000
+		</constant>
+	</rule>
+
+</rule>
+
+
+</rules>
+</configuration>

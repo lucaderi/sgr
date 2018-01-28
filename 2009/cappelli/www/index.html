@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+
+	<head>
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		<script  type="text/javascript" src="jquery-1.4.2.min.js"></script>
+		<script  type="text/javascript" src="jquery.dateFormat-1.0.js"></script>
+		<script  type="text/javascript" src="script.js"></script>
+	</head>
+
+	<body>
+    <div id="debug" ALIGN="CENTER">
+    <a href="/vhost">Dati JSON con formattazione HTML</a>
+    <a> | </a>
+    <a href="/json">Dati JSON</a>
+    <a> | </a>
+    <a href="/stop">Termina</a>
+    </div>
+    
+    <div id="rrd" ALIGN="CENTER">
+    <img src="rrd/tcpudp.png" border="1" name="refresh1">
+    <img src="rrd/dbAll.png" border="1" name="refresh2">
+    </div>
+    <div id="aggiornare"><p>Loading ....</p></div>
+    <SCRIPT language="JavaScript" type="text/javascript">
+    <!--
+    var t = 1 // interval in seconds
+    image1 = "rrd/dbAll.png"
+    image2 = "rrd/tcpudp.png"
+    
+    function Start() 
+    {
+    tmp = new Date();
+    tmp = "?"+tmp.getTime()
+    document.images["refresh1"].src = image1+tmp
+    document.images["refresh2"].src = image2+tmp
+    setTimeout("Start()", t*1000)
+    }
+    Start();
+    // -->
+    </SCRIPT> 
+    
+	</body>
+
+</html>

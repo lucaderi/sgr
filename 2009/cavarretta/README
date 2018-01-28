@@ -1,0 +1,36 @@
+Il progettino è stato sviluppato su Ubuntu 8.10 installando le librerie necessarie:
+
+libevent 1.3e-3
+librrd2 1.2.27-2ubuntu1
+libpcap 0.9.8-5
+
+////////////////////
+// COMPILARE CON: //
+////////////////////
+gcc arrayqueue.c cemetery.c flow.c hashtable.c pkt_info.c sniffer.c timer.c -o Sniffer -lpthread -levent -lrrd -lpcap
+
+//////////
+// USO: //
+//////////
+Per usare il programma è necessario lanciarlo con i diritti root, che verranno rilasciati appena non saranno più necessari
+
+-lancia il programma per sniffare dall'interfaccia specificata:
+Sniffer -i if_name
+
+-lancia il programma per sniffare dall'interfaccia che l'utente dovrà selezionare da una lista:
+Sniffer -i -list
+
+-lancia il programma per leggere un file di cattura .pcap:
+Sniffer -f filename
+
+/////////
+// RRD //
+/////////
+Il programma cerca nella working directory il file rrd.rrd per salvarvi le statistiche, se non lo trova chiede all'utente se vuole che esso venga creato.
+Se la risposta è no, le statistiche non verranno salvate, altrimenti il programma crea nella working directory il file rrd.rrd usando la seguente stringa:
+
+create rrd.rrd --step 5 DS:in:COUNTER:10:U:U DS:out:COUNTER:10:U:U DS:pro:COUNTER:10:U:U RRA:AVERAGE:0.5:1:12 RRA:AVERAGE:0.5:12:60
+
+E' possibile ottenere un grafico delle statistiche salvate, usando la stringa:
+
+rrdtool graph test.png --end now --start end-600s DEF:in=rrd.rrd:in:AVERAGE DEF:out=rrd.rrd:out:AVERAGE DEF:pro=rrd.rrd:pro:AVERAGE LINE2:in#FF0000 LINE2:out#00FF00 LINE2:pro#0000FF

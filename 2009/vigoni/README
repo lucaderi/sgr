@@ -1,0 +1,22 @@
+Capture 2.0 >>> A Tool for the Network Monitoring
+
+REQUIRES
+
+libmicrohttpd >=0.3
+rrdtool >= 1.3.8
+
+BUILDING
+
+cd capture
+make all
+
+EXECUTION
+
+./capture -h				# display helps
+sudo ./capture -d en1		# start capture on en1 network interface
+sudo ./capture -d en1 -r	# enable RRDTOOL
+
+DUMP
+
+http://localhost:19999/counters		# display counters json on your browser
+http://localhost:19999/flows		# display flows json on your browser

@@ -1,0 +1,1 @@
+This is the make to use for enabling debug support on GeoPacketVisualizer, it was automatically made by Eclipse and I suggest you to use the debbuggin tools offered by that IDE or by gdb to understand how the program wroks and to solve your problems, for any question feel free to email me gianluca_medici@tin.it

@@ -1,0 +1,28 @@
+ActiveMon(1)
+
+NAME:
+    ./activeMon -- script for network availability checking
+
+
+
+SYNOPSIS:
+  activeMon host timeLapse accuracy
+
+      host: IP address, IPv4 dotted-decimal notation ONLY!
+      timeLapse: Integer > 0 , seconds between every reports
+      accuracy: 0 <= Integer < 100 , minimum threshold of succeeded ping for every report
+
+
+DESCRIPTION:
+  -h                        Display the help
+  --help                    Display the help
+
+EXIT STATUS:
+       The activeMon utility DOES NOT return by itself, in order to end this script you have to:
+
+       Step1)  Send SIGSTOP via a ctrl+Z
+
+       Step2)  Kill the suspended process by using kill %n (n position of ActiveMon in suspended processes list)
+
+
+            June 24, 2016

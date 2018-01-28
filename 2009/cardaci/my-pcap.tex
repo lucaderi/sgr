@@ -1,0 +1,370 @@
+\documentclass[a4paper,11pt]{article}
+
+% packages %
+\usepackage[utf8]{inputenc}              % input unicode
+\usepackage[margin=2cm]{geometry}        % impostazione margini
+\usepackage[italian]{babel}              % lingua italiana
+\usepackage[autosize]{dot2texi}          % graphviz
+\usepackage{tikz}                        % graphviz
+\usepackage{color}                       % colori
+\usepackage[pdfborder={0 0 0}]{hyperref} % collegamenti ipertestuali senza bordo
+\usepackage[all]{hypcap}                 % corregge i riferimenti alle figure
+
+% info %
+\title{\Huge\tt my-pcap}
+\author{Andrea Cardaci}
+\date{SGR --- 2009}
+
+% info pdf %
+\pdfinfo{/Author(Andrea Cardaci) /Title(my-pcap)}
+
+% font %
+\renewcommand*\familydefault{\sfdefault}
+
+% custom %
+\definecolor{red}{rgb}{0.7,0,0}
+\newcommand\code[1]{\textcolor{red}{\texttt{#1}}}
+
+% document %
+\begin{document}
+
+\maketitle
+
+\section{Caratteristiche} \label{par:features}
+\code{my-pcap} cattura da una o tutte le interfacce disponibili
+fermandosi se interrotto oppure se è stato raggiunto il numero massimo
+di pacchetti specificati. Attualmente vengono analizzati solo i
+pacchetti \code{TCP} e \code{UDP} su \code{IPv4} (il riconoscimento
+viene delegato a un filtro \code{BPF}). Le opzioni di cattura
+comprendono inoltre la modalità promiscua e il filtraggio in base alla
+direzione dei pacchetti.
+
+\subsection{Sniffer di pacchetti}
+La cosa più semplice che è possibile fare è il dump dei pacchetti
+intercettati mostrando alcune informazioni fondamentali come la
+sorgente e la destinazione.
+
+\subsection{Analizzatore di flussi} \label{par:flows}
+\code{my-pcap} può memorizzare i pacchetti catturati compattandoli in
+flussi monodirezionali. Un flusso contiene un certo numero di
+informazioni relative ai pacchetti che lo compongono, divise in:
+
+\begin{enumerate}
+\item chiave:
+  \begin{itemize}
+  \item IP sorgente;
+  \item porta sorgente;
+  \item IP destinazione;
+  \item porta destinazione.
+  \end{itemize}
+\item data:
+  \begin{itemize}
+    \item numero di pacchetti;
+    \item dimensione in byte del traffico;
+    \item timestamp del primo pacchetto ricevuto;
+    \item timestamp dell'ultimo pacchetto ricevuto.
+  \end{itemize}
+\end{enumerate}
+
+Quando un flusso è attivo/inattivo da troppo tempo viene considerato
+scaduto, estratto da \code{my-pcap} e restituito, ad esempio
+attraverso una stampa.
+
+\subsection{Statistiche}
+Durante la cattura \code{my-pcap} conta il numero di pacchetti che ha
+ricevuto facendo distinzione tra \code{TCP} e \code{UDP}. Questi dati
+vengono inseriti in un database round-robin (\code{RRDtool}) che ne
+tiene traccia per un certo periodo; è possibile disegnare un grafico
+dell'andamento: numero di pacchetti al secondo.
+
+\subsection{Interfaccia HTTP}
+Opzionalmente \code{my-pcap} può attivare un server HTTP (utilizzando
+\code{libmicrohttpd}) attraverso il quale mostrare in una pagina HTML
+gli ultimi flussi estratti e il suddetto grafico.
+
+\section{Struttura}
+In figura \ref{fig:structure} è mostrata un'approssimazione della
+struttura interna di \code{my-pcap}; di seguito verrà illustrato il
+funzionamento dei vari thread.
+
+\begin{figure}
+  \centering
+  \begin{dot2tex}[dot,options=-s]
+    digraph
+    {
+      rankdir = "BT"
+
+      node [ shape = "circle" ]
+      capturer [ label = "Capturer" ]
+      updater1 [ label = "Updater 1" ]
+      updater2 [ label = "Updater 2" ]
+      updatern [ label = "Updater n" ]
+      flowdumper [ label = "Flow Dumper" ]
+
+      node [ shape = "box" ]
+      libpcap [ label = "libpcap" ]
+      queue1 [ label = "Queue 1" ]
+      queue2 [ label = "Queue 2" ]
+      queuen [ label = "Queue n" ]
+      hashtable [ label = "Hash Table" ]
+      flowoutput [ label = "Flow Output" ]
+
+      libpcap -> capturer
+
+      capturer -> queue1 -> updater1 -> hashtable
+      capturer -> queue2 -> updater2 -> hashtable
+      capturer -> queuen -> updatern -> hashtable
+
+      hashtable -> flowdumper -> flowoutput
+    }
+  \end{dot2tex}
+  \caption{\small\it Rappresentazione della struttura interna di
+    \code{my-pcap}: i cerchi indicano i thread, mentre i rettangoli le
+    risorse; le freccie possono essere interpretate come: ``una
+    risorsa è letta da un thread'' e ``un thread scrive su una
+    risorsa''.}
+  \label{fig:structure}
+\end{figure}
+
+\subsection{Capturer}
+La cattura viene effettuata da un thread tramite la funzione
+\code{pcap\_loop}. Il limite di un singolo thread è per evitare attese
+inutili su un mutex, che in caso contrario sarebbe
+necessario\footnote{a meno di meccanismi come \code{PF\_RING}} a
+prevenire race conditions.
+
+Il compito del thread \code{Capturer} è tuttavia limitato (oltre
+ovviamente a chiedere il prossimo pacchetto a \code{libpcap}) a
+calcolare l'hash del pacchetto (come mostrato in figura
+\ref{fig:hash}) e in base a questa inserirlo (non tutto il pacchetto
+ma solo le informazioni rilevanti, vedere~§~\ref{par:flows}) nella
+coda appropriata.
+
+\begin{figure}
+  \centering
+  \begin{dot2tex}[pgf]
+    digraph
+    {
+      d2toptions = "--valignmode=dot"
+      d2tgraphstyle = "anchor=base"
+      hash [ label = "{IP sorgente|IP destinatario|{Porta sorgente|Porta destinatario}}" shape = "record"  ]
+    }
+  \end{dot2tex}
+  \caption{\small\it La hash è un intero (senza segno) a 32 bit formato
+    dallo XOR di queste tre righe.}
+  \label{fig:hash}
+\end{figure}
+
+Le code hanno lo scopo di dividere i pacchetti tra i vari thread
+\code{Updater} (uno per coda) al fine di garantire l'assenza di
+interferenze al momento dell'aggiornamento della tabella hash. In
+altre parole un thread dovrà poter accedere solamente ai propri slot
+senza mai interferire con quelli dei suoi colleghi. Questo è garantito
+dal modo in cui vengono smistati i pacchetti nelle code:
+
+$$
+indice\_della\_coda = hash \mbox{ \% } numero\_di\_threads
+$$
+
+Queste code sono dei buffer circolari che vengono usati senza
+meccanismi di sincronizzazione, almeno dalla parte del \code{Capturer}
+che si limita a segnalare la presenza di pacchetti; i thread
+\code{Updater} aspettano quindi di essere segnalati per iniziare il
+loro ciclo.
+
+Se il \code{Capturer} dopo aver scelto una coda, trova che questa è
+piena, scarta il pacchetto; per il motivo sopra descritto non può
+delegarlo a un'altra coda. Per evitare allocazioni di memoria non
+necessarie gli elementi delle code hanno un flag di uso.
+
+Tutto questo può funzionare anche senza meccanismi di sincronizzazione
+perché su ogni coda agiscono esattamente due thread: il primo
+inserisce (e pone il flag a `usato') solo se un elemento non è usato;
+il secondo rimuove (e pone il flag a `non usato') solo se un elemento
+è usato. \`E importante notare che il flag viene modificato solo dopo
+aver effettuato l'azione.
+
+\subsection{Updater}
+Dopo aver estratto un pacchetto dalla propria coda, un thread
+\code{Updater} lo inserisce nella tabella hash; la posizione gli viene
+passata dal \code{Capturer} che, come già detto, ha utilizzato per
+scegliere la coda.
+
+La tabella hash è implementata con liste di trabocco dove ogni
+elemento ha, tra le altre cose, un flag di uso; questo approccio è
+stato usato per limitare le allocazioni/deallocazioni dato che i
+flussi devono essere memorizzati solo per un tempo limitato, dopo il
+quale altri prenderanno il loro posto. Un altro motivo di questa
+scelta riguarda l'interferenza con il thread \code{Flow~Dumper}: in
+questo modo è possibile fare a meno di meccanismi di sincronizzazione,
+seppur con qualche problema (vedere~§~\ref{par:issues}).
+
+L'esatta procedura di aggiornamento della tabella hash all'arrivo di
+un pacchetto (una volta individuata la lista di trabocco) è la
+seguente:
+
+\begin{enumerate}
+\item la lista viene scorsa fino a che non si trova l'elemento da
+  aggiornare o fino alla fine della lista; nel mentre viene salvato
+  l'eventuale primo elemento non utilizzato;
+\item se l'elemento viene trovato allora viene controllato il suo flag
+  di uso: se è attivo viene aggiornato, altrimenti resettato; se
+  invece viene raggiunta la fine della lista (quindi il pacchetto
+  richiede un nuovo flusso) le opzioni sono due: se nella ricerca è
+  stato trovato un elemento non usato allora viene utilizzato,
+  altrimenti un nuovo nodo viene allocato alla fine della lista.
+\end{enumerate}
+
+\subsection{Flow Dumper}
+Questo thread scorre ripetutamente la tabella hash in cerca di flussi
+che sono scaduti, quando ne trova uno lo stampa (o lo passa al server
+\code{HTTP} se è attivo) e commuta il flag in modo che il nodo possa
+essere riutilizzato in futuro.
+
+\subsection{Altri thread}
+Oltre a questi c'è un altro thread che si occupa della gestione dei
+segnali. Per aggiornare il database round-robin viene registrato un
+timer (\code{setitimer}) che a intervalli regolari invia un segnale
+(\code{SIGALRM}) al gestore, il quale tramite il comando
+\code{RRDtool} inserisce i valori nel database.
+
+\section{Problemi} \label{par:issues}
+Nel ridurre a zero le operazioni di sincronizzazione (lock, wait,
+etc.) sono occorsi alcuni problemi che tuttavia non compromettono la
+stabilità del programma:
+
+\begin{enumerate}
+\item non deallocare mai i nodi inutilizzati della tabella hash può
+  portare a lungo andare a un rallentamento globale causato
+  dall'aumento della lunghezza media delle liste di trabocco, tuttavia
+  problemi di memoria non dovrebbero verificarsi perché in caso di
+  impossibilità di allocare un nodo, il pacchetto viene semplicemente
+  scartato; e comunque dato il concetto di flusso, nuovi nodi si
+  libereranno in continuazione.
+\item un thread \code{Updater} prima di aggiornare un elemento
+  controlla lo stato del flag di uso, se tra queste due operazioni il
+  \code{Flow~Dumper} trova che il medesimo elemento è scaduto procede
+  con il dump; il problema è che l'\code{Updater} lo aggiornerà
+  comunque prolungando la durata del flusso, questo può portare nel
+  migliore dei casi a due dump (entrambi corretti) riguardanti lo
+  stesso flusso, mentre nel peggiore le informazioni che il
+  \code{Flow~Dumper} leggerà saranno state in parte aggiornate
+  dall'\code{Updater} con lo scarto di un pacchetto.
+\end{enumerate}
+
+\section{Utilizzo}
+Eseguito senza parametri (per le opzioni vedere figura~\ref{fig:usage}),
+\code{my-pcap} non mostra alcun output, ma tenta comunque di
+effettuare la cattura.
+
+\code{my-pcap} può catturare da una qualsiasi delle interfacce di
+rete, enumerabili tramite l'opzione \code{l}. Una volta scelte le
+opzioni cattura (\code{ipnd}) occorre scegliere una o più opzioni di
+output (\code{rofw}, vedere~§~\ref{par:features}).
+
+Per poter utilizzare il database round-robin è necessario prima
+crearne uno con l'opzione \code{c}, è importante notare che per
+effettuare la cattura è necessario essere super-utente, mentre il
+database dovrebbe essere creato da un utente normale dato che una
+volta iniziata la cattura i privilegi di \code{root} vengono
+abbandonati, creando dei problemi se il programma è stato eseguito
+tramite il comando \code{sudo} (vedere~§~\ref{par:notes}).
+
+L'interfaccia \code{HTTP} (\code{w}) per avere una qualche utilità
+deve essere usata insieme a una o entrambe le opzioni che abilitano la
+gestione dei flussi e delle statistiche.
+
+\begin{figure}
+  \centering
+\begin{verbatim}
+usage:
+    my-pcap -h
+    my-pcap -c <rrd>
+    my-pcap -g <rrd>
+    my-pcap [-i <int>] [-p] [-n <max>] [-d i | o]
+            [-r <rrd>] [-o] [-f] [-w <port>]
+
+ -h        : print these infos.
+ -l        : list compatible devices.
+ -c <out>  : create a rrd database in <out>.
+ -g <rrd>  : create a sample graph of <rrd>.
+ -i <int>  : read packets from <int>; 'any' by default.
+ -p        : promiscuous mode.
+ -n <max>  : read <max> packets and exit.
+ -d i|o    : capture direction, input(I) or output(O);
+             input and output by default.
+ -r <out>  : fill a rrd database in <out>.
+ -o        : dump some info on stdout.
+ -f        : dump some net flow info on stdout or http.
+ -w <port> : enable http server on port <port>.
+
+Analyze TCP and UDP over IPv4 packages only.
+Use SIGTERM or SIGINT to break the process.
+\end{verbatim}
+  \caption{\small\it Risultato del comando `\code{my-pcap~-h}'.}
+  \label{fig:usage}
+\end{figure}
+
+\section{Note} \label{par:notes}
+Seguono alcune considerazioni sul progetto:
+
+\begin{itemize}
+\item La scelta di non deallocare mai i nodi inutilizzati porta
+  inevitabilmente, come già detto, a un calo delle prestazioni; al
+  momento non è certo se convenga evitare allocazioni/deallocazioni di
+  memoria oppure mantenere le liste di trabocco il più corte
+  possibile. Possibili soluzioni includono:
+  \begin{itemize}
+    \item l'uso di un mutex che garantisca la mutua esclusione tra un
+      \code{Updater} e il \code{Flow~Dumper};
+    \item accorgimenti nel trattare gli elementi della lista al fine
+      di non causare interferenza tra i thread, anche mediante
+      l'eliminazione ritardata dei nodi.
+  \end{itemize}
+\item Per una questione di semplicità \code{my-pcap} supporta
+  solamente \code{IPv4}, anche se il passaggio alla versione
+  successiva non dovrebbe causare troppi problemi.
+\item La scelta di memorizzare i flussi in modo monodirezionale è
+  dovuta al fatto che in questo modo la gestione dei flussi è più
+  semplice.
+\item Le statistiche dividono i pacchetti solamente in \code{TCP} e
+  \code{UDP}, sarebbe più interessante andare avanti e monitorare
+  l'utilizzo dei servizi (\code{HTTP}, \code{DNS}, \code{FTP}, etc.);
+  per far questo basta analizzare il payload del livello applicazione
+  cercando di riconoscere un pattern e/o in base alle porte
+  utilizzate.
+\item \code{my-pcap} fa uso di una quantità di parametri definiti nel
+  codice tramite \code{\#define} che ne regolano profondamente il
+  funzionamento; sono inizializzati a valori che non sono
+  necessariamente la scelta migliore ma piuttosto la scelta più comoda
+  per testare il programma.
+\item La funzione hash (figura~\ref{fig:hash}) fa il suo lavoro ma è
+  probabile che con una funzione differente si ottengano risultati
+  migliori.
+\item Come già accennato per catturare da \code{libpcap} occorre
+  essere super-utente, quindi le possibilità sono due:
+  \begin{enumerate}
+  \item essere \code{root} e quindi ogni file prodotto ha i medesimi
+    privilegi;
+  \item eseguire \code{my-pcap} tramite il comando \code{sudo}, in
+    questo caso il programma se ne accorge (controllando la variabile
+    d'ambiente \code{SUDO\_USER}) e dopo aver richiesto il descrittore
+    per la cattura ed eventualmente attivato l'interfaccia \code{HTTP}
+    ripristina l'utente originale.
+  \end{enumerate}
+  Questa può forse non essere la scelta migliore in un contesto
+  realistico, dove la cattura e l'analisi dei pacchetti spetterebbe ad
+  un utente fittizio ad hoc, ma è senz'altro comoda in queste
+  circostanze.
+\item L'utilità pratica dell'interfaccia \code{HTTP} per come è adesso
+  è decisamente scarsa, serve solo a mostrare un altro modo, oltre la
+  stampa su \code{stdout}, di esportare i dati ottenuti durante la
+  cattura.
+\item Sempre a riguardo dell'interfaccia \code{HTTP}, sarebbe utile
+  stabilire su quale indirizzo far partire il servizio, se non altro
+  per evitare di catturare il traffico di chi accede all'interfaccia;
+  questo è impossibile con la versione di \code{libmicrohttpd} usata,
+  purtroppo quella più recente dà attualmente qualche problema.
+\end{itemize}
+
+\end{document}

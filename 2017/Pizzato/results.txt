@@ -1,0 +1,57 @@
+
+----------PRINTING----------
+
+Client   : 192.168.1.191
+Requests : 15
+  Server DNS: 192.168.1.254
+    Request id     : 25208
+    --- Answer good in 76625 usec
+    Request id     : 63941
+    --- Answer good in 93638 usec
+    Request id     : 59699
+    --- Answer good in 161784 usec
+    Request id     : 34017
+    --- Answer good in 16815 usec
+    Request id     : 55351
+    --- Answer good in 20550 usec
+    Request id     : 9755
+    --- Answer good in 125980 usec
+    Request id     : 28193
+    --- Answer good in 110966 usec
+    Request id     : 31686
+    --- Answer not good in 77289 usec
+    Request id     : 33435
+    --- Answer good in 13961 usec
+    Request id     : 40247
+    --- Answer good in 12891 usec
+    Request id     : 38312
+    --- Answer good in 39540 usec
+    Request id     : 24683
+    --- Answer good in 39642 usec
+    Request id     : 57411
+    --- Answer not good in 47535 usec
+    Request id     : 55345
+    --- Answer good in 12513 usec
+    Request id     : 53944
+    --- Answer good in 11871 usec
+
+  DNS stats: 
+   - Requests              : 15
+   - Responses             : 15
+   - Useful responses      : 13
+   - Not useful responses  : 2
+   - Queries not responded : 0
+   - Min response-time     : 11871 usec
+   - Max response-time     : 57440 usec
+   - Avg response-time     : 161784 usec
+
+Client stats: 
+ - Servers DNS used      : 1
+ - Requests              : 15
+ - Response              : 15
+ - Useful responses      : 13
+ - Not useful responses  : 2
+ - Queries not responded : 0
+ - Min response-time     : 11871 usec
+ - Max response-time     : 57440 usec
+ - Avg response-time     : 161784 usec

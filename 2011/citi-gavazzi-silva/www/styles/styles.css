@@ -1,0 +1,156 @@
+h1 img {
+	float: left;
+	margin-right: 5px;
+}
+
+h1 {
+	line-height: 56px;
+}
+
+h1, h2 {
+	font-weight: normal;
+}
+
+a {
+    text-decoration: none;
+    color: #262626;
+    line-height: 20px;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    z-index: 300;
+    position: absolute;
+}
+
+ul li {
+    list-style: none;
+    float:left;
+    text-align: center;
+}
+
+ul li a {
+    padding: 0 20px;
+    text-align: center;
+}
+
+header {
+    text-align: center;
+}
+
+body {
+    font-family: Georgia;
+    font-size: 14px;
+    text-shadow: 0 1px 0 rgba(255,255,255,.50);
+    color: #262626;
+    background: url(../images/wood-bg.jpg);
+}
+
+#menu {
+    width: 700px;
+    margin: 0 auto;
+    position: relative;
+}
+
+#footer {
+	width:700px;
+	margin-left:auto;
+	margin-right:auto;
+}
+
+#footercont {
+	display:block;
+	width:100%;
+	text-align:center;
+	position:fixed;
+	bottom:0;
+}
+
+/*LAVALAMP START*/
+
+.lavalamp {
+    position: relative;
+    border: 1px solid #d6d6d6;
+    background: #fff;
+    padding: 15px;
+    -webkit-box-shadow: 0 3px 6px rgba(0,0,0,.25);
+	-moz-box-shadow: 0 3px 6px rgba(0,0,0,.25);
+    border-radius : 10px;
+    -moz-border-radius : 10px;
+    -webkit-border-radius : 10px;
+    background : -webkit-gradient(linear, left top, left bottom, from(rgb(240,240,240)), to(rgb(204,204,204)));
+    background : -moz-gradient(linear, left top, left bottom, from(rgb(240,240,240)), to(rgb(204,204,204)));
+    height: 18px;
+}
+
+.cyan {
+	background : rgb(64,181,197);
+	background : -webkit-gradient(linear, left top, left bottom, from(rgb(64,181,197)), to(rgb(7,165,187)));
+	background : -moz-gradient(linear, left top, left bottom, from(rgb(64,181,197)), to(rgb(7,165,187)));
+	border: 1px solid #2f8893;
+}
+
+.yellow {
+	background : rgb(255,199,79);
+	background : -webkit-gradient(linear, left top, left bottom, from(rgb(255,199,79)), to(rgb(255,188,43)));
+	background : -moz-gradient(linear, left top, left bottom, from(rgb(255,199,79)), to(rgb(255,188,43)));
+	border: 1px solid #c08c1f;
+}
+
+.dark {
+	background : rgb(89,89,89);
+	background : -webkit-gradient(linear, left top, left bottom, from(rgb(89,89,89)), to(rgb(54,54,54)));
+	background : -moz-gradient(linear, left top, left bottom, from(rgb(89,89,89)), to(rgb(54,54,54)));
+	border: 1px solid #272727;
+}
+
+.magenta li a , .cyan li a, .yellow li a , .orange li a, .dark li a{
+	color: #fff;
+	text-shadow: 0 -1px 0 rgba(0,0,0,.40);
+}
+
+.floatr {
+    position: absolute;
+    top: 10px;
+    z-index: 50;
+    width: 70px;
+    height: 30px;
+    border-radius : 8px;
+    -moz-border-radius : 8px;
+    -webkit-border-radius : 8px;
+    background : rgba(0,0,0,.20);
+    -webkit-transition: all .4s ease-in-out;
+    -moz-transition: all .4s ease-in-out;
+}
+
+.contenuto {
+	display:inline-block;
+	float:left;
+	width:80%;
+	font-family: Tahoma,Georgia;
+    font-size: 14px;
+    text-shadow: 0 1px 0 rgba(255,255,255,.50);
+    color: #262626;   
+}
+
+.aside  {
+   float:left;
+   display:inline-block;
+   width:20%;
+   text-align:right;
+}
+
+.contenitore {
+  width:70%;
+  margin-left:auto;
+  margin-right:auto;
+  clear:both;
+}
+
+.foot {
+    border-radius : 8px;
+    -moz-border-radius : 8px;
+    -webkit-border-radius : 8px;
+    background : rgba(0,0,0,.20);
+}

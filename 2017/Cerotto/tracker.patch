@@ -1,0 +1,273 @@
+diff --git a/example/ndpiReader.c b/example/ndpiReader.c
+index 1893219..c0af4dd 100644
+--- a/example/ndpiReader.c
++++ b/example/ndpiReader.c
+@@ -64,6 +64,8 @@ static FILE *results_file           = NULL;
+ static char *results_path           = NULL;
+ static char * bpfFilter             = NULL; /**< bpf filter  */
+ static char *_protoFilePath         = NULL; /**< Protocol file path  */
++static char *_trackingFilePath         = NULL; /**< Tracking and advertising domains name file path */
++static FILE *trackingFile         =NULL; /**< Tracking and advertising domains name file */
+ #ifdef HAVE_JSON_C
+ static char *_statsFilePath         = NULL; /**< Top stats file path */
+ static char *_diagnoseFilePath      = NULL; /**< Top stats file path */
+@@ -79,6 +81,7 @@ static u_int8_t undetected_flows_deleted = 0;
+ /** User preferences **/
+ static u_int8_t enable_protocol_guess = 1, verbose = 0, nDPI_traceLevel = 0, json_flag = 0;
+ static u_int8_t stats_flag = 0, bpf_filter_flag = 0;
++static u_int8_t tracking_flag = 0;
+ #ifdef HAVE_JSON_C
+ static u_int8_t file_first_time = 1;
+ #endif
+@@ -184,11 +187,32 @@ typedef struct ndpi_id {
+   struct ndpi_id_struct *ndpi_id;  // nDpi worker structure
+ } ndpi_id_t;
+ 
++struct tracker_stats {
++    char *domain;                    /* key */
++    u_int64_t packets;
++    u_int64_t bytes;
++    u_int32_t flows;
++    UT_hash_handle hh;         /* makes this structure hashable */
++};
++
++struct tracker_protocol_stats {
++    u_int32_t dns;
++    u_int32_t http;
++    u_int32_t ssl;
++};
++
++struct tracker_stats *trackers = NULL;
++
++struct tracker_protocol_stats trackers_proto;
++
++void *tracking_automa;
++
+ // used memory counters
+ u_int32_t current_ndpi_memory = 0, max_ndpi_memory = 0;
+ 
+ 
+ void test_lib(); /* Forward */
++void collect_tracker_stats(char *, struct ndpi_flow_info *);
+ 
+ /* ********************************** */
+ 
+@@ -211,7 +235,7 @@ static void help(u_int long_help) {
+ 
+   printf("ndpiReader -i <file|device> [-f <filter>][-s <duration>][-m <duration>]\n"
+ 	 "          [-p <protos>][-l <loops> [-q][-d][-h][-t][-v <level>]\n"
+-	 "          [-n <threads>] [-w <file>] [-j <file>] [-x <file>] \n\n"
++	 "          [-n <threads>] [-w <file>] [-j <file>] [-x <file>] [-a <file>]\n\n"
+ 	 "Usage:\n"
+ 	 "  -i <file.pcap|device>     | Specify a pcap file/playlist to read packets from or a\n"
+ 	 "                            | device for live capture (comma-separated list)\n"
+@@ -239,7 +263,9 @@ static void help(u_int long_help) {
+ 	 "                            | 3 = port stats\n"
+          "  -b <file.json>            | Specify a file to write port based diagnose statistics\n"
+          "  -x <file.json>            | Produce bpf filters for specified diagnose file. Use\n"
+-         "                            | this option only for .json files generated with -b flag.\n");
++         "                            | this option only for .json files generated with -b flag.\n"
++         "  -a <file>                 | Print statististics on websites that track user activity or offer advertising,\n"
++         "                            | using a file that contains the list of domain names, one per line\n");
+ 
+ 
+ #ifndef WIN32
+@@ -297,6 +323,7 @@ static struct option longopts[] = {
+   { "json", required_argument, NULL, 'j'},
+   { "result-path", required_argument, NULL, 'w'},
+   { "quiet", no_argument, NULL, 'q'},
++  { "tracking", required_argument, NULL, 'a'},
+ 
+   {0, 0, 0, 0}
+ };
+@@ -411,7 +438,7 @@ static void parseOptions(int argc, char **argv) {
+   if(trace) fprintf(trace, " #### %s #### \n", __FUNCTION__);
+ #endif
+ 
+-  while ((opt = getopt_long(argc, argv, "df:g:i:hp:l:s:tv:V:n:j:rp:w:q0123:456:7:89:m:b:x:", longopts, &option_idx)) != EOF) {
++  while ((opt = getopt_long(argc, argv, "df:g:i:hp:l:s:tv:V:n:j:rp:w:q0123:456:7:89:m:b:x:a:", longopts, &option_idx)) != EOF) {
+ #ifdef DEBUG_TRACE
+     if(trace) fprintf(trace, " #### -%c [%s] #### \n", opt, optarg ? optarg : "");
+ #endif
+@@ -435,6 +462,11 @@ static void parseOptions(int argc, char **argv) {
+ #endif
+       break;
+ 
++    case 'a':
++      _trackingFilePath = optarg;
++      tracking_flag = 1;
++      break;
++
+     case 'm':
+       pcap_analysis_duration = atol(optarg);
+       break;
+@@ -671,12 +703,13 @@ char* intoaV4(u_int32_t addr, char* buf, u_int16_t bufLen) {
+  * @brief Print the flow
+  */
+ static void printFlow(u_int16_t thread_id, struct ndpi_flow_info *flow) {
++  char *tomatch=NULL;
+ #ifdef HAVE_JSON_C
+   json_object *jObj;
+ #endif
+   FILE *out = results_file ? results_file : stdout;
+ 
+-  if((verbose != 1) && (verbose != 2))
++  if((verbose != 1) && (verbose != 2) && !tracking_flag)
+     return;
+ 
+   if(!json_flag) {
+@@ -711,13 +744,24 @@ static void printFlow(u_int16_t thread_id, struct ndpi_flow_info *flow) {
+ 	    (flow->dst2src_packets > 0) ? "<->" : "->",
+ 	    flow->dst2src_packets, (long long unsigned int) flow->dst2src_bytes);
+ 
+-    if(flow->host_server_name[0] != '\0') fprintf(out, "[Host: %s]", flow->host_server_name);
++    if(flow->host_server_name[0] != '\0') {
++        fprintf(out, "[Host: %s]", flow->host_server_name);
++        tomatch=flow->host_server_name;
++    }
+     if(flow->info[0] != '\0') fprintf(out, "[%s]", flow->info);
+ 
+-    if(flow->ssh_ssl.client_info[0] != '\0') fprintf(out, "[client: %s]", flow->ssh_ssl.client_info);
++   if(flow->ssh_ssl.client_info[0] != '\0') {
++        fprintf(out, "[client: %s]", flow->ssh_ssl.client_info);
++        tomatch=flow->ssh_ssl.client_info;
++    }
+     if(flow->ssh_ssl.server_info[0] != '\0') fprintf(out, "[server: %s]", flow->ssh_ssl.server_info);
+     if(flow->bittorent_hash[0] != '\0') fprintf(out, "[BT Hash: %s]", flow->bittorent_hash);
+ 
++    if (tomatch && !ndpi_match_string(tracking_automa, tomatch) ) {
++        fprintf(out, "[TRACKING]");
++        collect_tracker_stats(tomatch, flow);
++    }
++
+     fprintf(out, "\n");
+   } else {
+ #ifdef HAVE_JSON_C
+@@ -1561,6 +1605,20 @@ static void saveTopStats(json_object **jObj_group,
+ }
+ #endif
+ 
++int name_sort(struct tracker_stats *a, struct tracker_stats *b) {
++    return strcmp(a->domain,b->domain);
++}
++
++void delete_tracker_stats() {
++    struct tracker_stats *s, *tmp;
++
++    HASH_ITER(hh, trackers, s, tmp) {
++        free(s->domain);
++        HASH_DEL(trackers, s);
++        free(s);
++    }
++}
++
+ /* *********************************************** */
+ 
+ void printPortStats(struct port_stats *stats) {
+@@ -1606,6 +1664,8 @@ static void printResults(u_int64_t tot_usec) {
+ 
+   memset(&cumulative_stats, 0, sizeof(cumulative_stats));
+ 
++  memset(&trackers_proto, 0, sizeof(struct tracker_protocol_stats));
++
+   for(thread_id = 0; thread_id < num_threads; thread_id++) {
+     if((ndpi_thread_info[thread_id].workflow->stats.total_wire_bytes == 0)
+        && (ndpi_thread_info[thread_id].workflow->stats.raw_packet_count == 0))
+@@ -1802,7 +1862,7 @@ static void printResults(u_int64_t tot_usec) {
+ 
+   // printf("\n\nTotal Flow Traffic: %llu (diff: %llu)\n", total_flow_bytes, cumulative_stats.total_ip_bytes-total_flow_bytes);
+ 
+-  if((verbose == 1) || (verbose == 2)) {
++  if((verbose == 1) || (verbose == 2) || tracking_flag) {
+     FILE *out = results_file ? results_file : stdout;
+ 
+     if(!json_flag) fprintf(out, "\n");
+@@ -1836,6 +1896,34 @@ static void printResults(u_int64_t tot_usec) {
+     }
+   }
+ 
++  if(tracking_flag) {
++      struct tracker_stats *s, *tmp;
++      long long unsigned int total_track_packets=0, total_track_bytes=0, total_track_flows=0;
++
++      printf("\n\nTracking and Advertising Stats:\n");
++
++      HASH_SORT(trackers, name_sort);
++      HASH_ITER(hh, trackers, s, tmp) {
++          printf("\t%-40s packets: %-13llu bytes: %-13llu flows: %-13u\n",
++                 s->domain, (long long unsigned int)s->packets, (long long unsigned int)s->bytes, s->flows);
++          total_track_packets+=(long long unsigned int)s->packets;
++          total_track_bytes+=(long long unsigned int)s->bytes;
++          total_track_flows+=s->flows;
++      }
++      printf("\t%-40s packets: %-13llu bytes: %-13llu flows: %-13llu\n",
++             "TOTAL", total_track_packets, total_track_bytes, total_track_flows);
++
++      printf("\nProtocols: (tracking flows/total flows)\n"
++          "\tDNS: %6u / %-5u %.2f%%\n"
++          "\tHTTP: %5u / %-5u %.2f%%\n"
++          "\tSSL: %6u / %-5u %.2f%%\n",
++          trackers_proto.dns, cumulative_stats.protocol_flows[NDPI_PROTOCOL_DNS], trackers_proto.dns / (double) cumulative_stats.protocol_flows[NDPI_PROTOCOL_DNS] * 100,
++          trackers_proto.http, cumulative_stats.protocol_flows[NDPI_PROTOCOL_HTTP], trackers_proto.http / (double) cumulative_stats.protocol_flows[NDPI_PROTOCOL_HTTP] * 100,
++          trackers_proto.ssl, cumulative_stats.protocol_flows[NDPI_PROTOCOL_SSL], trackers_proto.ssl / (double) cumulative_stats.protocol_flows[NDPI_PROTOCOL_SSL] * 100);
++
++      delete_tracker_stats();
++  }
++
+   if(json_flag != 0) {
+ #ifdef HAVE_JSON_C
+     json_object_object_add(jObj_main,"detected.protos",jArray_detProto);
+@@ -2275,6 +2363,45 @@ void automataUnitTest() {
+   ndpi_free_automa(automa);
+ }
+ 
++void parse_tracking_file() {
++    char domain[255];
++
++    if ( ! ( trackingFile = fopen(_trackingFilePath, "r" )) ) {
++        perror("Couldn't open tracking domain file");
++        exit (-1);
++    }
++
++    if ( (tracking_automa = ndpi_init_automa()) == NULL ) {
++        fprintf(stderr,"Error initializing automa");
++        exit(-1);
++    }
++
++    while(fscanf(trackingFile, "%s", domain) != EOF) {
++        ndpi_add_string_to_automa(tracking_automa, domain);
++    }
++
++    ndpi_finalize_automa(tracking_automa);
++
++    fclose(trackingFile);
++}
++
++void collect_tracker_stats(char *tomatch, struct ndpi_flow_info *flow){
++    struct tracker_stats *s;
++
++    HASH_FIND_STR(trackers, tomatch, s);
++    if (s==NULL) {
++        s = (struct tracker_stats *) calloc(1, sizeof(struct tracker_stats));
++        s->domain=strdup(tomatch);
++        HASH_ADD_KEYPTR( hh, trackers, s->domain, strlen(s->domain), s );
++    }
++    s->packets+=flow->src2dst_packets+flow->dst2src_packets;
++    s->bytes+=flow->src2dst_bytes+flow->dst2src_bytes;
++    s->flows++;
++    if(flow->detected_protocol.master_protocol == NDPI_PROTOCOL_DNS) trackers_proto.dns++;
++    if(flow->detected_protocol.master_protocol == NDPI_PROTOCOL_HTTP) trackers_proto.http++;
++    if(flow->detected_protocol.master_protocol == NDPI_PROTOCOL_SSL) trackers_proto.ssl++;
++}
++
+ /* *********************************************** */
+ 
+ /**
+@@ -2659,6 +2786,7 @@ int main(int argc, char **argv) {
+ #endif
+   }
+ 
++  if(tracking_flag) parse_tracking_file();
+ 
+   if((!json_flag) && (!quiet_mode)) {
+     printf("\n-----------------------------------------------------------\n"

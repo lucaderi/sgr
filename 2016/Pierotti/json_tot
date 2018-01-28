@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Per ogni file in input estraggo le informazioni di cui ho bisogno: 
+# -il nome dei protocolli 
+# -il numero di pacchetti scambiati
+
+# Le operazioni all'interno del ciclo servono per posizionare le informazioni corrispondenti 
+# sulla stessa riga in modo tale che siano recuperabili piu facilmente in seguito. Viene anche
+# aggiunto sulla linea il valore dell'id che corrisponde al file esaminato.
+
+id=9
+for FILE in "$@" ; do 
+		
+	cat $FILE | jq '.' | grep name > name.txt
+ 	cat $FILE | jq '.' | grep packets | sed '1,2d' > packets.txt
+	paste name.txt packets.txt > name_packets"$id".txt
+	sed -i "s/^/id:$id,/g" name_packets"$id".txt
+	id=$(($id+1))	
+
+done
+
+# Queste operazioni servono per concatenare i file ottenuti nel ciclo precedente ed
+# a eliminare gli spazi per evitare errori successivi
+
+cat name_packets* > final.txt
+tr -d '\t ' <final.txt >lista.txt
+
+# Ogni linea del file dato in input a questo ciclo è della forma
+# "id:int,"name":"Stringa","packets":int,"
+
+while read line
+do
+
+# Con queste istruzioni scompatto la linea considerata in modo tale da recuperare
+# l'id il nome e il numero di pacchetti
+
+	j=0
+	while IFS=',' read -ra ADDR; do
+		for i in "${ADDR[@]}"; do
+			riga[j]="$i" 
+			j=$(($j+1))
+		done
+	 done <<< "$line"
+
+	id=${riga[0]#*:}
+	nome=${riga[1]#*:}
+	pacchetti=${riga[2]#*:}
+	
+# Adesso si inizia a formare il file traffico.txt che servirà a contenere tutte le informazioni
+# estratte dai vari file. In particolare si compone l'array "dati" per ogni protocollo presente
+# con le giuste informazioni. In questa fase non vengono considerati i caratteri "[" e "]" che devono
+# aprire/chiudere il file json, nonchè le "," che andranno a separare i vari campi; verranno
+# gestiti dopo.
+
+# Se non esiste ancora il file traffico.txt si crea con i dati iniziali
+
+	if [ ! -f traffico.txt ] ; then
+		echo {'"dati"':[[$id , $pacchetti]], '"protocollo"': $nome} > traffico.txt
+	else
+	
+# altrimenti se il file esiste ma non ci sono occorrenze per il nome si aggiunge un campo al file
+
+		if [[ `grep -c $nome traffico.txt` -eq 0 ]] ; then  
+				echo {'"dati"':[[$id , $pacchetti]], '"protocollo"': $nome} >> traffico.txt
+		else
+		
+# Se il file esiste e vi è un occorrenza del nome del protocollo allora bisogna aggiornare l'array dati:
+# Si recupera la linea esatta, si aggiunge un campo con la giusta formattazione e tramite un file d'appoggio
+# tmp.txt si copia il contenuto di traffico.txt (escusa la stringa considerata) appendendvi alla fine la riga
+# modificata; a questo punto si sovrascrive traffico.txt con tmp.txt
+
+				line=`grep $nome traffico.txt`
+				chiave="]]"
+		  		r1=${line%%$chiave*}
+				r2=${line#*$chiave}
+				r="],[$id, $pacchetti]]"
+				grep -v $nome traffico.txt > tmp.txt
+				echo $r1$r$r2 >> tmp.txt
+				cat tmp.txt > traffico.txt
+		fi
+	fi	
+done < lista.txt
+
+# Adesso non resta che creare il file traffico_tot.json utilizzando i dati in
+# traffico.txt. Si inserisce ad inizio file "[", si estrae la prima linea e la si inserisce
+# nel file .json dopo di che tramite il file d'appoggio tmp.txt considero tutte le altre
+# linee (questo per posizionare giustamente le ",")
+
+echo [ > traffico_tot.json
+
+first=`head -n1 traffico.txt`
+chiave="}"
+nome=`echo $first | cut -f 3 -d:`
+nome=${nome%$chiave}
+echo $first >> traffico_tot.json
+grep -v $nome traffico.txt > tmp.txt
+
+while read line
+do 
+
+	echo , >> traffico_tot.json
+	echo $line >> traffico_tot.json
+
+done < tmp.txt
+
+# Alla fine si inserisce in traffico_tot.json "]" che chiude il file
+
+echo ] >> traffico_tot.json
+
+# Si rimuovono tutti i file d'appoggio creati
+
+rm *txt

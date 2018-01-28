@@ -1,0 +1,13 @@
+- autogen.sh
+- sed -i '/ -O./s; -O.;;' Makefile plugins/Makefile
+- make
+- nprobe --help or nprobe
+
+1)
+- cd .libs
+- ln -s ../plugins
+- gdb lt-nprobe
+
+2)
+- ln -s .libs/lt-nprobe
+- gdb lt-nprobe

@@ -1,0 +1,7 @@
+*Le righe con * sono commenti!
+*Numero dei punti da raccogliere
+numberOfPoints=50
+*Tempo tra la raccolta di ogni punto (in secondi)
+timeFrequency=5
+*Interfacce interessate: separarle con una virgola (Es Interface=n1,n2,n3) , mettere all per inserirle tutte
+Interface=all

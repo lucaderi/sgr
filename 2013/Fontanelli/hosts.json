@@ -1,0 +1,119 @@
+{"center":[0, 0],
+"objects":
+	[
+		{
+			"host":
+				[	
+					{
+						"lat":55.00408,
+						"lng":3.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.129"
+					},
+					{
+						"lat":49.00408,
+						"lng":2.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.152"
+					}
+				],
+			"flusso":5,
+			"html":"Info aggiuntive sul flusso"
+		},
+		{
+			"host":
+				[	
+					{
+						"lat":49.00408,
+						"lng":2.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.152"
+					},
+					{
+						"lat":20.00408,
+						"lng":2.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.130"
+					}
+				],
+			"flusso":100,
+			"html":"Info aggiuntive sul flusso"
+		},
+		{
+			"host":
+				[	
+					{
+						"lat":49.00408,
+						"lng":2.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.130"
+					},
+					{
+						"lat":40.00408,
+						"lng":34.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.1"
+					}
+				],
+			"flusso":49,
+			"html":"Info aggiuntive sul flusso"		
+		},
+		{
+			"host":
+				[	
+					{
+						"lat":40.00408,
+						"lng":34.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.12"
+					},
+					{
+						"lat":40.00408,
+						"lng":50.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.2"
+					}
+				],
+			"flusso":15,
+			"html":"Info aggiuntive sul flusso"
+		},
+		{
+			"host":
+				[	
+					{
+						"lat":55.00408,
+						"lng":3.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.152"
+					},
+					{
+						"lat":-40.00408,
+						"lng":-60.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.254"
+					}
+				],
+			"flusso":21,
+			"html":"Info aggiuntive sul flusso"
+		},
+		{
+			"host":
+				[	
+					{
+						"lat":-40.00408,
+						"lng":-60.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.128"
+					},
+					{
+						"lat":-20.00408,
+						"lng":-50.56228,
+						"html":"Info aggiuntive sul peer",
+						"name":"192.168.1.132"
+					}
+				],
+			"flusso":79,
+			"html":"Info aggiuntive sul flusso"
+		}
+	]
+}

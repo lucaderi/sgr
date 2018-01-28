@@ -1,0 +1,41 @@
+ul {
+	list-style-type: none;
+}
+
+li.vhost {
+	display: inline-block;
+	float: left;
+	margin: 3px;
+	padding: 2px 5px;
+	border: 1px solid #999;
+	width: 300px;
+	height: 300px;
+	overflow: auto;
+	background: url(bg.jpg) repeat-x;
+}
+
+.inactive {
+	color: #888;
+}
+
+li.vhost h2 {
+	margin: 0;
+	padding: 0;
+	font-family: "Trebuchet MS", sans-serif;
+	font-size: 14pt;
+}
+
+li.vhost p {
+	margin: 0;
+	padding: 0;
+	font-family: Verdana, Helvetica, sans-serif;
+	font-size: 10pt;
+	width: 300px;
+}
+
+li.vhost p em {
+	font-family: Verdana, Helvetica, sans-serif;
+	font-weight: bold;
+	font-variant: none;
+	font-size: 10pt;
+}

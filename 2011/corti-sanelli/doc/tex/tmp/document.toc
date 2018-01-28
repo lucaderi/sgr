@@ -1,0 +1,4 @@
+\select@language {italian}
+\contentsline {section}{\numberline {1}Title}{1}
+\contentsline {subsection}{\numberline {1.1}Subtitle}{1}
+\contentsline {subsection}{\numberline {1.2}Another subtitle}{1}

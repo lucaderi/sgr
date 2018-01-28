@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="tabletemplate.xsl"?>
+<fs>
+<f>
+<t>UDP</t>
+<si>192.168.1.3</si>
+<di>192.168.1.1</di>
+<sp>55169</sp>
+<dp>53</dp>
+<sb>82</sb>
+<sdp>1</sdp>
+<sf>24 Jun 2009 15:17:56.145690</sf>
+<sl>24 Jun 2009 15:17:56.145690</sl>
+<db>198</db>
+<dsp>1</dsp>
+<df>24 Jun 2009 15:17:56.198370</df>
+<dl>24 Jun 2009 15:17:56.198370</dl>
+<i>1</i>
+</f>
+<f>
+<t>ICMP</t>
+<si>192.168.1.3</si>
+<di>131.114.11.7</di>
+<sp>0</sp>
+<dp>0</dp>
+<sb>980</sb>
+<sdp>10</sdp>
+<sf>24 Jun 2009 15:17:56.198563</sf>
+<sl>24 Jun 2009 15:18:05.210725</sl>
+<i>2</i>
+</f>
+</fs>

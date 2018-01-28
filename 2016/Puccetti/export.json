@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "UNICAST-vs-BROADCAST",
+    "_type": "dashboard",
+    "_source": {
+      "title": "UNICAST vs BROADCAST",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"col\":1,\"id\":\"sum-of-BROADCAST-in-bytes\",\"panelIndex\":1,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":7,\"id\":\"sum-of-UNICAST-in-bytes\",\"panelIndex\":2,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":7,\"id\":\"10-most-used-protocol-Histogram-UNICAST\",\"panelIndex\":3,\"row\":7,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"10-most-frequent-DNS-queries-UNICAST\",\"panelIndex\":5,\"row\":13,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Area-IN-slash-OUT-bytes-UNICAST\",\"panelIndex\":7,\"row\":3,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Area-IN-bytes-BROADCAST\",\"panelIndex\":9,\"row\":3,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"most-frequent-SOURCE-host-in-flows\",\"panelIndex\":10,\"row\":7,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"bar-chart-traffic-destination\",\"panelIndex\":11,\"row\":10,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"}]",
+      "optionsJSON": "{\"darkTheme\":true}",
+      "uiStateJSON": "{}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+      }
+    }
+  }
+]

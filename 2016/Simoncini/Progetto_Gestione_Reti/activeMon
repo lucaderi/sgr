@@ -1,0 +1,30 @@
+.TH activeMon 1 “25 June 2016” "1.0" “ActiveMon MAN PAGE”
+.SH NAME
+activeMon - script for network availability checking
+.SH SYNOPSIS
+.B ./activeMon [ -h
+.B ] [
+.I host
+.B ] [
+.I timeLapse
+.B ] [
+.I accuracy
+.B ]
+.SH DESCRIPTION
+activeMon is high level shell wrapper for active monitoring over a network. Every [timeLapse] seconds, the percentage of correctly packets received from [host_IP] during last [timeLapse] is checked, if this is less than [accuracy], write back a report with every statistic.
+.SH OPTIONS
+.TP
+.B -h 
+Display the help
+.SH EXIT STATUS
+The activeMon utility DOES NOT return by itself, in order to end this script you have to:
+
+	Step1)  Send SIGSTOP via a CTRL+Z
+
+	Step2)  Kill the suspended process by using kill %n (n position of ActiveMon in suspended processes list)
+.SH SEE ALSO
+ping(8)
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Niccolo' Simoncini (nsimoncini@icloud.com)

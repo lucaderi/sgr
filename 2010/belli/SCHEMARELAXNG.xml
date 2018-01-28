@@ -1,0 +1,191 @@
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+
+<start>
+<element name="configuration">
+<ref name="Communities"/>
+<ref name="Rules"/>
+</element>
+</start>
+
+
+<define name="Communities">
+<element name="communities">
+  <zeroOrMore>
+	<ref name="Community"/>
+  </zeroOrMore>
+</element>
+</define>
+
+<define name ="Community">
+<element name="community">
+	  <attribute name="id" />
+	  <optional>
+      <attribute name="name">
+        <text/>
+      </attribute>
+      </optional>
+      	<zeroOrMore>
+	        <element name="cidr">
+	        	<text/>
+	        </element>
+        </zeroOrMore>
+        <zeroOrMore>
+	        <element name="host">
+	        	<text/>
+	        </element>
+        </zeroOrMore>
+</element>
+</define>
+
+
+#define the composition of a set of rule
+<define name="Rules">
+<element name="rules">
+	<oneOrMore>
+		<ref name="Rule"/>
+	</oneOrMore>
+</element>
+</define>
+
+# define the possible composition and attributes of one rule
+<define name="Rule">
+<element name="rule">
+<attribute name="id" />
+<optional>
+<attribute name="timing" />
+</optional>
+	<choice>
+		<ref name="TRule1"/>
+		<ref name="TRule2"/>
+		<ref name="TRule3"/>
+	</choice>
+</element>
+</define>
+
+# basic rule type.
+<define name="TRule1">
+	<group>
+		<ref name="Function"/>
+		<ref name="ExprOp"/>
+		<choice>
+			<ref name="Function"/>
+			<ref name="Constant"/>
+		</choice>
+	</group>
+</define>
+
+# rule that merge the result from 2 rules 
+<define name="TRule2">
+	<group>
+		<ref name="Rule"/>
+		<ref name="BoolOp"/>
+		<ref name="Rule"/>
+	</group>
+</define>
+
+# Rule that permit to value a rule foreach host in the specified community 
+<define name="TRule3">
+	<group>
+		<ref name="Foreach"/>
+		<ref name="ExprOp"/>
+		<choice>
+			<ref name="Function"/>
+			<ref name="Constant"/>
+		</choice>
+	</group>
+</define>
+
+<define name="Foreach">
+	<element name="foreach">
+		<attribute name="communityId" />
+	<optional>
+		<attribute name="offsetPercentage">
+		<data type="positiveInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" />
+		</attribute>
+	</optional>
+	<ref name="Measure"/>
+	</element>
+</define>
+
+<define name="Function">
+<element name="function">
+	<attribute name="communityId" />
+	<attribute name="type">
+			<choice>
+				<value>Max</value>
+				<value>Min</value>
+				<value>Avg</value>
+				<value>Sum</value>
+			</choice>
+	</attribute>
+	<optional>
+		<attribute name="offsetPercentage">
+		<data type="positiveInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" />
+		</attribute>
+	</optional>
+	<ref name="Measure"/>
+</element>
+</define>
+
+<define name="Measure">
+<element name="measure">
+		<attribute name="type">
+			<choice>
+			<value> GENERATED TRAFFIC </value>
+			<value> RECEIVED TRAFFIC </value>
+			<value> TOTAL TRAFFIC </value>
+			<value> OPENED CONNECTION </value>
+			</choice>
+		</attribute>
+		<optional>
+			<element name="portRange">
+				<attribute name="begin">
+					<data type="positiveInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+					<param name="minInclusive">1</param>
+					<param name="maxInclusive">65535</param>
+					</data>
+				</attribute>
+				<attribute name="end">
+					<data type="positiveInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+					<param name="minInclusive">1</param>
+					<param name="maxInclusive">65535</param>
+					</data>
+				</attribute>
+			</element>
+		</optional>
+</element>
+</define>
+
+<define name="ExprOp">
+<element name="exprOp">
+<attribute name="type">
+<choice>
+	<value>GREATER THAN</value>
+	<value>LESS THAN</value>
+	<value>GREATHER THAN OR EQUAL TO</value>
+	<value>LESS THAN OR EQUAL TO</value>
+	<value>EQUAL TO</value>
+	<value>NOT EQUAL TO</value>
+</choice>
+</attribute>
+</element>
+</define>
+
+<define name="BoolOp">
+<element name="boolOp">
+<attribute name="type">
+<choice>
+	<value>AND</value>
+	<value>OR</value>
+</choice>
+</attribute>
+</element>
+</define>
+
+<define name="Constant">
+<element name="constant">
+	<data type="positiveInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+</element>
+</define>
+
+</grammar>

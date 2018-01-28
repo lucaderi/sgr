@@ -1,0 +1,11 @@
+[ FILES ]
+my-pcap.pdf  : relazione
+http-test.sh : dimostrazione uso interfaccia HTTP
+
+[ COMPILAZIONE ]
+'make' compila il progetto
+
+[ DIPENDENZE ]
+libmicrohttpd >= 0.3.1
+rrdtool >= 1.3.1
+libpcap >= 0.9.8

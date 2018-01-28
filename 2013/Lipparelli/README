@@ -1,0 +1,31 @@
+Installation Istructions
+
+Prerequisites
+
+- Apache HTTPD Server version 2.2.x or later
+- PHP 5 any version
+- SQLite 3
+- PHP module for Apache Server
+- SQLite 3 module for PHP 5
+
+All this modules are in the Ubuntu 12.04 LTS Repositories.
+
+
+
+Istructions
+
+1) Put the all my project files into /var/www the default directory for http docs in apache server
+
+2) Give all permissions to /var/www and in particularly /var/www/db and /var/www/tmp for read/write operations
+
+3) Config apache conf files for start with localhost address and give it a port, for example: 8090
+
+
+
+Use Instractions
+
+The index.html is the homepage here you can do researchs into database but firt you must populate it, click on populate mode button and choose a time intervals from date and time picker, WARNING don't choose long time period or it will take much much time to populate for example choose a hand of minutes like 17.39 to 17.49.
+
+After population is complete click again populate mode button to return in normal mode, now you can do researchs form the in the navbar at top of homepage, the results will be diplay under the navbar and it will be clickable for get more information about the values in the graph.
+
+For more information and graphical istructions read the test part of my projects report; you can find the report in th svn directory or in the homepage under the book icon in section More information.

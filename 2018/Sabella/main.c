@@ -18,10 +18,11 @@
 #define FAIL 2
 
 #define BUFFSIZE 65535;
-#define C_PACKETBUFFER_TM 1 // Customs handler packet buffer timeout
+#define C_PACKETBUFFER_TM 256 // Customs handler packet buffer timeout
 #define P_PACKETBUFFER_TM 1   // Poison handler packet buffer timeout
 
-#define DEBUG { char aus[25]; stringFyMAC(aus, gGatewayMAC); printf("DEBUG: %s\n", aus); }
+#define DEBUG { printf("DEBUG at line:%d\n", __LINE__); }
+
 
 // ----- ----- GLOBALS ----- ----- //
 extern int errno;
@@ -35,6 +36,10 @@ char* gTargetDev = NULL;
 char gGatewayIP[20]  = "192.168.1.1";
 unsigned char gGatewayMAC[6];
 const unsigned char gSpoofedMAC[6] = {0x3c, 0x5a, 0xb4, 0x88, 0x88, 0x88};
+
+int gTerminate    = FALSE; // Terminates the execution if something went wrong
+pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t c  = PTHREAD_COND_INITIALIZER;
 
 
 // ----- ----- STRUCTS ----- ----- //
@@ -53,7 +58,7 @@ typedef struct _ThreadArgs ThreadArgs;
 
 // ----- ----- FUNCTION DEFINITIONS ----- ----- //
 void printUsage();
-void sigIntHandler(int signum);
+void breakLoops(int signum);
 char* policyParser(char* filename);
 void* pcapLoop(void *vargp);
 void Poisoner(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
@@ -110,17 +115,22 @@ int parseUArgs(int argc, char const *argv[]) {
 
 
 // ----- ----- MAIN ----- ----- //
-int main(int argc, char const *argv[]) {
+void setup() {
   ARP_REQUEST = htons(ARP_REQUEST);
   ARP_REPLY   = htons(ARP_REPLY);
   IP_PROTO    = htons(IP_PROTO);
+}
 
+int main(int argc, char const *argv[]) {
+  setup();
+
+  // Parsing policy file
   if(parseUArgs(argc, argv) == -1) return -1;
   char* policies = policyParser("policy.txt");
 
   // Checking root permissions
   if(geteuid() != 0) {
-    fprintf(stderr, "Can't work without root permission: ¯\\_(ツ)_/¯\n");
+    fprintf(stderr, "Permission denied\n");
     return FAIL;
   }
 
@@ -133,9 +143,9 @@ int main(int argc, char const *argv[]) {
   }
 
   // Poisoner loop
-  char poisonerFilter[100];
-  sprintf(poisonerFilter, "arp dst host %s && ether multicast", gGatewayIP);
-  // sprintf(poisonerFilter, "(arp dst host %s) && !(arp src host %s) && (ether multicast)", gGatewayIP, gGatewayIP); // Avoids Gratious Cycles
+  char* poisonerFilter = malloc(100 * sizeof(char));
+  strcat(poisonerFilter, "arp dst host ");
+  strcat(poisonerFilter, gGatewayIP);
 
   ThreadArgs* poisonArgs = malloc(sizeof(ThreadArgs));
   poisonArgs -> captureHandler = &gPoisongHandler;
@@ -155,14 +165,17 @@ int main(int argc, char const *argv[]) {
   char spoofedMac[18];
   stringFyMAC(spoofedMac, gSpoofedMAC);
   int policiesLength = (policies == NULL) ? 0 : strlen(policies);
-  int filterLength = strlen(spoofedMac) + policiesLength + 20;
-  char gatekeeperFilter[filterLength + 1];
+  int filterLength = strlen(spoofedMac) + policiesLength + 21;
+  char* gatekeeperFilter = malloc(filterLength * sizeof(char));
 
+  strcat(gatekeeperFilter, "ether dst ");
+  strcat(gatekeeperFilter, spoofedMac);
   if(policies != NULL) {
-    snprintf(gatekeeperFilter, filterLength, "ether dst %s && (%s)", spoofedMac, policies);
+    strcat(gatekeeperFilter, " && (");
+    strcat(gatekeeperFilter, policies);
+    strcat(gatekeeperFilter, ")");
     free(policies);
   }
-  else snprintf(gatekeeperFilter, filterLength, "ether dst %s", spoofedMac);
 
   ThreadArgs* gatekeeperArgs = malloc(sizeof(ThreadArgs));
   gatekeeperArgs -> captureHandler = &gGatekeeperHandler;
@@ -177,11 +190,17 @@ int main(int argc, char const *argv[]) {
   pthread_t gatekeeperTid;
   pthread_create(&gatekeeperTid, NULL, pcapLoop, (void*) gatekeeperArgs);
 
-  signal(SIGINT, sigIntHandler); // CRTL-C termination
+  signal(SIGINT, breakLoops); // CRTL-C termination
 
-  void* gateKeeperStatus = 0;
-  pthread_join(gatekeeperTid, &gateKeeperStatus);
-  if((int) gateKeeperStatus == 42) pcap_breakloop(gPoisongHandler);
+  // If one of the threads stops exit
+  pthread_mutex_lock(&m);
+  while (gTerminate == FALSE)
+    pthread_cond_wait(&c, &m);
+  pthread_mutex_unlock(&m);
+
+  breakLoops(0);
+
+  pthread_join(gatekeeperTid, NULL);
   pthread_join(poisonerTid, NULL);
 
   printf("\nGlad to stop, sir.\n");
@@ -192,12 +211,20 @@ int main(int argc, char const *argv[]) {
 
 // ----- ----- MISCELLANEOUS ----- ----- //
 void printUsage() {
+  printf("\
+Usage: backfire [option]                                                       \n\
+Option:                                                                        \n\
+  -a [mac address]: gateway mac address to which sent resend captured packets  \n\
+  -i [ip]         : target ip to spoof, default 192.168.1.1                    \n\
+  -d [device]     : device from which capture and inject the traffic           \n\
+  -g              : gratuitous option active                                   \n\
+  ");
   printf("\n");
 }
 
-void sigIntHandler(int signum) {
-  pcap_breakloop(gPoisongHandler);
-  pcap_breakloop(gGatekeeperHandler);
+void breakLoops(int signum) {
+  if(gPoisongHandler    != NULL) pcap_breakloop(gPoisongHandler);
+  if(gGatekeeperHandler != NULL) pcap_breakloop(gGatekeeperHandler);
 }
 
 char* policyParser(char* filename) {
@@ -211,10 +238,10 @@ char* policyParser(char* filename) {
   if (fp == NULL) return NULL;
 
   while ((cread = getline(&line, &len, fp)) != -1) {
-    line[cread - 1] = 0;
+    line[strlen(line)-1] = '\0';
     if(strcmp(line, "") == 0) continue;
     if(policy != NULL) {
-      int totalSize = (strlen(policy) + cread + 6) * sizeof(char);
+      int totalSize = (strlen(policy) + cread + 7) * sizeof(char);
       policy = realloc(policy, totalSize);
       strcat(policy, " or (");
       strcat(policy, line);
@@ -233,40 +260,55 @@ char* policyParser(char* filename) {
 
 
 // ----- ----- LOOP INITIALIZER ----- ----- //
+void closeThread(ThreadArgs* args, pcap_t* handler, struct bpf_program* filter) {
+  pthread_mutex_lock(&m);
+  gTerminate = TRUE;
+  pthread_cond_signal(&c);
+  pthread_mutex_unlock(&m);
+
+  if(handler != NULL) {
+    pcap_close(handler);
+    pcap_freecode(filter);
+  }
+  free(args);
+  pthread_exit(NULL);
+}
+
 void *pcapLoop(void *vargp) {
   ThreadArgs* args = (ThreadArgs*) vargp;
+  pcap_t* handler;
+  struct bpf_program filter;
 
   // Creating and opening handler
-  pcap_t* handler;
   if((handler = pcap_open_live(args->targetDev, args->snaplen, args->promisc, args->packetBufferTm, gErrbuf)) == NULL) {
     fprintf(stderr, "Cannot create or open packet capture handle for %s\n", args->targetDev);
-    pthread_exit(NULL);
+    closeThread(args, handler, &filter);
   }
   pcap_t** ghandler = args->captureHandler;
   *ghandler = handler;
 
   // Setting up filters
-  struct bpf_program filter;
   if (pcap_compile(handler, &filter, args->filterExp, TRUE, args->devMask) == -1) {
-    fprintf(stderr, "Something wrong while parsing filter %s: %s\n", args->filterExp, pcap_geterr(handler));
-    return (void *) 42;
+    fprintf(stderr, "Something wrong while parsing filter \"%s\": %s\n", args->filterExp, pcap_geterr(handler));
+    closeThread(args, handler, &filter);
   }
 	if (pcap_setfilter(handler, &filter) == -1) {
     fprintf(stderr, "Something wrong while installing filter \"%s\": %s\n", args->filterExp, pcap_geterr(handler));
-    pthread_exit(NULL);
+    closeThread(args, handler, &filter);
 	}
+
+  pthread_mutex_lock(&m);
+  if(gTerminate == TRUE) closeThread(args, handler, &filter);
+  pthread_mutex_unlock(&m);
 
   // Setting up callback
   int loopReturn = pcap_loop(handler, -1, args->callback, (unsigned char *) handler);
   if(loopReturn == -1) {
     fprintf(stderr, "Error while looping");
-    pthread_exit(NULL);
   }
 
   // Cleaning
-  pcap_close(handler);
-  pcap_freecode(&filter);
-  free(args);
+  closeThread(args, handler, &filter);
   pthread_exit(NULL);
 }
 

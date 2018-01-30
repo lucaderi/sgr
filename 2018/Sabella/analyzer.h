@@ -86,6 +86,8 @@ void printDevStat() {
 
 // ----- ----- CLEANING ----- ----- //
 void freeDevTable() {
+  if(devicesTable == NULL) return;
+  
   struct DevStatics *currentDev, *tmp;
 
   HASH_ITER(hh, devicesTable, currentDev, tmp) {

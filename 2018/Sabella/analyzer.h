@@ -1,111 +1,16 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
+#include <stdint.h>
 #include <limits.h>
+#include <arpa/inet.h>
+
+#include "formats.h"
 #include "libs/uthash/uthash.h"
 
-#define CLEAR_SCREEN for (int asdfghjkl=0; asdfghjkl<20; asdfghjkl++) printf("\n");
-
-
-// ----- ----- GLOBALS ----- ----- //
-long gTotPackets = 1;
-
-
-// ----- ----- STRCUTS ----- ----- //
-struct DevStatics {
-  long pSend;
-  unsigned char hostIP[4];
-  unsigned char hostMAC[6];
-
-  unsigned long ID;
-  UT_hash_handle hh; /* makes this structure hashable */
-};
-typedef struct DevStatics DevStatics;
-
-DevStatics* devicesTable = NULL; // Declaring hashtable
-
-
-// ----- ----- FUNCTION DEFINITIONS ----- ----- //
-unsigned long hashString(const unsigned char *str);
+// Called on termination to clean the envirnoment setted up by the analyzer
 void cleanAnalyzer();
-void printDevStat();
-
-
-// ----- ----- ANALYZING ----- ----- //
-void Analyze(int caplen, const u_char *bytes) {
-  printDevStat();
-
-  // Gathering host info
-  EthHeader* eth = (EthHeader*) bytes;
-  char aus[20]; stringFyMAC(aus, eth->srcAddr);
-  unsigned long devID = hashString(aus);
-
-  unsigned char* hostIP = NULL;
-  if(eth->type == IP_PROTO) {
-    IpHeader* ipFrame = (IpHeader*) (bytes + 14); // 14 Byte Ethernet header
-    hostIP = ipFrame->srcIP;
-  }
-
-  DevStatics* device;
-  HASH_FIND_INT(devicesTable, &devID, device);
-  if(device == NULL){
-    device = (DevStatics*) malloc(sizeof(DevStatics));
-
-    device->pSend = 0;
-    device->ID = devID;
-    memcpy(device->hostMAC, eth->srcAddr, 6);
-    if(hostIP != NULL) memcpy(device->hostIP, hostIP, 4);
-
-    HASH_ADD_INT(devicesTable, ID, device);  /* id: name of key field */
-  }
-  else {
-    gTotPackets++;
-    device->pSend = device->pSend + 1;
-    if(hostIP != NULL) memcpy(device->hostIP, hostIP, 4);
-  }
-}
-
-
-// ----- ----- CLEANING ----- ----- //
-void printDevStat() {
-  CLEAR_SCREEN;
-  printf("Tot packets: %ld\n", gTotPackets);
-  for(DevStatics* currentDev=devicesTable; currentDev != NULL; currentDev=currentDev->hh.next) {
-    char devMac[18];
-    stringFyMAC(devMac, currentDev->hostMAC);
-
-    char devIP[18];
-    stringFyIP(devIP, currentDev->hostIP);
-
-    float perc = ((float) currentDev->pSend/gTotPackets);
-
-    printf("Device:   MAC/%-18s   IP/%-17s   %%(%.4f)\n", devMac, devIP, perc);
-  }
-  fflush(stdout);
-}
-
-// ----- ----- CLEANING ----- ----- //
-void cleanAnalyzer() {
-  if(devicesTable == NULL) return;
-
-  struct DevStatics *currentDev, *tmp;
-
-  HASH_ITER(hh, devicesTable, currentDev, tmp) {
-    HASH_DEL(devicesTable, currentDev);
-    free(currentDev);
-  }
-}
-
-
-// ----- ----- HASHING ----- ----- //
-unsigned long hashString(const unsigned char *str) {
-  unsigned long hash = 5381;
-  int c;
-
-  while ((c = *str++))
-    hash = ((hash << 5) + hash) + c;
-
-  return hash;
-}
+// Called each time a packet that respects the security policy is captured
+void Analyze(int caplen, const uint8_t *bytes);
 
 #endif

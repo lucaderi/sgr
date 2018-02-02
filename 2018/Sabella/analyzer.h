@@ -17,7 +17,7 @@ struct DevStatics {
   unsigned char hostIP[4];
   unsigned char hostMAC[6];
 
-  unsigned long devID;
+  unsigned long ID;
   UT_hash_handle hh; /* makes this structure hashable */
 };
 typedef struct DevStatics DevStatics;
@@ -26,8 +26,8 @@ DevStatics* devicesTable = NULL; // Declaring hashtable
 
 
 // ----- ----- FUNCTION DEFINITIONS ----- ----- //
-unsigned long hashMAC(const unsigned char *str);
-void freeDevTable();
+unsigned long hashString(const unsigned char *str);
+void cleanAnalyzer();
 void printDevStat();
 
 
@@ -37,7 +37,8 @@ void Analyze(int caplen, const u_char *bytes) {
 
   // Gathering host info
   EthHeader* eth = (EthHeader*) bytes;
-  unsigned char* hostMAC = eth->srcAddr;
+  char aus[20]; stringFyMAC(aus, eth->srcAddr);
+  unsigned long devID = hashString(aus);
 
   unsigned char* hostIP = NULL;
   if(eth->type == IP_PROTO) {
@@ -46,17 +47,16 @@ void Analyze(int caplen, const u_char *bytes) {
   }
 
   DevStatics* device;
-  unsigned long devID = hashMAC(hostMAC);
   HASH_FIND_INT(devicesTable, &devID, device);
   if(device == NULL){
     device = (DevStatics*) malloc(sizeof(DevStatics));
 
     device->pSend = 0;
-    device->devID = devID;
-    memcpy(device->hostMAC, hostMAC, 6);
+    device->ID = devID;
+    memcpy(device->hostMAC, eth->srcAddr, 6);
     if(hostIP != NULL) memcpy(device->hostIP, hostIP, 4);
 
-    HASH_ADD_INT(devicesTable, devID, device);  /* id: name of key field */
+    HASH_ADD_INT(devicesTable, ID, device);  /* id: name of key field */
   }
   else {
     gTotPackets++;
@@ -85,9 +85,9 @@ void printDevStat() {
 }
 
 // ----- ----- CLEANING ----- ----- //
-void freeDevTable() {
+void cleanAnalyzer() {
   if(devicesTable == NULL) return;
-  
+
   struct DevStatics *currentDev, *tmp;
 
   HASH_ITER(hh, devicesTable, currentDev, tmp) {
@@ -98,7 +98,7 @@ void freeDevTable() {
 
 
 // ----- ----- HASHING ----- ----- //
-unsigned long hashMAC(const unsigned char *str) {
+unsigned long hashString(const unsigned char *str) {
   unsigned long hash = 5381;
   int c;
 

@@ -37,11 +37,13 @@ struct _ThreadArgs {
 };
 typedef struct _ThreadArgs ThreadArgs;
 
-struct _EthARP {
-  EthHeader eth;
-  ArpFormat arp;
+struct _HostIP {
+  unsigned char hostIP[4];
+
+  unsigned long ID;
+  UT_hash_handle hh; /* makes this structure hashable */
 };
-typedef struct _EthARP EthARP;
+typedef struct _HostIP HostIP;
 
 
 // ----- ----- GLOBALS ----- ----- //
@@ -57,18 +59,21 @@ unsigned char gGatewayMAC[6];
 const unsigned char gSpoofedMAC[6] = {0x3c, 0x5a, 0xb4, 0x88, 0x88, 0x88};
 u_char* gGratuitousARPSpoof;
 
+HostIP* gHostsMap = NULL; // Declaring hashtable
+pthread_mutex_t gHostMapLock = PTHREAD_MUTEX_INITIALIZER;
+
 int gTerminate    = FALSE; // Terminates the execution if something went wrong
 pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t c  = PTHREAD_COND_INITIALIZER;
 
 
 // ----- ----- FUNCTION DEFINITIONS ----- ----- //
-void printUsage();
-void breakLoops(int signum);
+void  printUsage();
+void  breakLoops(int signum);
 char* policyParser(char* filename);
+void  Spoof();
 void* pcapLoop(void *vargp);
-void Poisoner(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
-void Gatekeeper(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
+void  Poisoner(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
+void  Gatekeeper(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 
 
 // ----- ----- ARGUMENT PARSING ----- ----- //
@@ -132,12 +137,11 @@ void setup() {
   memcpy(eth->srcAddr, gSpoofedMAC, 6);
 
   ArpFormat* arp = (ArpFormat*) (gGratuitousARPSpoof + 14);
-  arp->operation = ARP_REPLY;
+  arp->operation = ARP_REQUEST;
   arp->hwType = htons(0x0001); arp->hwLength = (6);
   arp->prType = htons(0x0800); arp->prLenght = (4);
 
   memcpy(arp->srcPrAddr, spoofIP, 4);
-  memcpy(arp->dstPrAddr, spoofIP, 4);
   memcpy(arp->srcHwAddr, gSpoofedMAC, 6);
   memcpy(arp->dstHwAddr, ETH_BROADCAST, 6);
 }
@@ -164,13 +168,12 @@ int main(int argc, char const *argv[]) {
   }
 
   // Poisoner loop
-  char* poisonerFilter = malloc(150 * sizeof(char));
+  char* poisonerFilter = malloc(200 * sizeof(char));
   strcpy(poisonerFilter, "ether src host not ");
   char aus[20]; stringFyMAC(aus, gSpoofedMAC);
   strcat(poisonerFilter, aus);
-  strcat(poisonerFilter, " && arp dst host ");
+  strcat(poisonerFilter, " && arp && arp src host not 0.0.0.0 && arp src host not ");
   strcat(poisonerFilter, gGatewayIP);
-
 
   ThreadArgs* poisonArgs = malloc(sizeof(ThreadArgs));
   poisonArgs -> captureHandler = &gPoisongHandler;
@@ -223,19 +226,20 @@ int main(int argc, char const *argv[]) {
     pthread_mutex_lock(&m);
     int term = gTerminate;
     pthread_mutex_unlock(&m);
-    if(term == TRUE) break;
+    if(term) break;
 
+    Spoof();
     usleep(500 * 1000);
-    pcap_sendpacket(gPoisongHandler, gGratuitousARPSpoof, ARP_SIZE);
   }
 
-  breakLoops(0);
-
-  pthread_join(gatekeeperTid, NULL);
+  if(gPoisongHandler != NULL) pcap_breakloop(gPoisongHandler);
   pthread_join(poisonerTid, NULL);
 
+  if(gGatekeeperHandler != NULL) pcap_breakloop(gGatekeeperHandler);
+  pthread_join(gatekeeperTid, NULL);
+
   printf("\nGlad to stop, sir.\n");
-  freeDevTable();
+  cleanAnalyzer();
   return 0;
 }
 
@@ -253,8 +257,9 @@ Option:                                                                        \
 }
 
 void breakLoops(int signum) {
-  if(gPoisongHandler    != NULL) pcap_breakloop(gPoisongHandler);
-  if(gGatekeeperHandler != NULL) pcap_breakloop(gGatekeeperHandler);
+  pthread_mutex_lock(&m);
+  gTerminate = TRUE;
+  pthread_mutex_unlock(&m);
 }
 
 char* policyParser(char* filename) {
@@ -293,7 +298,6 @@ char* policyParser(char* filename) {
 void closeThread(ThreadArgs* args, pcap_t* handler, struct bpf_program* filter) {
   pthread_mutex_lock(&m);
   gTerminate = TRUE;
-  pthread_cond_signal(&c);
   pthread_mutex_unlock(&m);
 
   if(handler != NULL) {
@@ -352,26 +356,32 @@ void *pcapLoop(void *vargp) {
 
 
 // ----- ----- POISONING ----- ----- //
+void Spoof() {
+  ArpFormat* arp = (ArpFormat*) (gGratuitousARPSpoof + 14);
+
+  pthread_mutex_lock(&gHostMapLock);
+  for(HostIP* host=gHostsMap; host!=NULL; host=(HostIP*) host->hh.next) {
+    memcpy(arp->dstPrAddr, host->hostIP, 4);
+    pcap_sendpacket(gPoisongHandler, gGratuitousARPSpoof, ARP_SIZE);
+  }
+  pthread_mutex_unlock(&gHostMapLock);
+}
+
 void Poisoner(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes) {
   ArpFormat* arpMsg = (ArpFormat*) (bytes + 14); // 14 Byte Ethernet header
 
-  // Poisoning ARP
-  unsigned char dstPrAddr[4]; // Source protocol address (assuming IPv4)
-  memcpy(dstPrAddr, (arpMsg->dstPrAddr), 4);
+  HostIP* host;
+  unsigned long hostID = hashString(arpMsg->srcPrAddr);
 
-  arpMsg->operation = ARP_REPLY;
-  memcpy(arpMsg->dstPrAddr, arpMsg->srcPrAddr, 4);
-  memcpy(arpMsg->dstHwAddr, arpMsg->srcHwAddr, 6);
-  memcpy(arpMsg->srcPrAddr, dstPrAddr, 4);
-  memcpy(arpMsg->srcHwAddr, gSpoofedMAC, 6);
-
-  // Rebuilding Ethernet frame
-  EthHeader* eth = (EthHeader*) bytes;
-  memcpy(eth->dstAddr, arpMsg->dstHwAddr, 6);
-  memcpy(eth->srcAddr, arpMsg->srcHwAddr, 6);
-
-  // Injecting ¯\_(ツ)_/¯
-  pcap_sendpacket(gPoisongHandler, bytes, ARP_SIZE);
+  pthread_mutex_lock(&gHostMapLock);
+  HASH_FIND_INT(gHostsMap, &hostID, host);
+  if(host == NULL) {
+    host = (HostIP*) malloc(sizeof(HostIP));
+    host->ID = hostID;
+    memcpy(host->hostIP, arpMsg->srcPrAddr, 4);
+    HASH_ADD_INT(gHostsMap, ID, host);
+  }
+  pthread_mutex_unlock(&gHostMapLock);
 }
 
 

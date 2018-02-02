@@ -194,7 +194,7 @@ int main(int argc, char const *argv[]) {
   int filterLength = strlen(spoofedMac) + policiesLength + 150;
   char* gatekeeperFilter = malloc(filterLength * sizeof(char));
 
-  strcat(gatekeeperFilter, "ether src not ");
+  strcpy(gatekeeperFilter, "ether src not ");
   strcat(gatekeeperFilter, spoofedMac);
   strcat(gatekeeperFilter, " && ether dst ");
   strcat(gatekeeperFilter, spoofedMac);
@@ -356,7 +356,7 @@ void cleanThreadEnv(ThreadArgs* args, pcap_t* handler, struct bpf_program* filte
 
   if(handler != NULL) {
     pcap_close(handler);
-    pcap_freecode(filter);
+    if(filter!=NULL) pcap_freecode(filter);
   }
   free(args);
 }
@@ -379,7 +379,7 @@ void *pcapLoop(void *vargp) {
 
   // Setting up filters
   if (pcap_compile(handler, &filter, args->filterExp, TRUE, args->devMask) == -1) {
-    fprintf(stderr, "Something wrong while parsing filter \"%s\": %s\n", args->filterExp, pcap_geterr(handler));
+    fprintf(stderr, "Something wrong while parsing filter: %s\n", pcap_geterr(handler));
     cleanThreadEnv(args, handler, &filter);
     pthread_exit(NULL);
   }

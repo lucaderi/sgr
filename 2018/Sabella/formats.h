@@ -1,8 +1,6 @@
 #ifndef FORMATS_H
 #define FORMATS_H
 
-#include <stdio.h>
-#include <string.h>
 #include <arpa/inet.h>
 
 // ----- ----- ETHERNET FRAME ----- ----- //
@@ -52,11 +50,8 @@ void stringFyMAC(char* target, const unsigned char aus[6]);
 
 int stringToMAC(char* macString, unsigned char macHex[6]);
 
-void stringToIP(char* ipString, unsigned char ip[4]);
-// Ethernet frame to string
-void stringFyEth(char* targetString, EthHeader* eth);
+int stringToIP(char* ipString, unsigned char ip[4]);
 
-// ARP message to string
-void stringFyArp(char* targetString, ArpMessage* arpMsg);
+uint8_t* BuildEthArp(int op, char* srcIP, char* srcMAC, char* dstIp, char* dstMAC);
 
 #endif

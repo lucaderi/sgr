@@ -1,5 +1,12 @@
 #include "analyzer.h"
 
+#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
+
+#include "formats.h"
+#include "libs/uthash/uthash.h"
+
 #define CLEAR_SCREEN for (int asdfghjkl=0; asdfghjkl<20; asdfghjkl++) printf("\n");
 
 

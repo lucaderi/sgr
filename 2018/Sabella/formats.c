@@ -34,12 +34,12 @@ unsigned long hashString(const unsigned char *str) {
 
 // Ip to string function
 void stringFyIP(char* target, const unsigned char aus[4]) {
-  snprintf(target, 4, "%d.%d.%d.%d", aus[0], aus[1], aus[2], aus[3]);
+  sprintf(target, "%d.%d.%d.%d", aus[0], aus[1], aus[2], aus[3]);
 }
 
 // MAC to string function
 void stringFyMAC(char* target, const unsigned char aus[6]) {
-  snprintf(target, 6, "%02X:%02X:%02X:%02X:%02X:%02X", aus[0], aus[1], aus[2], aus[3], aus[4], aus[5]);
+  sprintf(target, "%02X:%02X:%02X:%02X:%02X:%02X", aus[0], aus[1], aus[2], aus[3], aus[4], aus[5]);
 }
 
 int stringToMAC(char* macString, unsigned char macHex[6]) {

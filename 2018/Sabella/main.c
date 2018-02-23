@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <ncurses.h>
 
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
@@ -21,6 +22,14 @@
 #define BUFFSIZE 65535
 #define BUFFER_TM 256 // Customs handler packet buffer timeout
 
+#define Close_Curses {                                        \
+  int x, y;                                                   \
+  getmaxyx(stdscr, y, x);                                     \
+  mvprintw(y-1, 0, "Terminated (press any key to close)");    \
+  refresh();                                                  \
+  getch();                                                    \
+  endwin();                                                   \
+}
 
 // ----- ----- STRUCTS ----- ----- //
 // Structure used to encapsulate threads' arguments
@@ -46,10 +55,12 @@ char* gTargetDev = NULL;
 pcap_t* gPoisongHandler;
 pcap_t* gGatekeeperHandler;
 
-// Network basic informations
+// Network informations
 char* gGatewayIP = "192.168.1.1";
-char* gTargetIP;
 char* gGatewayMAC;
+char* gTargetIP;
+char* gTargetMAC;
+
 char* gSpoofedMAC = "3c:5a:b4:88:88:88";
 
 // Termination condition
@@ -77,7 +88,7 @@ void Poisoner(pcap_t* poisonHandler, int xms);
 // ----- ----- ARGUMENT PARSING ----- ----- //
 int parseUArgs(int argc, char const *argv[]) {
   int opt;
-  while ((opt = getopt(argc, (char *const *) argv, "i:a:d:h:t:")) != -1) {
+  while ((opt = getopt(argc, (char *const *) argv, "i:a:h:t:m:d:")) != -1) {
       switch (opt) {
       case 'i': {
         gGatewayIP = optarg;
@@ -89,6 +100,10 @@ int parseUArgs(int argc, char const *argv[]) {
       }
       case 'a': {
         gGatewayMAC = optarg;
+        break;
+      }
+      case 'm': {
+        gTargetMAC = optarg;
         break;
       }
       case 'd': {
@@ -105,7 +120,7 @@ int parseUArgs(int argc, char const *argv[]) {
       }
   }
 
-  if(gGatewayIP==NULL || gTargetIP==NULL || gTargetDev==NULL) {
+  if(gGatewayIP==NULL || gTargetIP==NULL || gTargetDev==NULL || gTargetMAC==NULL) {
     PrintUsage();
     return EXIT_FAILURE;
   }
@@ -116,6 +131,7 @@ int parseUArgs(int argc, char const *argv[]) {
 // ----- ----- MAIN ----- ----- //
 int main(int argc, char const *argv[]) {
   // ----- Initialization ----- //
+  initscr(); // Initializing ncurses
   // Parsing policy file
   if(parseUArgs(argc, argv) == -1) return -1;
   char* policies = PolicyParser("policy.txt");
@@ -124,7 +140,8 @@ int main(int argc, char const *argv[]) {
 
   // Checking root permissions
   if(geteuid() != 0) {
-    fprintf(stderr, "Permission denied\n");
+    printw("Error: permission denied, need to be root\n");
+    Close_Curses;
     return FAIL;
   }
 
@@ -132,7 +149,8 @@ int main(int argc, char const *argv[]) {
   bpf_u_int32 devIP;   // device ip address
   bpf_u_int32 devMask; // device mask
   if(pcap_lookupnet(gTargetDev, &devIP, &devMask, gErrbuf) != 0) {
-    fprintf(stderr, "Cannot retrieve informations for %s\n", gTargetDev);
+    printw("Cannot retrieve informations for %s\n", gTargetDev);
+    Close_Curses;
     return FAIL;
   }
 
@@ -173,7 +191,7 @@ int main(int argc, char const *argv[]) {
   // ----- Poisoning ----- //
   // Initializing handler
   pcap_t* poisonHandler = pcap_open_live(gTargetDev, BUFFSIZE, TRUE, BUFFER_TM, gErrbuf);
-  if(poisonHandler != NULL) Poisoner(poisonHandler, 500);
+  if(poisonHandler != NULL) Poisoner(poisonHandler, 200);
   else fprintf(stderr, "%s", pcap_geterr(poisonHandler));
 
   // ----- Closing ----- //
@@ -182,7 +200,10 @@ int main(int argc, char const *argv[]) {
 
   cleanAnalyzer(); // Cleaning analyzer
 
-  printf("\nGlad to stop, sir.\n");
+  printw("Glad to stop, sir.\n");
+  refresh();
+
+  Close_Curses;
   return 0;
 }
 
@@ -198,7 +219,7 @@ void setup() {
 
 // ----- ----- MISCELLANEOUS ----- ----- //
 void PrintUsage() {
-  printf("\
+  printw("\
 Usage: backfire [option]                                                          \n\
 Options:                                                                          \n\
   -a [mac address]: gateway mac address                                           \n\
@@ -206,7 +227,8 @@ Options:                                                                        
   -t [ip]         : target machine ip                                             \n\
   -d [device]     : device from which capture and inject the traffic              \n\
   ");
-  printf("\n");
+  printw("\n");
+  refresh();
 }
 
 void SigIntHandler(int signum) {
@@ -326,12 +348,16 @@ void Poisoner(pcap_t* poisonHandler, int xms) {
 
 // ----- ----- GATEKEEPING ----- ----- //
 void Gatekeeper(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *bytes) {
-  // Analyze(h->caplen, bytes);
+  Analyze(h->caplen, bytes);
 
-  // Rebuilding Ethernet frame
+  // // Rebuilding Ethernet frame
   // EthHeader* eth = (EthHeader*) bytes;
-  // memcpy(eth->srcAddr, ETH_BROADCAST, 6);
-  // memcpy(eth->dstAddr, gGatewayMAC, 6);
+  // if(memcmp(eth->srcAddr, gGatewayMAC, 6) == 0){
+  //   // Packet sent from gateway to device
+  //   memcpy(eth->dstAddr, gTargetMAC, 6);
+  // }
+  // else memcpy(eth->srcAddr, gGatewayMAC, 6);
+  //
   //
   // // Injecting
   // int res = pcap_sendpacket(gGatekeeperHandler, bytes, h->len);

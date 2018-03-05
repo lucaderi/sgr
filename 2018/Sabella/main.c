@@ -283,12 +283,17 @@ int parseUArgs(int argc, char const *argv[]) {
 // ----- ----- MISCELLANEOUS ----- ----- //
 void PrintUsage() {
   printw("\
-Usage: backfire [option]                                                          \n\
-Options:                                                                          \n\
-  -a [mac address]: gateway mac address                                           \n\
-  -i [ip]         : gateway ip                                                    \n\
-  -t [ip]         : target machine ip                                             \n\
-  -d [device]     : device from which capture and inject the traffic              \n\
+Description: the backfire tool sends two arp requests every x milliseconds to poison a device's and       \n\
+  gateway's caches. The traffic is hijacked to a dummy device, whose MAC addrress is '3c:5a:b4:88:88:88', \n\
+  and filtered according to the policy specified in the file 'policy.txt'. The policy is interpreted      \n\
+  according to the filter syntax available at 'https://www.tcpdump.org/manpages/pcap-filter.7.html'.      \n\
+-- -- -- -- --                                                                              \n\
+Usage: backfire [option]                                                                    \n\
+Options:                                                                                    \n\
+  -a [<mac>/<ip>]:   gateway's IP and MAC address (eg. '-a 10:13:31:c3:b2:2/192.168.1.1')   \n\
+  -t [<mac>/<ip>]:   target device's IP and MAC address                                     \n\
+  -x [milliseconds]: time intervel between every spoof attempt                              \n\
+  -d [device] :      device from which capture and inject the traffic (eg. '-d en0')        \n\
   ");
   printw("\n");
   refresh();

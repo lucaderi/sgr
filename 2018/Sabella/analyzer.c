@@ -1,5 +1,13 @@
 #include "analyzer.h"
 
+#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
+#include <ncurses.h>
+
+#include "formats.h"
+#include "libs/uthash/uthash.h"
+
 #define CLEAR_SCREEN for (int asdfghjkl=0; asdfghjkl<20; asdfghjkl++) printf("\n");
 
 
@@ -64,20 +72,18 @@ void Analyze(int caplen, const uint8_t *bytes) {
 
 // ----- ----- DISPLAYING STATICS ----- ----- //
 static void printDevStat() {
-  CLEAR_SCREEN;
-  printf("Tot packets: %ld\n", gTotPackets);
+  clear();
+  printw("Tot packets: %ld\n", gTotPackets);
   for(HostDetails* currentDev=devicesTable; currentDev != NULL; currentDev=currentDev->hh.next) {
-    char devMac[18];
+    char devMac[25];
     stringFyMAC(devMac, currentDev->hostMAC);
 
-    char devIP[18];
+    char devIP[25];
     stringFyIP(devIP, currentDev->hostIP);
 
-    float perc = ((float) currentDev->pSend/gTotPackets);
-
-    printf("Device:   MAC/%-18s   IP/%-17s   %%(%.4f)\n", devMac, devIP, perc);
+    printw("Device:   MAC/%s   IP/%s\n", devMac, devIP);
   }
-  fflush(stdout);
+  refresh();
 }
 
 

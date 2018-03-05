@@ -81,9 +81,7 @@ static void printDevStat() {
     char devIP[25];
     stringFyIP(devIP, currentDev->hostIP);
 
-    float perc = ((float) currentDev->pSend/gTotPackets);
-
-    printw("Device:   MAC/%s   IP/%s   %%(%.4f)\n", devMac, devIP, perc);
+    printw("Device:   MAC/%s   IP/%s\n", devMac, devIP);
   }
   refresh();
 }

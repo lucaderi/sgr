@@ -54,19 +54,16 @@ void Analyze(int caplen, const uint8_t *bytes) {
     // New host discovered
     device = (HostDetails*) malloc(sizeof(HostDetails));
 
-    device->pSend = 0;
     device->ID = devID;
     memcpy(device->hostMAC, eth->srcAddr, 6);
-    if(hostIP != NULL) memcpy(device->hostIP, hostIP, 4);
 
     HASH_ADD_INT(devicesTable, ID, device);  /* id: name of key field */
   }
-  else {
-    // Known host, updating statics
-    gTotPackets++;
-    device->pSend = device->pSend + 1;
-    if(hostIP != NULL) memcpy(device->hostIP, hostIP, 4);
-  }
+
+  // Known host, updating statics
+  gTotPackets++;
+  device->pSend = device->pSend + 1;
+  if(hostIP != NULL) memcpy(device->hostIP, hostIP, 4);
 }
 
 

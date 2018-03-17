@@ -78,7 +78,7 @@ uint8_t* BuildEthArp(int op, char* _srcIp, char* _srcMAC, char* _dstIp, char* _d
   unsigned char srcMAC[6]; stringToMAC(_srcMAC, srcMAC);
   unsigned char dstIp [4]; stringToIP (_dstIp,  dstIp);
   unsigned char dstMAC [6];
-  if (op==ARP_REPLY) stringToMAC(_dstMAC, dstMAC);
+  if (_dstMAC !=  NULL) stringToMAC(_dstMAC, dstMAC); // if not specified set broadcast
   else memcpy(dstMAC, ETH_BROADCAST, 6);
 
   // Building standard Ethernet

@@ -8,6 +8,11 @@
 #include <unistd.h>
 #include <ncurses.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if_dl.h>
+#include <ifaddrs.h>
+
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
 
@@ -65,7 +70,7 @@ char* gTargetIP;
 char* gTargetMAC;
 
 // Dummy MAC address used to spoof traffic
-char* gSpoofedMAC = "3c:5a:b4:88:88:88";
+char gSpoofedMAC[19] = "";
 
 // Termination condition
 int gTerminate = FALSE;
@@ -90,16 +95,29 @@ void* pcapLoop(void *vargp);
 void  Gatekeeper(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *bytes);
 // Sends two requests to router and target device every x milliseconds
 void Poisoner(pcap_t* poisonHandler, int xms);
-
+// Stores the interface's mac address into target var
+int getMac(char* devname, char* target);
 
 // ----- ----- MAIN ----- ----- //
 int main(int argc, char const *argv[]) {
   // - Initialization - //
-  initscr(); // Initializing ncurses
+  // Initializing ncurses
+  initscr();
+
+  // Configuring user arguments
+  if(parseUArgs(argc, argv) != 0) {
+    Close_Curses;
+    return FAIL;
+  }
+  // If not set -f, get device MAC
+  if(strcmp(gSpoofedMAC, "")==0) {
+    getMac(gSniffingDev, gSpoofedMAC);
+  }
+
   // Parsing policy file
-  if(parseUArgs(argc, argv) == -1) return -1;
   char* policies = PolicyParser("policy.txt");
 
+  // Minor setup
   setup();
 
   // Checking root permissions
@@ -229,7 +247,7 @@ int parseMacIp(char* macIp, char** bucket) {
 int parseUArgs(int argc, char const *argv[]) {
   int opt;
 
-  while ((opt = getopt(argc, (char *const *) argv, "g:t:d:x:")) != -1) {
+  while ((opt = getopt(argc, (char *const *) argv, "g:t:d:x:f")) != -1) {
       switch (opt) {
       case 't': {
         // Taking target device ip and mac addresses
@@ -260,6 +278,11 @@ int parseUArgs(int argc, char const *argv[]) {
 
         break;
       }
+      case 'f': {
+        strcpy(gSpoofedMAC, "3c:5a:b4:88:88:88");
+
+        break;
+      }
       default:
         PrintUsage();
         return EXIT_FAILURE;
@@ -268,7 +291,7 @@ int parseUArgs(int argc, char const *argv[]) {
 
   if(gGatewayIP==NULL || gTargetIP==NULL || gSniffingDev==NULL || gTargetMAC==NULL) {
     PrintUsage();
-    return EXIT_FAILURE;
+    return FAIL;
   }
   else return 0;
 }
@@ -284,10 +307,12 @@ Description: the backfire tool sends two arp requests every x milliseconds to po
 -- -- -- -- --                                                                              \n\
 Usage: backfire [option]                                                                    \n\
 Options:                                                                                    \n\
-  -g [<mac>/<ip>]:   gateway's IP and MAC address (eg. '-g 10:13:31:c3:b2:2/192.168.1.1')   \n\
-  -t [<mac>/<ip>]:   target device's IP and MAC address                                     \n\
+  -g [<mac>/<ip>]  : gateway's IP and MAC address (eg. '-g 10:13:31:c3:b2:2/192.168.1.1')   \n\
+  -t [<mac>/<ip>]  : target device's IP and MAC address                                     \n\
   -x [milliseconds]: time intervel between every spoof attempt                              \n\
-  -d [device] :      device from which capture and inject the traffic (eg. '-d en0')        \n\
+  -d [device]      : device from which capture and inject the traffic (eg. '-d en0')        \n\
+  -f               : if active a dumb MAC address will be used to generate each arp         \n\
+                     request, otherwise will be used device MAC address                     \n\
   ");
   printw("\n");
   refresh();
@@ -295,6 +320,26 @@ Options:                                                                        
 
 void SigIntHandler(int signum) {
   gTerminate = TRUE;
+}
+
+int getMac(char* devname, char* target){
+  struct ifaddrs *ifap, *if_ptr;
+  getifaddrs(&ifap);
+
+  // Finding dev info
+  for(if_ptr=ifap; if_ptr!=NULL && (strcmp(if_ptr->ifa_name, devname)!=0); if_ptr=if_ptr->ifa_next);
+  if(if_ptr==NULL) {
+    freeifaddrs(ifap);
+    return FAIL;
+  }
+
+  // Storing mac
+  unsigned char* ptr = (unsigned char *)LLADDR((struct sockaddr_dl *)(if_ptr)->ifa_addr);
+  stringFyMAC(target, ptr);
+
+  // Cleaning envr
+  freeifaddrs(ifap);
+  return 0;
 }
 
 /*

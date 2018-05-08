@@ -1,12 +1,7 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-#include <stdint.h>
-#include <limits.h>
 #include <arpa/inet.h>
-
-#include "formats.h"
-#include "libs/uthash/uthash.h"
 
 // Called on termination to clean the envirnoment setted up by the analyzer
 void cleanAnalyzer();

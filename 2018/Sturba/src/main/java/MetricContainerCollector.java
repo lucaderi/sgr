@@ -3,10 +3,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DecimalFormat;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import metrics.CpuMetric;
+import metrics.CurrentCpuStats;
+import metrics.DiskMetric;
+import metrics.MemoryMetric;
+import metrics.NetworkMetric;
+import metrics.PreCpuStats;
 
 public class MetricContainerCollector implements Runnable
 {	
@@ -37,10 +45,59 @@ public class MetricContainerCollector implements Runnable
 			{
 				//TODO calculate metrics
 				
+				//TEST CPU
+				
+				//get cpu usage
+				CurrentCpuStats currentCpuStats = new CurrentCpuStats(metrics);
+				PreCpuStats preCpuStats = new PreCpuStats(metrics);
+				
+				double cpu = CpuMetric.calculateCpuPercentage(currentCpuStats, preCpuStats);
+				
+				//DEBUG
+//				System.out.println(containerName+" cpu: "+cpu+"%");
+//				Runtime.getRuntime().exec("clear");
+				
+				//TEST MEMORY
+				
+				//get memory usage
+				MemoryMetric memory = new MemoryMetric(metrics);
+				
+				double memory_usg = MemoryMetric.calculateMemoryUsage(memory);
+				
+//				System.out.println(containerName+" memory: "+memory_usg+"%");
+				
+				//TEST NETWORK
+				NetworkMetric netMetrics = new NetworkMetric(metrics);
+//				
+				//net stats not found
+				if(netMetrics.getRxBytes() != -1 && netMetrics.getTxBytes() != -1)
+				{
+					double rxBytes = Math.floor( ( ((double)netMetrics.getRxBytes() / 1024.0) * 100 ) /100 );
+					double txBytes = Math.floor( ( ((double)netMetrics.getTxBytes() / 1024.0) * 100 ) /100 );
+
+//					System.out.println(containerName+ "rx: "+rxBytes + "kb tx: "+txBytes+"kb");
+				}
+				
+				//TEST DISK
+				DiskMetric diskMetric = new DiskMetric(metrics);
+				
+				//disk stats not found
+				if(diskMetric.getTotalBytesIO() != -1)
+				{
+					double totalBytesIO = Math.floor( ( ((double)diskMetric.getTotalBytesIO() / 1024.0) * 100 ) /100 );
+					System.out.println(containerName+"DISK IO: "+totalBytesIO+"kB");
+				}
+				
+				//free all,for best garbage
+//				currentCpuStats = null;
+//				preCpuStats = null;
+//				metrics = null;
+//				memory = null;
+//				netMetrics = null;
+				
+				
 				//TODO send metrics to graphite
-			}
-			
-			
+			}	
 		} 
 		catch (Exception e) 
 		{
@@ -84,7 +141,7 @@ public class MetricContainerCollector implements Runnable
 			if(res != null)
 			{
 				//DEBUG
-				System.out.println(this.containerName+": "+res.get("read"));
+				//System.out.println(this.containerName+": "+res.get("read"));
 				
 				//if it is an invalid read
 				if(res.get("read").equals("0001-01-01T00:00:00Z")) {

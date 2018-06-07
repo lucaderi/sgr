@@ -19,7 +19,7 @@ import org.json.simple.parser.ParseException;
 public class Collector implements Runnable
 {
 	private String URL_LIST_ACTIVE_CONTAINERS;
-	private static final  int timeout = 1000;
+	private static final  int TIMEOUT_IN_SECOND = 1;
 	
 	private JSONParser parser;
 	private int port;
@@ -42,7 +42,7 @@ public class Collector implements Runnable
 			{
 				monitorAllActiveContainers();
 				
-				Thread.sleep(timeout);
+				Thread.sleep(TIMEOUT_IN_SECOND * 1000);
 			} 
 			catch(Exception e) {
 				e.printStackTrace();

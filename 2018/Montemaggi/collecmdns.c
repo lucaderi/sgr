@@ -55,12 +55,10 @@ return device;
 static void onfindmdns(struct ndpi_workflow *workflow,struct ndpi_flow_info *flow,void *data)
 {
 	struct ndpi_packet_struct *packet = &flow->ndpi_flow->packet;
-	/*check payload and if there is a answer in packet copy in a ndpi struct 
-	 * if there is a response return 2 if a query return 1 */
+	/*check payload and if there is a answer in packet copy in a ndpi struct*/
 	
-	ndpi_int_check_mdns_payload(workflow->ndpi_struct,flow->ndpi_flow);		
-		
-		
+	ndpi_int_check_mdns_payload(workflow->ndpi_struct,flow->ndpi_flow);	
+	
 }
 
 /*register a callback*/
@@ -107,7 +105,6 @@ int main(int argc,char **argv)
 	ndpi_set_protocol_detection_bitmask2(workflow->ndpi_struct,&mdns);
 	
 	if(workflow->pcap_handle !=NULL){
-		fprintf(stderr,"pcap_loop\n");
 		pcap_loop(workflow->pcap_handle,-1,&callback_pcap,(u_char*)workflow);
 	}
 	else

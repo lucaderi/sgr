@@ -20,15 +20,18 @@
  * along with nDPI.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-//#include "ndpi_protocol_ids.h"
+#include <libndpi/ndpi_protocols.h>
+#include "ndpi_util.h"
+#include <stdio.h>
+#include <libndpi/ndpi_api.h>
 
 #ifdef NDPI_PROTOCOL_MDNS
 
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_MDNS
 
-#include <libndpi/ndpi_api.h>
-
 #define NDPI_MAX_MDNS_REQUESTS  128
+
+
 
 PACK_ON
 struct mdns_header {
@@ -87,7 +90,7 @@ void FlowdissectMDNS(uint8_t *payload, uint16_t payload_len,struct ndpi_flow_str
     struct mdns_rsp_entry rsp;
     unsigned int j;
     uint16_t rsp_type, data_len;
-    uint8_t device_info = false;
+    uint8_t device_info = 0;
     char dtype[20] = "device_unknown";
     
     memset(_name, 0, sizeof(_name));
@@ -158,7 +161,7 @@ void FlowdissectMDNS(uint8_t *payload, uint16_t payload_len,struct ndpi_flow_str
 #endif
     
     if(strstr(name, "._device-info._"))
-      device_info = true;
+      device_info = 1;
     else if(strstr(name, "._airplay._") || strstr(name, "._spotify-connect._") )
       strncpy(dtype, "device_multimedia",20);
     else if(strstr(name, "_ssh._"))
@@ -222,8 +225,8 @@ void FlowdissectMDNS(uint8_t *payload, uint16_t payload_len,struct ndpi_flow_str
 	 	       else if(strncmp(txt_buf, "model=", 6) == 0)           model = &txt_buf[6];
 	 	       else if(strncmp(txt_buf, "md=", 3) == 0)              model = &txt_buf[3];
 	 	   
-	 	       fprintf(stdout,"model: %s\n",model );
 	 	       
+			   fprintf(stdout,"model: %s\n",model );
 	 	     }
 	 	   } else
 	 	     	break;
@@ -263,7 +266,7 @@ static void ndpi_int_mdns_add_connection(struct ndpi_detection_module_struct
   ndpi_set_detected_protocol(ndpi_struct, flow, NDPI_PROTOCOL_MDNS, NDPI_PROTOCOL_UNKNOWN);
 }
 
-static int ndpi_int_check_mdns_payload(struct ndpi_detection_module_struct
+int ndpi_int_check_mdns_payload(struct ndpi_detection_module_struct
 				       *ndpi_struct, struct ndpi_flow_struct *flow) {
   
   struct ndpi_packet_struct *packet = &flow->packet;
@@ -277,7 +280,7 @@ static int ndpi_int_check_mdns_payload(struct ndpi_detection_module_struct
   if(((packet->payload[2] & 0x80) == 0)
      && (questions <= NDPI_MAX_MDNS_REQUESTS)
      && (answers <= NDPI_MAX_MDNS_REQUESTS)) {	
-    NDPI_LOG_INFO(ndpi_struct, "found MDNS with question query\n");
+    //NDPI_LOG_INFO(ndpi_struct, "found MDNS with question query\n");
     return 1;    
   }
 
@@ -295,13 +298,9 @@ static int ndpi_int_check_mdns_payload(struct ndpi_detection_module_struct
 
     /* printf("==> [%d] %s\n", j, answer);  */
 
-    if(!ndpi_struct->disable_metadata_export) {
-      len = ndpi_min(sizeof(flow->protos.mdns.answer)-1, j);
-      strncpy(flow->protos.mdns.answer, (const char *)answer, len);
-      flow->protos.mdns.answer[len] = '\0';
-    }
     
-    NDPI_LOG_INFO(ndpi_struct, "found MDNS with answer query\n");
+    
+    //NDPI_LOG_INFO(ndpi_struct, "found MDNS with answer query\n");
     return 1;
   }
   
@@ -313,7 +312,7 @@ void ndpi_search_mdns(struct ndpi_detection_module_struct *ndpi_struct, struct n
   struct ndpi_packet_struct *packet = &flow->packet;
   u_int16_t dport;
   
-  NDPI_LOG_DBG(ndpi_struct, "search MDNS\n");
+  //NDPI_LOG_DBG(ndpi_struct, "search MDNS\n");
 
   /**
      information from http://www.it-administrator.de/lexikon/multicast-dns.html 
@@ -329,7 +328,7 @@ void ndpi_search_mdns(struct ndpi_detection_module_struct *ndpi_struct, struct n
       /* mdns protocol must have destination address 224.0.0.251 */
 	    if(packet->iph != NULL /* && ntohl(packet->iph->daddr) == 0xe00000fb */) {
 
-	NDPI_LOG_INFO(ndpi_struct, "found MDNS with destination address 224.0.0.251 (=0xe00000fb)\n");
+	//NDPI_LOG_INFO(ndpi_struct, "found MDNS with destination address 224.0.0.251 (=0xe00000fb)\n");
 	
 	if(ndpi_int_check_mdns_payload(ndpi_struct, flow) == 1) {
 	  ndpi_int_mdns_add_connection(ndpi_struct, flow);
@@ -341,7 +340,7 @@ void ndpi_search_mdns(struct ndpi_detection_module_struct *ndpi_struct, struct n
 	const u_int32_t *daddr = packet->iphv6->ip6_dst.u6_addr.u6_addr32;
 	if(daddr[0] == htonl(0xff020000) /* && daddr[1] == 0 && daddr[2] == 0 && daddr[3] == htonl(0xfb) */) {
 
-	  NDPI_LOG_INFO(ndpi_struct, "found MDNS with destination address ff02::fb\n");
+	  //NDPI_LOG_INFO(ndpi_struct, "found MDNS with destination address ff02::fb\n");
 	  
 	  if(ndpi_int_check_mdns_payload(ndpi_struct, flow) == 1) {
 	    ndpi_int_mdns_add_connection(ndpi_struct, flow);
@@ -352,7 +351,7 @@ void ndpi_search_mdns(struct ndpi_detection_module_struct *ndpi_struct, struct n
 #endif
     }
   }
-  NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
+  //NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
 
 

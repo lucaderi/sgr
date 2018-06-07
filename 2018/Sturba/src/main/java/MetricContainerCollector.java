@@ -4,11 +4,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import graphiteClient.SimpleGraphiteClient;
 import metrics.CpuMetric;
 import metrics.CurrentCpuStats;
 import metrics.DiskMetric;
@@ -43,7 +48,12 @@ public class MetricContainerCollector implements Runnable
 			
 			if(metrics != null)
 			{
-				//TODO calculate metrics
+				//starting calculating metrics for the container
+				
+				//list of metric to send to Graphite
+				Map<String, Number> carbonMetrics = new HashMap<String, Number>();
+				
+				String pathMetric = new String("Containers."+containerName);
 				
 				//TEST CPU
 				
@@ -52,6 +62,9 @@ public class MetricContainerCollector implements Runnable
 				PreCpuStats preCpuStats = new PreCpuStats(metrics);
 				
 				double cpu = CpuMetric.calculateCpuPercentage(currentCpuStats, preCpuStats);
+				
+				carbonMetrics.put(pathMetric+".cpu.usage",cpu);
+				
 				
 				//DEBUG
 //				System.out.println(containerName+" cpu: "+cpu+"%");
@@ -63,6 +76,10 @@ public class MetricContainerCollector implements Runnable
 				MemoryMetric memory = new MemoryMetric(metrics);
 				
 				double memory_usg = MemoryMetric.calculateMemoryUsage(memory);
+				
+				carbonMetrics.put(pathMetric+".memory.usage",memory_usg);
+
+
 				
 //				System.out.println(containerName+" memory: "+memory_usg+"%");
 				
@@ -76,6 +93,9 @@ public class MetricContainerCollector implements Runnable
 					double txBytes = Math.floor( ( ((double)netMetrics.getTxBytes() / 1024.0) * 100 ) /100 );
 
 //					System.out.println(containerName+ "rx: "+rxBytes + "kb tx: "+txBytes+"kb");
+					
+					carbonMetrics.put(pathMetric+".net.rxBytes",rxBytes);
+					carbonMetrics.put(pathMetric+".net.txBytes",txBytes);
 				}
 				
 				//TEST DISK
@@ -85,23 +105,25 @@ public class MetricContainerCollector implements Runnable
 				if(diskMetric.getTotalBytesIO() != -1)
 				{
 					double totalBytesIO = Math.floor( ( ((double)diskMetric.getTotalBytesIO() / 1024.0) * 100 ) /100 );
-					System.out.println(containerName+"DISK IO: "+totalBytesIO+"kB");
+					//System.out.println(containerName+"DISK IO: "+totalBytesIO+"kB");
+					carbonMetrics.put(pathMetric+".disk.totalBytesIO",totalBytesIO);
 				}
 				
 				//free all,for best garbage
-//				currentCpuStats = null;
-//				preCpuStats = null;
-//				metrics = null;
-//				memory = null;
-//				netMetrics = null;
+				currentCpuStats = null;
+				preCpuStats = null;
+				metrics = null;
+				memory = null;
+				netMetrics = null;
 				
 				
-				//TODO send metrics to graphite
+				//send metrics to graphite
+				SimpleGraphiteClient graphiteClient = new SimpleGraphiteClient("localhost", 2003);
+				graphiteClient.sendMetrics(carbonMetrics);
 			}	
 		} 
 		catch (Exception e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		}

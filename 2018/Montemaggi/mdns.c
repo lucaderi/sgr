@@ -20,13 +20,13 @@
  * along with nDPI.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-#include "ndpi_protocol_ids.h"
+//#include "ndpi_protocol_ids.h"
 
 #ifdef NDPI_PROTOCOL_MDNS
 
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_MDNS
 
-#include "ndpi_api.h"
+#include <libndpi/ndpi_api.h>
 
 #define NDPI_MAX_MDNS_REQUESTS  128
 

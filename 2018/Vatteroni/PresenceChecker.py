@@ -26,7 +26,7 @@ monitor_disable = 'airmon-ng stop '
 max_bytes = 128 # da rivedere si puo accorciare
 promiscuous = True
 read_timeout = 10
-ignore = [] #mac da ignorare (ex. accesspoint della rete)
+ignore = [] # mac da ignorare (ex. accesspoint della rete)
 ha={}
 
 delay = 5 # delay per export
@@ -60,12 +60,14 @@ def recv_pkts(hdr, data):
             #salto i primi 8 byte per ottenere il mac trasmittente
             ethMacS[i] = hex(decodedDataDownDown.get_byte(8+i)) 
         macS = ':'.join(map(str, ethMacS))
+
         s = type(radio.get_dBm_ant_signal())
 
         time = datetime.datetime.now()
 
         #aggiunta al dizionario
-        if (s is int) & (macS not in ignore):
+        #controllo se il segnale ha un valore consistente, in caso contrario scarto
+        if (s is int):
             signal = hex(radio.get_dBm_ant_signal())
             t = (time,signal)
             if (ha.has_key(macS)):
@@ -85,9 +87,16 @@ def recv_pkts(hdr, data):
     except: pass
 
 def mysniff(interface):
+    global ignore
+
     pcapy.findalldevs()
     pc = pcapy.open_live(interface, max_bytes, promiscuous, read_timeout)
-    pc.setfilter('')    
+    #ignoro i tipi che non hanno mac sorgente
+    filt = 'not(subtype ack or subtype cts)'
+    #aggiungo i mac da ignorare
+    for e in ignore:
+        filt = filt + ' and wlan addr2 not ' + e
+    pc.setfilter(filt)
     packet_limit = -1 # -1 per infiniti
     pc.loop(packet_limit, recv_pkts) # cattura pacchetti
 
@@ -120,8 +129,8 @@ def main():
         finally:
             os.system(monitor_disable)
     else:
-        print '[!] Insert a valid interface'
-        print '[!] example: python ' + sys.argv[0] + ' eth0'
-        print '[!] example: python ' + sys.argv[0] + ' eth0 ./ignore.xml'
+        print '[!] Insert a valid interface or a valid ignore file'
+        print '[!] example: python ' + sys.argv[0] + ' wlan0'
+        print '[!] example: python ' + sys.argv[0] + ' wlan0 ./ignore.xml'
 
 main()

@@ -3,10 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -25,16 +22,25 @@ public class MetricContainerCollector implements Runnable
 {	
 	private String containerName;
 	private String urlContainerMetricsStats;
+	private String host;
 	private JSONParser parser;
+	
+	private String graphiteHost;
+	private int graphitePort;
 
-	public MetricContainerCollector(String containerName,int port) 
+	public MetricContainerCollector(String containerName,String host,int port,String graphiteHost,int graphitePort) 
 	{
 		if(containerName == null) {
 			throw new NullPointerException();
 		}
 		
 		this.containerName = containerName;
-		this.urlContainerMetricsStats = "http://localhost:"+port+"/containers/"+containerName+"/stats?stream=0";
+		this.host = host;
+		this.urlContainerMetricsStats = "http://"+host+":"+port+"/containers/"+containerName+"/stats?stream=0";
+		
+		this.graphiteHost = graphiteHost;
+		this.graphitePort = graphitePort;
+		
 		parser = new JSONParser();
 	}
 
@@ -118,14 +124,14 @@ public class MetricContainerCollector implements Runnable
 				
 				
 				//send metrics to graphite
-				SimpleGraphiteClient graphiteClient = new SimpleGraphiteClient("localhost", 2003);
+				SimpleGraphiteClient graphiteClient = new SimpleGraphiteClient(graphiteHost,graphitePort);
 				graphiteClient.sendMetrics(carbonMetrics);
 			}	
 		} 
 		catch (Exception e) 
 		{
 			e.printStackTrace();
-			return;
+			System.exit(1);
 		}
 	}
 	
@@ -168,7 +174,7 @@ public class MetricContainerCollector implements Runnable
 				//if it is an invalid read
 				if(res.get("read").equals("0001-01-01T00:00:00Z")) {
 					//DEBUG
-					System.out.println("LAST IS INVALID");
+					//System.out.println("LAST IS INVALID");
 					return null;
 				}
 			}

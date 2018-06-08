@@ -1,4 +1,7 @@
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -12,23 +15,29 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-
-//TODO insert a dinamic port for REST API,insert into a config file
-//TODO insert dinamic timeout, into config file
-
 public class Collector implements Runnable
 {
 	private String URL_LIST_ACTIVE_CONTAINERS;
-	private static final  int TIMEOUT_IN_SECOND = 1;
+	private int timeout = 1;
 	
 	private JSONParser parser;
 	private int port;
+	private String host;
+	
+	private String graphiteHost;
+	private int graphitePort;
+	
 	private ThreadPoolExecutor threadpool;
 	
-	public Collector(int port) 
+	public Collector(String host,int port,String graphiteHost,int graphitePort,int timeout) 
 	{
 		this.port = port;
-		URL_LIST_ACTIVE_CONTAINERS = "http://localhost:"+port+"/containers/json";
+		this.host = host;
+		this.graphiteHost = graphiteHost;
+		this.graphitePort = graphitePort;
+		this.timeout = timeout;
+		
+		URL_LIST_ACTIVE_CONTAINERS = "http://"+host+":"+port+"/containers/json";
 	}
 
 	@Override
@@ -42,7 +51,7 @@ public class Collector implements Runnable
 			{
 				monitorAllActiveContainers();
 				
-				Thread.sleep(TIMEOUT_IN_SECOND * 1000);
+				Thread.sleep(timeout * 1000);
 			} 
 			catch(Exception e) {
 				e.printStackTrace();
@@ -108,7 +117,7 @@ public class Collector implements Runnable
 	        	//System.out.println(name);
 	        	
 	        	//a thread from the pool,collect the metric for this containers at this given time
-	        	threadpool.submit(new MetricContainerCollector(name,port));
+	        	threadpool.submit(new MetricContainerCollector(name,host,port,graphiteHost,graphitePort));
 	        }
 		}
 		
@@ -117,12 +126,59 @@ public class Collector implements Runnable
 	}
 	
 	
-	public static void main(String[] args) 
+	public static void main(String[] args) throws IOException 
 	{
-		//TODO parsing argument
+		String host = "127.0.0.1",graphiteHost = "127.0.0.1";
+		int port = 4243,graphitePort = 2003,timeout = 1;
 		
+		//Parsing Config File
+		File configFile = new File("./src/main/resources/collector.config");
+		BufferedReader br = new BufferedReader(new FileReader(configFile));
+		
+		String line;
+		while((line = br.readLine()) != null)
+		{
+			//is a comment
+			if(line.contains("#") || line.isEmpty()) {
+				continue;
+			}
+			else {
+				String[] array = line.split("=");
+				array[1] = array[1].trim();
+				
+				switch (array[0]) {
+				case "DOCKER_REST_API_HOST":
+					host = array[1];
+					break;
+				
+				case "DOCKER_REST_API_PORT":
+					port = Integer.valueOf(array[1]);
+					break;
+					
+				case "TIMEOUT_INTERVAL_IN_SECOND":
+					timeout = Integer.valueOf(array[1]);
+					break;
+					
+				case "GRAPHITE_HOST":
+					graphiteHost = array[1];
+					break;
+					
+				case "GRAPHITE_PORT":
+					graphitePort = Integer.valueOf(array[1]);
+					break;
+					
+				default:
+					break;
+				}
+			}
+		}
+		
+		br.close();
+		
+		//System.out.println(host+" "+port+" "+timeout+" "+graphiteHost+" "+graphitePort);
+				
 		//starting collector
-		new Collector(4243).run();
+		new Collector(host,port,graphiteHost,graphitePort,timeout).run();
 	}
 
 }

@@ -24,7 +24,7 @@ public class DiskMetric extends ContainerMetric
 		{
 			JSONArray serviceBytes = (JSONArray)blkioStats.get("io_service_bytes_recursive");
 			
-			if(serviceBytes != null)
+			if(serviceBytes != null && serviceBytes.size() > 0)
 			{
 				JSONObject totalIO = (JSONObject)serviceBytes.get(4);
 				
@@ -39,8 +39,9 @@ public class DiskMetric extends ContainerMetric
 				}
 
 			}
+			//IO not found
 			else {
-				throw new InvalidAttributeValueException();
+				totalBytesIO = -1;
 			}
 		}
 		//IO not found

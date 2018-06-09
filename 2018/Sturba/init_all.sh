@@ -1,6 +1,8 @@
 #!/bin/bash
 
-#TODO check if docker api metrics is available on port 4243
+#This script execute 2 docker container Graphite(port 2003,port 100), and Grafana (port 3000), and create 2 volumes of storage for them,
+#and execute the collector.
+
 echo "Starting all components (Collector,Grafana,Graphite)..."
 
 #check to see if exist volumes storage for graphite & grafana,otherwise create it
@@ -60,7 +62,7 @@ if [ $? -ne 0 ];then
 fi
 
 #time to start completely the containers above
-sleep 4
+sleep 6
 
 #Start collector
 echo "Starting Collector..."
@@ -71,4 +73,4 @@ if [ $? -ne 0 ];then
 	exit 1
 fi
 
-echo "System started correctly: to shutdown the system run the following command: 1)docker kill grafana graphite 2) kill -9 {$!}"
+echo -e "\n\nSystem started correctly: to shutdown the system run the following command: 1)kill -9 $! 2) docker kill grafana graphite"

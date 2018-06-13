@@ -1,0 +1,5 @@
+compilare con make
+
+passare -i <device> per fare scan live
+
+bloccare il programma con ctrl ^c

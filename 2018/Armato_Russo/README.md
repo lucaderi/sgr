@@ -1,5 +1,5 @@
 # Progetto Gestione di Rete
-Il progetto ha lo scopo di utilizzare l' API di ntopng per analizzare i flussi riguardanti i social network all'interno della rete. Gli script messi a disposizione mostrano statistiche che riguardano pacchetti, bytes e durata dei flussi social di un determinato host.
+Il progetto ha lo scopo di utilizzare l' API di ntopng per analizzare i flussi riguardanti i social network all'interno della rete. Gli script messi a disposizione mostrano statistiche che riguardano pacchetti, bytes e durata dei flussi di un determinato host.
 # Requisiti
 -ntopng
 # Uso

@@ -24,10 +24,10 @@ function update_social_table(ip) {
 
         	for (var i = 0; i < metrics.length; i++) {
         		tr = table.insertRow(-1);
-            	for (var j = 0; j < col.length; j++) {
-                	var tabCell = tr.insertCell(-1);
-                	tabCell.innerHTML = metrics[i][col[j ] ]  
-            	}
+            		for (var j = 0; j < col.length; j++) {
+                		var tabCell = tr.insertCell(-1);
+                		tabCell.innerHTML = metrics[i][col[j ] ]  
+            		}	
         	}
         	var divContainer = document.getElementById("stats_table");
         	divContainer.innerHTML = "";

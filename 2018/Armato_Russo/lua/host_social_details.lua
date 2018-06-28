@@ -65,7 +65,7 @@ print [[
 function ip_changed() {
 	// Carica la nuova pagina con le statistiche dell'ip selezionato
 	var selectBox = document.getElementById("selectBox");
-    var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+    	var selectedValue = selectBox.options[selectBox.selectedIndex].value;
 	window.location.search = '?host='+ selectedValue;
 }
 </script>

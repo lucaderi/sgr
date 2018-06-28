@@ -3,7 +3,7 @@ Il progetto ha lo scopo di utilizzare l' API di ntopng per analizzare il traffic
 # Requisiti
 -ntopng
 # Uso
-- Copiare ~/[nomeprogetto]/lua/* in ~/ntopng/scripts/lua
-- Copiare i file ~/[nomeprogetto]/css/* in ~/ntopng/httpdocs/css
-- Copiare i file ~/[nomeprogetto]/js/* in ~/ntopng/httpdocs/js
+- Copiare ~/Armato_Russo/lua/* in ~/ntopng/scripts/lua
+- Copiare i file ~/Armato_Russo/css/* in ~/ntopng/httpdocs/css
+- Copiare i file ~/Armato_Russo/js/* in ~/ntopng/httpdocs/js
 - Visitare la pagina web [host:port]/lua/host_social_details.lua

@@ -15,6 +15,7 @@ function update_social_table(ip) {
         }
         var table = document.createElement("table");
         var tr = table.insertRow(-1);
+
         for (var i = 0; i < col.length; i++) {
         	var th = document.createElement("th");
         	th.innerHTML = col[i];
@@ -28,11 +29,10 @@ function update_social_table(ip) {
                 tabCell.innerHTML = metrics[i][col[j ] ]  
             }
         }
-        var divContainer = document.getElementById("showData");
+        var divContainer = document.getElementById("stats_table");
         divContainer.innerHTML = "";
         divContainer.appendChild(table);
 
   		}
 	})
-	
 }

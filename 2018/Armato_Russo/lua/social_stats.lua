@@ -1,12 +1,4 @@
--- [DONE] Parametrizzare per host ip
--- [DONE] Parametrizzare per il tipo di grafico (durata,byte,packets)
--- [DONE] Accesso costante ai flussi che appartengono a SocialNetwork
--- [DONE] Restituire un json con tutte le metriche per tutti i proto social per poterne fare una tabella
--- [TODO] Cosa deve fare nel caso in cui c'è qualcosa che non va
-
-
 --[[ FUNCTIONS --]] 
-
 -- Stampa il valore di tutte le metriche di un protocollo social
 function allMetrics (protoNdpiStats)
 	local firstTime = true
@@ -55,16 +47,14 @@ local host_ip = _GET["host"]
 local metric = _GET["p_metric"]
 hostInfo = interface.getHostInfo(host_ip)
 if(hostInfo == nil or (metric ~= nil and metric ~= "duration" and metric ~= "bytes" and metric ~= "packets")) then 
-	-- [TESTED] Controllo sui parametri
 	print "[ ]"
 	return 
 end
 
 jsonString = hostInfo.json
---print("<p>"..jsonString.."<p>")
 local info, pos, err = json.decode(jsonString, 1, nil)
-if( err ) then
-	-- [TESTED]
+if( err or (info.localHost) == false) then
+	-- Se c'è stato un errore nella decodifica oppure l'ip non è locale
 	print("[ ]")
 	return
 end
@@ -72,7 +62,6 @@ end
 stats = info.ndpiStats
 socialFlowExists = stats["categories"]["SocialNetwork"]
 if (socialFlowExists == nil) then
-	-- [TESTED] Se non c'è alcun flusso di tipo social
 	print("[ ]")
 	return 
 end
@@ -85,7 +74,7 @@ socialProtos = interface.getnDPIProtocols(catId)
 print "[ "
 for protoName,_ in pairs(socialProtos) do
 	protoNdpiStats = stats[protoName]
-	if(protoNdpiStats ~=nil) then
+	if(protoNdpiStats ~= nil) then
 		-- Se esiste un flusso per questo tipo di social
 		if( not firstTime) then
 			-- Dal secondo oggetto in poi la virgola tra il precedente e il corrente

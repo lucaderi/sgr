@@ -24,10 +24,10 @@ print [[
 
 print [[
     <link href="/css/pie-chart.css" rel="stylesheet">
-	<link href="/css/dc.css" rel="stylesheet">
+    <link href="/css/dc.css" rel="stylesheet">
 
-	<script>var refresh = 3000 /* ms */;</script>
-	<script type="text/javascript" src="/js/jquery_bootstrap.min.js"></script>
+    <script>var refresh = 3000 /* ms */;</script>
+    <script type="text/javascript" src="/js/jquery_bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/table_updater.js"></script>
     <script type="text/javascript" src="/js/pie-chart.js" ></script> 
 	

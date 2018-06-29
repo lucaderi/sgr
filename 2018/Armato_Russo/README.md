@@ -5,4 +5,4 @@ Il progetto ha lo scopo di utilizzare l' API di ntopng per analizzare i flussi r
 # Uso
 - Copiare ~/Armato_Russo/lua/* in ~/ntopng/scripts/lua
 - Copiare i file ~/Armato_Russo/js/* in ~/ntopng/httpdocs/js
-- Visitare la pagina web [host:port]/lua/host_social_details.lua
+- Eseguire ntopng e visitare la pagina web [host:port]/lua/host_social_details.lua

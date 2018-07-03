@@ -24,22 +24,35 @@ print [[
 
 print [[
     <link href="/css/pie-chart.css" rel="stylesheet">
-    <link href="/css/dc.css" rel="stylesheet">
-
-    <script>var refresh = 3000 /* ms */;</script>
-    <script type="text/javascript" src="/js/jquery_bootstrap.min.js"></script>
+	<link href="/css/dc.css" rel="stylesheet">
+	<script>var refresh = 3000 /* ms */;</script>
+	<script type="text/javascript" src="/js/jquery_bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/table_updater.js"></script>
     <script type="text/javascript" src="/js/pie-chart.js" ></script> 
 	
     <style>
-        tr, th, td{
-            margin:10px 0;
-            border:solid 1px #333;
-            padding:2px 4px;
-            font:15px Verdana;
+        th, td {
+            border-bottom: 1px solid #ddd; 
+            padding: 10px 0;
         }
-        th {
-            font-weight:bold;
+        
+        .stats-t table { 
+            width: 100%;
+            height: 25%;
+            white-space:nowrap;
+            border-collapse: separate;
+            border-spacing: 50px 0;
+        }
+        
+        .custom-select {
+            text-align: center;
+            width: auto;
+            height: 50px;
+        }
+        
+        .cs {
+            display: block;
+            margin: 0 auto;
         }
     </style>
     ]]
@@ -65,14 +78,17 @@ print [[
 function ip_changed() {
 	// Carica la nuova pagina con le statistiche dell'ip selezionato
 	var selectBox = document.getElementById("selectBox");
-    	var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+    var selectedValue = selectBox.options[selectBox.selectedIndex].value;
 	window.location.search = '?host='+ selectedValue;
 }
 </script>
 ]]
 
 print [[
-<select id="selectBox" onchange="ip_changed()">
+    <div class="custom-select" >
+        <select class="cs" id="selectBox" onchange="ip_changed()">
+        <option disabled selected value> -- Select an option -- </option>
+</div>
 ]]
 
 for ip,_ in pairs(ips) do
@@ -97,28 +113,23 @@ if(host_ip ~= nil) then
 	<div class="pie-chart" id="durationPieChart"></div>
 	</td>
 	</tr>
-
 	<tr>
 	<th class="text-left">Bytes Chart(sent + rcvd)</th>
 	<td colspan="2">
 	<div class="pie-chart" id="bytesPieChart"></div>
 	</td>
 	</tr>
-
 	<tr>
 	<th class="text-left">Packets Chart(sent + rcvd)</th>
 	<td colspan="2">
 	<div class="pie-chart" id="packetsPieChart"></div>
 	</td>
 	</tr>
-
 	</tbody>
 	</table>
-
-	<div id="stats_table"></div>
+	<div class ="stats-t" id="stats_table"></div>
 	]]
 end
-
 
 
 

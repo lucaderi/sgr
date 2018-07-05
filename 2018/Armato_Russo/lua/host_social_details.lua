@@ -5,40 +5,36 @@ package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 require "lua_utils"
 
 if(mode ~= "embed") then
-   sendHTTPHeader('text/html')
+   sendHTTPContentTypeHeader('text/html')
    ntop.dumpFile(dirs.installdir .. "/httpdocs/inc/header.inc")
    active_page = "hosts"
    dofile(dirs.installdir .. "/scripts/lua/inc/menu.lua")
 end
 
 local hostTable = interface.getLocalHostsInfo()
+
 if (hostTable == nil) then
 	print("Non ci sono host nella rete locale")
 	return
 end
+
 local host_ip = _GET["host"]
 local ips = hostTable.hosts
+
+if(host_ip == nil) then
+	print("Inserire un host come parametro.")
+	return
+end
+
 if(host_ip ~= nil and ips[host_ip] == nil) then
 	print("L'ip selezionato non appartiene alla rete locale")
 	return
 end
 
-
-
 print [[
-    <meta charset="utf-8"/>
-]]
-
-print [[
-    <link href="/css/pie-chart.css" rel="stylesheet">
-	<link href="/css/dc.css" rel="stylesheet">
-    <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="/css/ntopng.css" rel="stylesheet">
-    
 	<script>var refresh = 3000 /* ms */;</script>
-	<script type="text/javascript" src="/js/jquery_bootstrap.min.js"></script>
     <script type="text/javascript" src="/js/table_updater.js"></script>
-    <script type="text/javascript" src="/js/pie-chart.js" ></script> 
+  
     <style>
         .stats-t table { 
             width: 100%;
@@ -47,30 +43,68 @@ print [[
             border-collapse: separate;
             border-spacing: 50px 0;
         }
-        
+		
+		.pie-chart {
+			font-size: inherit;	
+		}
     </style>
-    ]]
+]]
         
 
 if(host_ip ~= nil) then
+
 print [[
 <script type="text/javascript">
-// Al caricamento della finestra crea tutti i grafici e la tabella più i timer
-window.onload = function(){
+function show_data(){
+	var charts = document.getElementsByClassName("pie-chart");
+	var i;
+	for (i = 0; i < charts.length; i++) {
+    	charts[i].innerHTML = "";
+	}
+	update_social_table(]]print("\""..host_ip.."\"")print[[) 
 	do_pie("#durationPieChart", '/lua/social_stats.lua', { host: ]]print("\""..host_ip.."\"")print[[, p_metric: "duration" }, "secondi", refresh);
    	do_pie("#bytesPieChart", '/lua/social_stats.lua', { host: ]]print("\""..host_ip.."\"")print[[, p_metric: "bytes" }, "byte", refresh);
 	do_pie("#packetsPieChart", '/lua/social_stats.lua', { host:]]print("\""..host_ip.."\"")print[[, p_metric: "packets" }, "packets", refresh);
-   	update_social_table(]]print("\""..host_ip.."\"")print[[);
 	setInterval(function(){ update_social_table(]]print("\""..host_ip.."\"")print[[);}, refresh);
 }
 </script>
+
+<script type="text/javascript">
+// Controlla ad intervalli che ci siano dati da mostrare
+function check_data(ip){
+	$.ajax({
+		type : 'GET',
+		url: "/lua/social_stats",
+		data: "host="+ip,
+		success: function(content){
+			var metrics=JSON.parse(content)
+			if(metrics != ""){
+				clearInterval(refreshId);
+				show_data();
+			}else{
+				var charts = document.getElementsByClassName("pie-chart");
+				var i;
+				for (i = 0; i < charts.length; i++) {
+    				charts[i].innerHTML = "Non ci sono dati da mostrare momentaneamente. La pagina si aggiornerà automaticamente.";
+				}
+			}
+  		}
+	})
+}
+</script>
+
+<script type="text/javascript">
+// Al caricamento della finestra controlla se ci sono dati
+window.onload = function(){
+	check_data("]]print(host_ip)print[[");
+	refreshId = setInterval(function(){check_data("]]print(host_ip)print[[");}, refresh);
+}
+</script>
+
 ]]
-end
 
-
-if(host_ip ~= nil) then
-	-- Se ho selezionato un ip e devo visualizzare le statistiche
-	print [[
+-- Se ho selezionato un ip e devo visualizzare le statistiche
+print [[
 	<table class="table">
 	<tbody>
 	<tr>
@@ -101,7 +135,6 @@ if(host_ip ~= nil) then
 	]]
 end
 
-
 if(mode ~= "embed") then
-dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")
+	dofile(dirs.installdir .. "/scripts/lua/inc/footer.lua")
 end

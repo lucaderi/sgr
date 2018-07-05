@@ -162,6 +162,23 @@ else
    --   Added global javascript variable, in order to disable the refresh of pie chart in case
    --  of historical interface
    print('\n<script>var refresh = 3000 /* ms */;</script>\n')
+	
+	--[[ [A-R] Nostra modifica
+		 Controlla se ci sono informazioni riguardanti il tab social e setta il timer per
+		 controllare ad ogni intervallo
+	--]]
+	print[[
+		<script type="text/javascript" src="]] print(ntop.getHttpPrefix()) print [[/js/tab_updater.js" ></script>
+		<script type="text/javascript">
+		// Al caricamento della finestra controlla se ci sono dati
+		window.onload = function(){
+			show_social_tab("]]print(host_ip)print[[");
+			refreshId = setInterval(function(){show_social_tab("]]print(host_ip)print[[");}, refresh);
+		}
+		</script>
+	]]
+
+
 
    if(host["ip"] ~= nil) then
       host_name = hostinfo2hostkey(host)
@@ -237,12 +254,15 @@ if(not(isLoopback(ifname))) then
    end
 end
 
---Nostra modifica
+--[[ [A-R] Nostra modifica
+	 Aggiunta il tab Social se ci sono delle informazioni a riguardo e lo 
+	 imposta come attivo nel caso in cui l'utente clicca
+--]]
 if(page == "social") then
     print("<li class=\"active\"><a href=\"#\">Social</a></li>\n")
 else 
     if(host["ip"] ~= nil) then
-      print("<li><a href=\""..url.."&page=social\"> Social</a></li>")
+      print("<li id = social_tab style=display:none;><a href=\""..url.."&page=social\"> Social</a></li>")
    end
 end
 
@@ -1942,7 +1962,10 @@ drawRRD(ifId, host_key, rrdfile, _GET["zoom"], ntop.getHttpPrefix()..'/lua/host_
 elseif(page == "traffic_report") then
    dofile(dirs.installdir .. "/pro/scripts/lua/enterprise/traffic_report.lua")
 elseif(page == "social") then
-    --Nostra modifica
+    --[[ [A-R] Nostra modifica
+		 Abilita la modalità embed per lo script e mostra
+		 i grafici e le informazioni sulla pagina
+	--]]
     mode = "embed"
     dofile(dirs.installdir .. "/scripts/lua/host_social_details.lua")
 elseif(page == "sprobe") then

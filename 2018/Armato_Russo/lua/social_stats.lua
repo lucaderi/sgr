@@ -1,25 +1,26 @@
 --[[ FUNCTIONS --]] 
 -- Stampa il valore di tutte le metriche di un protocollo social
+
 function allMetrics (protoNdpiStats)
-	local firstTime = true
-	for key,value in pairs(protoNdpiStats) do
-		if(type(value) == "table") then
-			for key2,value2 in pairs(value) do
-				if( not firstTime) then
-				print(", ")
-				end
-				print("\""..(key:sub(1,1):upper()..key:sub(2)).." "..(key2:sub(1,1):upper()..key2:sub(2)).."\": ".. value2)
-				firstTime = false
-			end
-		else -- if table
-			if( not firstTime) then
-				print(", ")
-			end
-			print("\""..(key:sub(1,1):upper()..key:sub(2)).."\": ".. value)
-		end
-		firstTime = false
-	end -- for protoNdpiStats
-	print("}")
+    local duration = protoNdpiStats["duration"]
+    local pcktsSent =protoNdpiStats["packets"]["sent"]
+    local pcktsRcvd =protoNdpiStats["packets"]["rcvd"]
+    local bytesSent = protoNdpiStats["bytes"]["sent"]
+    local bytesRcvd = protoNdpiStats["bytes"]["rcvd"]
+    print("<td align=right>"..secondsToTime(duration).."</td>")
+    print("<td align=right>"..formatPackets(pcktsRcvd).."</td>")
+    print("<td align=right>"..formatPackets(pcktsSent).."</td>")
+    print("<td>")
+    breakdownBar(pcktsRcvd, "Rcvd", pcktsSent, "Sent", 0, 100)
+    print("</td>")
+    print("<td align=right>"..formatPackets(pcktsRcvd + pcktsSent ).."</td>")
+    
+    print("<td align=right>"..bytesToSize(bytesRcvd).."</td>")
+    print("<td align=right>"..bytesToSize(bytesSent).."</td>")
+    print("<td>")
+    breakdownBar(bytesRcvd, "Rcvd", bytesSent, "Sent", 0, 100)
+    print("</td>")
+    print("<td align=right>"..bytesToSize(bytesRcvd + bytesSent).."</td>")
 end
 
 -- Stampa il valore della metrica di un protocollo social
@@ -36,6 +37,10 @@ end
 dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
 require "lua_utils"
+require "format_utils"
+require "graph_utils"
+
+
 json = require("dkjson")
 sendHTTPContentTypeHeader('text/html')
 
@@ -71,19 +76,23 @@ firstTime = true
 catId = interface.getnDPICategoryId("SocialNetwork")
 -- Table con tutti i protocolli con categoria SocialNetwork
 socialProtos = interface.getnDPIProtocols(catId)
-print "[ "
+if (metric ~= nil) then
+    print "[ "
+end
 for protoName,_ in pairs(socialProtos) do
 	protoNdpiStats = stats[protoName]
 	if(protoNdpiStats ~= nil) then
 		-- Se esiste un flusso per questo tipo di social
-		if( not firstTime) then
+		if( (not firstTime) and metric ~=nil) then
 			-- Dal secondo oggetto in poi la virgola tra il precedente e il corrente
 			print(",")
 		end
-		
 		if( metric == nil) then
-			print(" {\"Application Name\": \"".. protoName .."\", ")
+            print("<tr>")
+            print("<td>"..protoName)
 			allMetrics(protoNdpiStats)
+            print("</td>")
+            print("</tr>")        
 		else
 			print(" {\"label\": \"".. protoName .."\", ")
 			singleMetric(protoNdpiStats,metric)
@@ -91,6 +100,6 @@ for protoName,_ in pairs(socialProtos) do
 		firstTime = false
 	end -- if protoNdpiStats
 end -- for socialProtos
-print " ]"
-
-
+if (metric ~= nil) then
+    print " ]"
+end

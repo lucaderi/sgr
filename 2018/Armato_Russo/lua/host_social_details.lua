@@ -1,9 +1,7 @@
 
 dirs = ntop.getDirs()
 package.path = dirs.installdir .. "/scripts/lua/modules/?.lua;" .. package.path
-
 require "lua_utils"
-
 if(mode ~= "embed") then
    sendHTTPContentTypeHeader('text/html')
    ntop.dumpFile(dirs.installdir .. "/httpdocs/inc/header.inc")
@@ -33,21 +31,7 @@ end
 
 print [[
 	<script>var refresh = 3000 /* ms */;</script>
-    <script type="text/javascript" src="/js/table_updater.js"></script>
-  
-    <style>
-        .stats-t table { 
-            width: 100%;
-            height: 25%;
-            white-space:nowrap;
-            border-collapse: separate;
-            border-spacing: 50px 0;
-        }
-		
-		.pie-chart {
-			font-size: inherit;	
-		}
-    </style>
+    
 ]]
         
 
@@ -55,17 +39,38 @@ if(host_ip ~= nil) then
 
 print [[
 <script type="text/javascript">
+
+function update_social_table() {
+  $.ajax({
+    type: 'GET',
+    url: ']]
+  print(ntop.getHttpPrefix())
+  print [[/lua/social_stats.lua',
+    data: { host: "]] print(host_ip.."") print ("\" ")
+
+    print [[ },
+    success: function(content) {
+        $('#host_details_social_tbody').html(content);
+        $('#myTable').trigger("update");
+    }
+    
+  });
+}
+</script>
+
+
+<script type="text/javascript">
 function show_data(){
 	var charts = document.getElementsByClassName("pie-chart");
 	var i;
 	for (i = 0; i < charts.length; i++) {
     	charts[i].innerHTML = "";
 	}
-	update_social_table(]]print("\""..host_ip.."\"")print[[) 
-	do_pie("#durationPieChart", '/lua/social_stats.lua', { host: ]]print("\""..host_ip.."\"")print[[, p_metric: "duration" }, "secondi", refresh);
-   	do_pie("#bytesPieChart", '/lua/social_stats.lua', { host: ]]print("\""..host_ip.."\"")print[[, p_metric: "bytes" }, "byte", refresh);
-	do_pie("#packetsPieChart", '/lua/social_stats.lua', { host:]]print("\""..host_ip.."\"")print[[, p_metric: "packets" }, "packets", refresh);
-	setInterval(function(){ update_social_table(]]print("\""..host_ip.."\"")print[[);}, refresh);
+    update_social_table();
+	do_pie("#durationPieChart", '/lua/social_stats.lua', { host: ]]print("\""..host_ip.."\"")print[[, p_metric: "duration" }, "", refresh);
+   	do_pie("#bytesPieChart", '/lua/social_stats.lua', { host: ]]print("\""..host_ip.."\"")print[[, p_metric: "bytes" }, "", refresh);
+	do_pie("#packetsPieChart", '/lua/social_stats.lua', { host:]]print("\""..host_ip.."\"")print[[, p_metric: "packets" }, "", refresh);
+    setInterval(update_social_table, refresh);
 }
 </script>
 
@@ -75,7 +80,7 @@ function check_data(ip){
 	$.ajax({
 		type : 'GET',
 		url: "/lua/social_stats",
-		data: "host="+ip,
+		data: "host="+ip+"&p_metric=packets",
 		success: function(content){
 			var metrics=JSON.parse(content)
 			if(metrics != ""){
@@ -115,14 +120,14 @@ print [[
 	</tr>
 
 	<tr>
-	<th class="text-left">Bytes Chart(sent + rcvd)</th>
+	<th class="text-left">Bytes Chart(sent + received)</th>
 	<td colspan="2">
 	<div class="pie-chart" id="bytesPieChart"></div>
 	</td>
 	</tr>
 
 	<tr>
-	<th class="text-left">Packets Chart(sent + rcvd)</th>
+	<th class="text-left">Packets Chart(sent + received)</th>
 	<td colspan="2">
 	<div class="pie-chart" id="packetsPieChart"></div>
 	</td>
@@ -131,7 +136,25 @@ print [[
 	</tbody>
 	</table>
 
-	<div class ="stats-t" id="stats_table"></div>
+    <table id="myTable" class="table table-bordered table-striped tablesorter">
+        <thead>
+            <tr>
+                <th>Application Name</th>
+                <th>Duration</th>
+                <th>Packets Received</th>
+                <th>Packets Sent</th>
+                <th>Packets Breakdown</th>
+                <th>Total Packets</th>
+                <th>Bytes Received</th>
+                <th>Bytes Sent</th>
+                <th>Bytes Breakdown</th>
+                <th>Total Bytes</th>
+            </tr>
+        </thead>
+        
+        <tbody id="host_details_social_tbody"></tbody>
+     </table>
+	
 	]]
 end
 

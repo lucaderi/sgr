@@ -171,10 +171,13 @@ else
 		<script type="text/javascript" src="]] print(ntop.getHttpPrefix()) print [[/js/tab_updater.js" ></script>
 		<script type="text/javascript">
 		// Al caricamento della finestra controlla se ci sono dati
+        var refreshId;
 		window.onload = function(){
 			show_social_tab("]]print(host_ip)print[[");
 			refreshId = setInterval(function(){show_social_tab("]]print(host_ip)print[[");}, refresh);
-		}
+		
+        }
+        
 		</script>
 	]]
 
@@ -928,7 +931,7 @@ print [[/lua/host_l4_stats.lua', { ifid: "]] print(ifId.."") print('", '..hostin
 
 
 elseif((page == "ICMP")) then
-
+  
   print [[
      <table id="myTable" class="table table-bordered table-striped tablesorter">
      <thead><tr><th>]] print(i18n("icmp_page.icmp_message")) print[[</th><th>]] print(i18n("icmp_page.last_sent_peer")) print[[</th><th>]] print(i18n("icmp_page.last_rcvd_peer")) print[[</th><th>]] print(i18n("breakdown")) print[[</th><th style='text-align:right;'>]] print(i18n("icmp_page.packets_sent")) print[[</th><th style='text-align:right;'>]] print(i18n("icmp_page.packets_received")) print[[</th><th style='text-align:right;'>]] print(i18n("total")) print[[</th></tr></thead>
@@ -947,6 +950,7 @@ function update_icmp_table() {
 
     print [[ },
     success: function(content) {
+        
       $('#host_details_icmp_tbody').html(content);
       $('#myTable').trigger("update");
     }
@@ -1050,7 +1054,6 @@ setInterval(update_ndpi_table, 5000);
 </script>
 
 ]]
-
   print [[
      <table class="table table-bordered table-striped">
      ]]

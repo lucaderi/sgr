@@ -14,7 +14,7 @@ HOKER ha una struttura multi-threaded della quale si riportano i principali thre
 
 Il **main** si occupa: delle operazioni legate all'inizializzazione dell'interfaccia di rete, della compilazione e del settaggio del filtro per i pacchetti ARP, del reperimento della maschera di rete e del blocco di indirizzi IP, della creazione dei due thread prima menzionati. Riordina infine le informazioni ricavate dall'operazione di scansione, stampando i risultati.
 
-![Immagine prova](/Demo.png)
+![Immagine prova](./Demo.png)
 
 ## Istruzioni per l'utilizzo
 Compilare con:

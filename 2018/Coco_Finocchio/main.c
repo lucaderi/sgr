@@ -184,7 +184,7 @@ void* discoverer(void* arg) {
   /* Recupera indirizzo IP relativo ad interfaccia di rete in interface */
   CHECK_T_MENO1(notused, getifaddrs (&ifap), "getifaddrs fallita");
   for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-			if (ifa->if_addr == NULL)
+			if (ifa->ifa_addr == NULL)
 				continue;
       if (ifa->ifa_addr->sa_family==AF_INET && strcmp(ifa->ifa_name, interface)==0) {
          source_ip_addr = (struct sockaddr_in *) ifa->ifa_addr;

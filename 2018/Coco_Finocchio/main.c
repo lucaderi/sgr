@@ -1,8 +1,7 @@
 /* ---------------------------------------------------------------------- */
-/* 								HOKER: local network HOst tracKER                    		*/
+/* 	HOKER: local network HOst tracKER                    		  */
 /* Autori: Mario Coco - 517558, Federico Finocchio - 516818               */
-/* Compilare con: gcc main.c map.c -o hoker -lpcap -pthread 							*/
-/* Utilizzo: sudo ./hoker <interfaccia>                                		*/
+/* Utilizzo: sudo ./hoker <interfaccia>                                	  */
 /* Eseguire con permessi di root!                                         */ 
 /* ---------------------------------------------------------------------- */
 
@@ -20,7 +19,7 @@ char* interface;										 	/* Interfaccia di rete					 	*/
 pcap_t *descr = NULL;                	/* Handler interfaccia di rete    */
 map_void_t map;                      	/* Hashmap host in rete           */
 eth_pkt_t *eth_pkt = NULL;           	/* Puntatore al frame ethernet    */
-unsigned char *source_mac_addr;      	/* Indirizzo MAC locale           */
+unsigned char source_mac_addr[6];      	/* Indirizzo MAC locale           */
 unsigned char *mac;                  	/* Stringa indirizzo MAC target   */
 unsigned char *s_mac;                	/* Stringa indirizzo MAC locale   */
 net_stats_t *stats;										/* Struttura statistiche di rete	*/
@@ -37,34 +36,34 @@ int notused;
 /* Costruisce stringa a partire da indirizzo MAC */
 void macBuilder(unsigned char *str, u_char *mac) {
   sprintf(str, "%02X:%02X:%02X:%02X:%02X:%02X",
-  mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	  mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
 
 /* Funzione per la formattazione della stampa */
 void printInfo() {
 
-	printf(" -------------------------------------------------------------------------------\n");
-	printf("| Host			| Indirizzo MAC			| Stato			|\n");
-	printf(" -------------------------------------------------------------------------------\n");
+  printf(" -------------------------------------------------------------------------------\n");
+  printf("| Host			| Indirizzo MAC			| Stato			|\n");
+  printf(" -------------------------------------------------------------------------------\n");
 
-	for(int i=0; i<ip_count; i++) {
-		if(table[i]!=NULL) {
-			printf("| %d.%d.%d.%d\t\t", table[i]->spa[0], table[i]->spa[1], table[i]->spa[2], table[i]->spa[3]);
-			printf("| %02X:%02X:%02X:%02X:%02X:%02X\t\t",table[i]->sha[0], table[i]->sha[1], table[i]->sha[2],
-      	table[i]->sha[3], table[i]->sha[4], table[i]->sha[5]);
+  for(int i=0; i<ip_count; i++) {
+    if(table[i]!=NULL) {
+      printf("| %d.%d.%d.%d\t\t", table[i]->spa[0], table[i]->spa[1], table[i]->spa[2], table[i]->spa[3]);
+      printf("| %02X:%02X:%02X:%02X:%02X:%02X\t\t",table[i]->sha[0], table[i]->sha[1], table[i]->sha[2],
+	     table[i]->sha[3], table[i]->sha[4], table[i]->sha[5]);
 
-  		if(table[i]->lastUsed == 1) {
-     	 printf("| Online\t\t|\n");
-     	 table[i]->lastUsed = 0;
-     	 stats->online++;
-  		}
-  		else
-    		printf("| Offline\t\t|\n");
-		}
-	}
-	printf(" -------------------------------------------------------------------------------\n");
-	printf("Utenti totali: %d\n",stats->len);
+      if(table[i]->lastUsed == 1) {
+	printf("| Online\t\t|\n");
+	table[i]->lastUsed = 0;
+	stats->online++;
+      }
+      else
+	printf("| Offline\t\t|\n");
+    }
+  }
+  printf(" -------------------------------------------------------------------------------\n");
+  printf("Utenti totali: %d\n",stats->len);
   printf("Utenti online: %d/%d\n", stats->online, stats->len);
   stats->online = 0;
 
@@ -75,30 +74,30 @@ void printInfo() {
 void getHostInfo() {
 
   const char* key;	/* Chiave di iterazione */
-	char *string;			/* Stringa IP mittente 	*/
-	stats->len = 0;
+  char *string;			/* Stringa IP mittente 	*/
+  stats->len = 0;
 
-	/* Inizializza iteratore e itera sugli elementi della hasmap */
+  /* Inizializza iteratore e itera sugli elementi della hasmap */
   map_iter_t iter = map_iter(&map);
   while(key = map_next(&map, &iter)) {
 
     stats->len++;
 
-		/* Generico nodo hasmap */
+    /* Generico nodo hasmap */
     hash_node_t *node = (hash_node_t*)(*map_get(&map, key));
 
-		/* Recupera IP mittente e lo utilizza per indicizzare la sruttura ordinata */
-		CHECK_T_ALLOC(string, malloc(20*sizeof(char)), "malloc fallita");
-	  sprintf(string, "%d.%d.%d.%d", node->spa[0], node->spa[1], node->spa[2], node->spa[3]);
-	  struct in_addr address;
-	  inet_aton(string, &address);
-		free(string);
-	  unsigned long index = ntohl(address.s_addr) - first_ip;
-	  table[index]=node;
+    /* Recupera IP mittente e lo utilizza per indicizzare la sruttura ordinata */
+    CHECK_T_ALLOC(string, malloc(20*sizeof(char)), "malloc fallita");
+    sprintf(string, "%d.%d.%d.%d", node->spa[0], node->spa[1], node->spa[2], node->spa[3]);
+    struct in_addr address;
+    inet_aton(string, &address);
+    free(string);
+    unsigned long index = ntohl(address.s_addr) - first_ip;
+    table[index]=node;
 		
   }
 
-	printInfo();
+  printInfo();
 
 } 
 
@@ -106,12 +105,12 @@ void getHostInfo() {
 /* Funzione per liberare la memoria allocata */
 void freeMem() {
 
-	const char* key;	/* Chiave di iterazione */
+  const char* key;	/* Chiave di iterazione */
 
-	free(mac);
+  free(mac);
   free(s_mac);
-	free(table);
-	free(stats);
+  free(table);
+  free(stats);
 
   map_iter_t iter = map_iter(&map);
   while(key = map_next(&map, &iter)) {
@@ -119,7 +118,7 @@ void freeMem() {
     free(node);
   }
 
-	map_deinit(&map);
+  map_deinit(&map);
 
 }
 /* --------------------------------------------------------------------- */
@@ -142,12 +141,12 @@ void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char* 
     /* Costruisce stringa relativa a MAC sorgente */
     macBuilder(mac, eth_pkt->sha);
 
-		/* Costruisce elemento hashmap */
-		hash_node_t *node;
-		CHECK_T_ALLOC(node, malloc(sizeof(hash_node_t)), "malloc fallita");
-		memcpy(node->sha, &eth_pkt->sha, sizeof(node->sha));
-		memcpy(node->spa, &eth_pkt->spa, sizeof(node->spa));
-		node->lastUsed = 1;
+    /* Costruisce elemento hashmap */
+    hash_node_t *node;
+    CHECK_T_ALLOC(node, malloc(sizeof(hash_node_t)), "malloc fallita");
+    memcpy(node->sha, &eth_pkt->sha, sizeof(node->sha));
+    memcpy(node->spa, &eth_pkt->spa, sizeof(node->spa));
+    node->lastUsed = 1;
       
     /* Inserisce elemento nella hashmap */
     CHECK_T_MENO1(notused, map_set(&map, mac, node), "map_set fallita");
@@ -160,11 +159,11 @@ void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char* 
 void* discoverer(void* arg) {
 
   eth_pkt_t packet;                                 /* Frame ethernet               							*/
-	int fd;                                           /* File descriptor socket       							*/
+  int fd;                                           /* File descriptor socket       							*/
   struct ifreq ifr;                                 /* Struttura informazioni interfaccia di rete	*/
-	struct in_addr address;                           /* Struttura per indirizzo IP    							*/
+  struct in_addr address;                           /* Struttura per indirizzo IP    							*/
   unsigned char frame[sizeof(eth_pkt_t)];           /* Frame da inviare sulla rete  							*/
-	struct ifaddrs *ifap, *ifa;												/* Struttura informazioni interfaccia di rete	*/
+  struct ifaddrs *ifap, *ifa;												/* Struttura informazioni interfaccia di rete	*/
   struct sockaddr_in *source_ip_addr;								/* Struttura per indirizzo IP locale					*/
 
   /* Imposta nome interfaccia di rete */
@@ -177,19 +176,19 @@ void* discoverer(void* arg) {
   CHECK_T_MENO1(notused, ioctl(fd,SIOCGIFHWADDR,&ifr), "errore ioctl"); 
 
   /* Recupera indirizzo MAC locale */
-  source_mac_addr=(unsigned char*)ifr.ifr_hwaddr.sa_data;
+  memcpy(source_mac_addr, (unsigned char*)ifr.ifr_hwaddr.sa_data, 6);
 
   CHECK_T_MENO1(notused, close(fd), "close fallita");
 
   /* Recupera indirizzo IP relativo ad interfaccia di rete in interface */
   CHECK_T_MENO1(notused, getifaddrs (&ifap), "getifaddrs fallita");
   for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-			if (ifa->ifa_addr == NULL)
-				continue;
-      if (ifa->ifa_addr->sa_family==AF_INET && strcmp(ifa->ifa_name, interface)==0) {
-         source_ip_addr = (struct sockaddr_in *) ifa->ifa_addr;
-				 memcpy(&packet.spa, &source_ip_addr->sin_addr, sizeof(packet.spa));
-      }
+    if (ifa->ifa_addr == NULL)
+      continue;
+    if (ifa->ifa_addr->sa_family==AF_INET && strcmp(ifa->ifa_name, interface)==0) {
+      source_ip_addr = (struct sockaddr_in *) ifa->ifa_addr;
+      memcpy(&packet.spa, &source_ip_addr->sin_addr, sizeof(packet.spa));
+    }
   }
   freeifaddrs(ifap);
 
@@ -208,13 +207,13 @@ void* discoverer(void* arg) {
   memcpy(&packet.sha, source_mac_addr, sizeof(packet.sha));
 
   /* Cicla sugli indirizzi IP presenti nel blocco ed invia richieste ARP */
-	for (unsigned long ip = first_ip; ip <= last_ip; ++ip) {
+  for (unsigned long ip = first_ip; ip <= last_ip; ++ip) {
    
-		printf("%ld%%\r", 100*(ip-first_ip)/ip_count);
+    printf("%ld%%\r", 100*(ip-first_ip)/ip_count);
 
-		/* Imposta indirizzo IP destinatario in pacchetto ARP */
-		unsigned long theip = htonl(ip);
-		address.s_addr = (theip);
+    /* Imposta indirizzo IP destinatario in pacchetto ARP */
+    unsigned long theip = htonl(ip);
+    address.s_addr = (theip);
     memcpy(&packet.tpa, &address.s_addr, sizeof(packet.tpa));
 
     /* Costruisce frame ethernet e lo invia sulla rete */
@@ -224,7 +223,7 @@ void* discoverer(void* arg) {
     /* Attende prima di inviare una nuova richiesta */
     CHECK_T_MENO1(notused, usleep(SEND_INTERVAL), "usleep fallita");
 
-	}
+  }
 
 }
 
@@ -249,22 +248,22 @@ int main(int argc, char *argv[]) {
   pthread_t dis;                       	/* Thread invio richieste ARP    */
   pthread_t snif;                      	/* Thread ricezione risposte ARP */
   char errbuf[PCAP_ERRBUF_SIZE];       	/* Buffer errore                 */
-	char scelta;													/* Scelta utente 								 */
+  char scelta;													/* Scelta utente 								 */
 
   if (argc != 2) { 
-      printf("USAGE: hoker <interface>\n"); 
-      exit(1); 
+    printf("USAGE: hoker <interface>\n"); 
+    exit(1); 
   }
   interface=argv[1];
 
-	/* Inizializza strutture dati */
+  /* Inizializza strutture dati */
   memset(errbuf,0,PCAP_ERRBUF_SIZE);
-	CHECK_ALLOC(mac, malloc(18*sizeof(char)), "malloc fallita");
-	CHECK_ALLOC(s_mac, malloc(18*sizeof(char)), "malloc fallita");
+  CHECK_ALLOC(mac, malloc(18*sizeof(char)), "malloc fallita");
+  CHECK_ALLOC(s_mac, malloc(18*sizeof(char)), "malloc fallita");
   CHECK_ALLOC(stats, calloc(1,sizeof(net_stats_t)), "calloc fallita");
   map_init(&map);
 
-   /* Apre device di rete per cattura di pacchetti */
+  /* Apre device di rete per cattura di pacchetti */
   CHECK_NULL(descr,pcap_open_live(interface, MAXBYTES2CAPTURE, 0, 1000, errbuf), "Errore in pcap_open_live");
 
   /* Recupera info dal device di rete */ 
@@ -278,18 +277,18 @@ int main(int argc, char *argv[]) {
 
   /* Ricava indirizzi */
   first_ip = ntohl(netaddr & mask);
-	last_ip = ntohl(netaddr | ~(mask));
-	ip_count = last_ip - first_ip;
+  last_ip = ntohl(netaddr | ~(mask));
+  ip_count = last_ip - first_ip;
 
-	/* Inizializza struttura ordinata */
-	CHECK_ALLOC(table, malloc(sizeof(hash_node_t*)*ip_count), "malloc fallita");
+  /* Inizializza struttura ordinata */
+  CHECK_ALLOC(table, malloc(sizeof(hash_node_t*)*ip_count), "malloc fallita");
   for(int i=0; i<ip_count; i++) {
     table[i] = NULL;
   }
 
   while(1) {
 
-		printf("Inizio scansione\n");
+    printf("Inizio scansione\n");
 
     /* Crea thread sniffer */
     CHECK_OVER0(pthread_create(&snif,NULL,&sniffer,NULL),"pthread_create fallita\n");
@@ -297,7 +296,7 @@ int main(int argc, char *argv[]) {
     /* Crea thread per invio richieste ARP */
     CHECK_OVER0(pthread_create(&dis,NULL,&discoverer,NULL),"pthread_create fallita\n");
 
-	  CHECK_OVER0(pthread_join(dis,NULL),"pthread_join fallita\n");
+    CHECK_OVER0(pthread_join(dis,NULL),"pthread_join fallita\n");
 
     /* Imposta timeout per interruzione pcap_loop */
     alarm(T_ALARM);
@@ -309,17 +308,17 @@ int main(int argc, char *argv[]) {
     getHostInfo();
 
     printf("Effettuare nuova scansione? [S/n]\n");
-		scanf(" %c", &scelta);
-		printf("\n");
-		if( scelta=='n' )
-			break;
-		else if( scelta!='S' && scelta!='s' ) {
-			printf("Interrotto\n");
-			break;
-		}
+    scanf(" %c", &scelta);
+    printf("\n");
+    if( scelta=='n' )
+      break;
+    else if( scelta!='S' && scelta!='s' ) {
+      printf("Interrotto\n");
+      break;
+    }
   }
 
-	freeMem();
+  freeMem();
 		
   return 0; 
 

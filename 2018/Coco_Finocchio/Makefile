@@ -1,4 +1,4 @@
-CC = gcc
+CC = gcc -g
 LIBS = -lpcap -pthread
 TARGETS = main.c    \
           map.c

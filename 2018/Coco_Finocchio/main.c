@@ -9,7 +9,7 @@
 
 #define ARP_REPLY 2
 #define MAXBYTES2CAPTURE 1500
-#define SEND_INTERVAL 0
+#define SEND_INTERVAL 2000
 #define T_ALARM 3
 #define BROADCAST_MAC 0xff
 

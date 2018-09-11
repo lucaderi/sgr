@@ -1,8 +1,8 @@
 /* ---------------------------------------------------------------------- */
-/* 	HOKER: local network HOst tracKER                    		  */
+/* HOKER: local network HOst tracKER                                      */
 /* Autori: Mario Coco - 517558, Federico Finocchio - 516818               */
-/* Utilizzo: sudo ./hoker <interfaccia>                                	  */
-/* Eseguire con permessi di root!                                         */ 
+/* Utilizzo: sudo ./hoker <interfaccia>                                   */
+/* Eseguire con permessi di root!                                         */
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
@@ -14,19 +14,19 @@
 #define BROADCAST_MAC 0xff
 
 
-bpf_u_int32 netaddr=0, mask=0;       	/* Indirizzo di rete e maschera   */ 
-char* interface;										 	/* Interfaccia di rete					 	*/
-pcap_t *descr = NULL;                	/* Handler interfaccia di rete    */
-map_void_t map;                      	/* Hashmap host in rete           */
-eth_pkt_t *eth_pkt = NULL;           	/* Puntatore al frame ethernet    */
-unsigned char source_mac_addr[6];      	/* Indirizzo MAC locale           */
-unsigned char *mac;                  	/* Stringa indirizzo MAC target   */
-unsigned char *s_mac;                	/* Stringa indirizzo MAC locale   */
-net_stats_t *stats;										/* Struttura statistiche di rete	*/
-unsigned long first_ip;              	/* Indirizzo di rete              */
-unsigned long last_ip;               	/* Ultimo indirizzo               */
-hash_node_t **table;									/* Struttura ordinata nodi				*/ 
-unsigned long ip_count;               /* Numero indirizzi nel blocco  	*/
+bpf_u_int32 netaddr=0, mask=0;        /* Indirizzo di rete e maschera   */
+char* interface;                      /* Interfaccia di rete            */
+pcap_t *descr = NULL;                 /* Handler interfaccia di rete    */
+map_void_t map;                       /* Hashmap host in rete           */
+eth_pkt_t *eth_pkt = NULL;            /* Puntatore al frame ethernet    */
+unsigned char source_mac_addr[6];     /* Indirizzo MAC locale           */
+unsigned char *mac;                   /* Stringa indirizzo MAC target   */
+unsigned char *s_mac;                 /* Stringa indirizzo MAC locale   */
+net_stats_t *stats;                   /* Struttura statistiche di rete  */
+unsigned long first_ip;               /* Indirizzo di rete              */
+unsigned long last_ip;                /* Ultimo indirizzo               */
+hash_node_t **table;                  /* Struttura ordinata nodi        */
+unsigned long ip_count;               /* Numero indirizzi nel blocco    */
 int notused;
 
 
@@ -36,7 +36,7 @@ int notused;
 /* Costruisce stringa a partire da indirizzo MAC */
 void macBuilder(unsigned char *str, u_char *mac) {
   sprintf(str, "%02X:%02X:%02X:%02X:%02X:%02X",
-	  mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
 
@@ -51,15 +51,15 @@ void printInfo() {
     if(table[i]!=NULL) {
       printf("| %d.%d.%d.%d\t\t", table[i]->spa[0], table[i]->spa[1], table[i]->spa[2], table[i]->spa[3]);
       printf("| %02X:%02X:%02X:%02X:%02X:%02X\t\t",table[i]->sha[0], table[i]->sha[1], table[i]->sha[2],
-	     table[i]->sha[3], table[i]->sha[4], table[i]->sha[5]);
+      table[i]->sha[3], table[i]->sha[4], table[i]->sha[5]);
 
       if(table[i]->lastUsed == 1) {
-	printf("| Online\t\t|\n");
-	table[i]->lastUsed = 0;
-	stats->online++;
+        printf("| Online\t\t|\n");
+        table[i]->lastUsed = 0;
+        stats->online++;
       }
       else
-	printf("| Offline\t\t|\n");
+        printf("| Offline\t\t|\n");
     }
   }
   printf(" -------------------------------------------------------------------------------\n");
@@ -73,8 +73,8 @@ void printInfo() {
 /* Funzione per il recupero degli host nella hashmap */
 void getHostInfo() {
 
-  const char* key;	/* Chiave di iterazione */
-  char *string;			/* Stringa IP mittente 	*/
+  const char* key;   /* Chiave di iterazione  */
+  char *string;      /* Stringa IP mittente   */
   stats->len = 0;
 
   /* Inizializza iteratore e itera sugli elementi della hasmap */
@@ -94,18 +94,18 @@ void getHostInfo() {
     free(string);
     unsigned long index = ntohl(address.s_addr) - first_ip;
     table[index]=node;
-		
+
   }
 
   printInfo();
 
-} 
+}
 
 
 /* Funzione per liberare la memoria allocata */
 void freeMem() {
 
-  const char* key;	/* Chiave di iterazione */
+  const char* key;  /* Chiave di iterazione */
 
   free(mac);
   free(s_mac);
@@ -134,7 +134,7 @@ void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char* 
   macBuilder(mac, eth_pkt->tha);
   macBuilder(s_mac, source_mac_addr);
 
-  /* Inserisce informazioni sugli host nella hashmap se il pacchetto ricevuto 
+  /* Inserisce informazioni sugli host nella hashmap se il pacchetto ricevuto
      è un ARP_REPLY con destinatario MAC locale */
   if(ntohs(eth_pkt->oper) == ARP_REPLY && strcmp(s_mac, mac) == 0) {
 
@@ -147,7 +147,7 @@ void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char* 
     memcpy(node->sha, &eth_pkt->sha, sizeof(node->sha));
     memcpy(node->spa, &eth_pkt->spa, sizeof(node->spa));
     node->lastUsed = 1;
-      
+
     /* Inserisce elemento nella hashmap */
     CHECK_T_MENO1(notused, map_set(&map, mac, node), "map_set fallita");
 
@@ -158,13 +158,13 @@ void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char* 
 /* Funzione thread per invio richieste ARP */
 void* discoverer(void* arg) {
 
-  eth_pkt_t packet;                                 /* Frame ethernet               							*/
-  int fd;                                           /* File descriptor socket       							*/
-  struct ifreq ifr;                                 /* Struttura informazioni interfaccia di rete	*/
-  struct in_addr address;                           /* Struttura per indirizzo IP    							*/
-  unsigned char frame[sizeof(eth_pkt_t)];           /* Frame da inviare sulla rete  							*/
-  struct ifaddrs *ifap, *ifa;												/* Struttura informazioni interfaccia di rete	*/
-  struct sockaddr_in *source_ip_addr;								/* Struttura per indirizzo IP locale					*/
+  eth_pkt_t packet;                                 /* Frame ethernet                             */
+  int fd;                                           /* File descriptor socket                     */
+  struct ifreq ifr;                                 /* Struttura informazioni interfaccia di rete */
+  struct in_addr address;                           /* Struttura per indirizzo IP                 */
+  unsigned char frame[sizeof(eth_pkt_t)];           /* Frame da inviare sulla rete                */
+  struct ifaddrs *ifap, *ifa;                       /* Struttura informazioni interfaccia di rete */
+  struct sockaddr_in *source_ip_addr;               /* Struttura per indirizzo IP locale          */
 
   /* Imposta nome interfaccia di rete */
   size_t if_name_len=strlen(interface);
@@ -173,7 +173,7 @@ void* discoverer(void* arg) {
 
   CHECK_T_MENO1(fd, socket(AF_INET,SOCK_DGRAM,0), "errore apertura socket");
 
-  CHECK_T_MENO1(notused, ioctl(fd,SIOCGIFHWADDR,&ifr), "errore ioctl"); 
+  CHECK_T_MENO1(notused, ioctl(fd,SIOCGIFHWADDR,&ifr), "errore ioctl");
 
   /* Recupera indirizzo MAC locale */
   memcpy(source_mac_addr, (unsigned char*)ifr.ifr_hwaddr.sa_data, 6);
@@ -203,12 +203,12 @@ void* discoverer(void* arg) {
   packet.hlen=ETHER_ADDR_LEN;
   packet.plen=sizeof(in_addr_t);
   packet.oper=htons(ARPOP_REQUEST);
-  memset(&packet.tha, 0, sizeof(packet.tha)); 
+  memset(&packet.tha, 0, sizeof(packet.tha));
   memcpy(&packet.sha, source_mac_addr, sizeof(packet.sha));
 
   /* Cicla sugli indirizzi IP presenti nel blocco ed invia richieste ARP */
   for (unsigned long ip = first_ip; ip <= last_ip; ++ip) {
-   
+
     printf("%ld%%\r", 100*(ip-first_ip)/ip_count);
 
     /* Imposta indirizzo IP destinatario in pacchetto ARP */
@@ -243,16 +243,16 @@ void alarm_handler(int sig) {
 int main(int argc, char *argv[]) {
 
   int i=0;
-  struct bpf_program filter;           	/* Filtro programma BPF          */ 
-  struct pcap_pkthdr pkthdr;           	/* Informazioni pacchetto        */
-  pthread_t dis;                       	/* Thread invio richieste ARP    */
-  pthread_t snif;                      	/* Thread ricezione risposte ARP */
-  char errbuf[PCAP_ERRBUF_SIZE];       	/* Buffer errore                 */
-  char scelta;													/* Scelta utente 								 */
+  struct bpf_program filter;             /* Filtro programma BPF          */
+  struct pcap_pkthdr pkthdr;             /* Informazioni pacchetto        */
+  pthread_t dis;                         /* Thread invio richieste ARP    */
+  pthread_t snif;                        /* Thread ricezione risposte ARP */
+  char errbuf[PCAP_ERRBUF_SIZE];         /* Buffer errore                 */
+  char scelta;                           /* Scelta utente                 */
 
-  if (argc != 2) { 
-    printf("USAGE: hoker <interface>\n"); 
-    exit(1); 
+  if (argc != 2) {
+    printf("USAGE: hoker <interface>\n");
+    exit(1);
   }
   interface=argv[1];
 
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
   /* Apre device di rete per cattura di pacchetti */
   CHECK_NULL(descr,pcap_open_live(interface, MAXBYTES2CAPTURE, 0, 1000, errbuf), "Errore in pcap_open_live");
 
-  /* Recupera info dal device di rete */ 
+  /* Recupera info dal device di rete */
   CHECK_MENO1(notused,pcap_lookupnet(interface, &netaddr, &mask, errbuf), "Errore in pcap_lookupnet");
 
   /* Compila l'espressione filtro in un programma BPF */
@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
     /* Imposta timeout per interruzione pcap_loop */
     alarm(T_ALARM);
     signal(SIGALRM, alarm_handler);
-    
+
     CHECK_OVER0(pthread_join(snif,NULL),"pthread_join fallita\n");
 
     /* Stampa [MAC - IP] degli host connessi alla rete */
@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
   }
 
   freeMem();
-		
-  return 0; 
+
+  return 0;
 
 }

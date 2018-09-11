@@ -10,7 +10,7 @@ host = docker.from_env()
 #cerca il container a cui appartiene il pid
 def getContainerByPid(pid):
     try:
-        for c in host.containers.list():
+        for c in host.containers.list(all=True):
             if c.attrs['State']['Pid'] == pid:
                 return c
         return None

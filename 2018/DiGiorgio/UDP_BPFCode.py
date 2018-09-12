@@ -54,7 +54,7 @@ static int trace_send_return(struct pt_regs *ctx, short ipver){
 
     struct sock **skpp;
     skpp = currsock.lookup(&pid);
-    if (skpp == NULL || ret != 0) {
+    if (skpp == NULL || ret == -1) {
         return 0;   // missed entry
     }
 

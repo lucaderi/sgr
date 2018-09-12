@@ -11,7 +11,7 @@ serverAddr=$( docker inspect --format '{{ .NetworkSettings.IPAddress }}' test-se
 # avvia la sonda
 python ./eBPFlow.py -d &
 pid=$! # prendi il pid della sonda
-sleep 3
+sleep 8
 # avvia un client di prova
 docker run  -it --rm --name=test-client networkstatic/iperf3 -c $serverAddr
 # interrompi la sonda

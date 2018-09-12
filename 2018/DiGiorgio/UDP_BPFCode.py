@@ -61,6 +61,7 @@ static int trace_send_return(struct pt_regs *ctx, short ipver){
     // pull in details
     struct sock *skp = *skpp;
     u16 port = skp->__sk_common.skc_dport;
+    port = ntohs(port);
     if(port == 0) return 0;
 
     FILTER_RPORT
@@ -111,6 +112,7 @@ static int trace_receive(struct pt_regs *ctx, struct sock *sk, short ipver){
         return 0;
     u16 port = 0;
     port = sk->__sk_common.skc_num;
+    port = ntohs(port);
     if(port == 0) return 0;
 
     FILTER_RPORT_A

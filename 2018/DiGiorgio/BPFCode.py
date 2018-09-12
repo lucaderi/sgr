@@ -74,6 +74,7 @@ static int trace_connect_return(struct pt_regs *ctx, short ipver)
     // pull in details
     struct sock *skp = *skpp;
     u16 port = skp->__sk_common.skc_dport;
+    port = ntohs(port);
 
     FILTER_RPORT
     FILTER_PORT
@@ -133,7 +134,7 @@ int kretprobe__inet_csk_accept(struct pt_regs *ctx)
     // pull in details
     u16 port = 0;
     bpf_probe_read(&port, sizeof(port), &newsk->__sk_common.skc_num);
-
+    port = ntohs(port);
 
     FILTER_RPORT_A
     FILTER_PORT_A

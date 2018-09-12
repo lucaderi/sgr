@@ -117,6 +117,10 @@ static int trace_receive(struct pt_regs *ctx, struct sock *sk, short ipver){
     FILTER_RPORT_A
     FILTER_PORT_A
 
+    u16 family = 0;
+    bpf_probe_read(&family, sizeof(family), &sk->__sk_common.skc_family);
+    if(family != AF_INET && family != AF_INET6) return 0;
+
     if (ipver == 4) {
         struct ipv4_data_t data4 = {.pid = pid, .ip = ipver};
         data4.saddr = sk->__sk_common.skc_rcv_saddr;

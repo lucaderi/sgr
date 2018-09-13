@@ -18,30 +18,38 @@ import datetime
 import xml.etree.ElementTree as ET
 from impacket.ImpactDecoder import RadioTapDecoder, Dot11ControlDecoder, DataDecoder
 
+ha={}
+delay = 5 # delay per export
+ignore = [] # mac da ignorare (ex. accesspoint della rete)
+max_bytes = 128 # da rivedere si puo accorciare
+read_timeout = 10
+promiscuous = True
+lastexport = datetime.datetime.now()
+
 interface = ''
 moninterface = ''
-monitor_enable  = 'airmon-ng start '
 monitor_disable = 'airmon-ng stop '
-
-max_bytes = 128 # da rivedere si puo accorciare
-promiscuous = True
-read_timeout = 10
-ignore = [] # mac da ignorare (ex. accesspoint della rete)
-ha={}
-
-delay = 5 # delay per export
-lastexport = datetime.datetime.now()
+monitor_enable  = 'airmon-ng start '
+directory = os.path.expanduser("~")
 
 #scrittura su file
 def exporter(haexport):
-    name = "wfm "+ str(datetime.datetime.now()) +".log"
-    with open(name, "a") as myfile:
-        for h in haexport:
-            myfile.write(h + "\n")
-            for n in haexport.get(h):
-                t = n[0]
-                i = n[1]
-                myfile.write("      " + str(t) + " |> " + str(i) + "\n")
+    name = directory + "/wfm "+ str(datetime.datetime.now()) +".log.xml"
+
+    root = ET.Element("root")
+    for h in haexport:
+        doc = ET.SubElement(root, h)
+        idx = 0
+        for n in haexport.get(h):
+            t = n[0]
+            i = n[1]
+            tup = ET.SubElement(doc, str(idx))
+            ET.SubElement(tup, "time").text = str(t)
+            ET.SubElement(tup, "intensify").text = str(i)
+            idx = idx + 1
+
+    tree = ET.ElementTree(root)
+    tree.write(name)
 
 # callback per ricevere pacchetti
 def recv_pkts(hdr, data):
@@ -102,16 +110,23 @@ def mysniff(interface):
 
 def main():
 
+    global ignore
+    global directory
     global interface
     global moninterface
     global monitor_enable
     global monitor_disable
-    global ignore
 
     interfaces = os.listdir('/sys/class/net/')
     
     if (len(sys.argv) == 2) and (sys.argv[1] in interfaces) or ((len(sys.argv) == 3) and (sys.argv[1] in interfaces) and (os.path.isfile(sys.argv[2]))):
         interface = sys.argv[1]
+
+        #cartella per export
+        directory = directory + "/PresenceCheckerLOG/" + interface
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         moninterface = interface + 'mon'
         monitor_enable = monitor_enable + interface + ';'
         monitor_disable = monitor_disable + moninterface + ';'

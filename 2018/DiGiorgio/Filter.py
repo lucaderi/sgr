@@ -4,8 +4,6 @@
 # mail: s.costantino5@studenti.unipi.it,
 #       a.digiorgio1@studenti.unipi.it
 
-from socket import ntohs
-
 def filter(args,bpf_text):
     """
         modifica codice BPF, aggiungendo filtri su PID e porte
@@ -21,7 +19,7 @@ def filter(args,bpf_text):
     if args.port: #filtraggio su porte
         try:
             dports = [int(dport) for dport in args.port.split(',')]
-            dports_if = ' && '.join(['port != %d' % ntohs(dport) for dport in dports])
+            dports_if = ' && '.join(['port != %d' % dport for dport in dports])
             bpf_text = bpf_text.replace('FILTER_PORT_A',
                 'if (%s) { return 0; }' % dports_if) #accept
             bpf_text = bpf_text.replace('FILTER_PORT',
@@ -35,9 +33,9 @@ def filter(args,bpf_text):
             b=int(b)
             if not(a < 0 or b < 0) and a<=b:
                 bpf_text = bpf_text.replace('FILTER_RPORT_A',
-                    'if (port < %d || port > %d) { return 0; }' % ( ntohs(a) ,ntohs(b))) #accept
+                    'if (port < %d || port > %d) { return 0; }' % (a, b)) #accept
                 bpf_text = bpf_text.replace('FILTER_RPORT',
-                    'if (port < %d || port > %d) { currsock.delete(&pid); return 0; }' % ( ntohs(a) ,ntohs(b))) #connect
+                    'if (port < %d || port > %d) { currsock.delete(&pid); return 0; }' % (a, b)) #connect
             else:
                 print("wrong value(s) for rport (ignored option) : %s" % args.rport)
         except ValueError:

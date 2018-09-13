@@ -54,13 +54,14 @@ static int trace_send_return(struct pt_regs *ctx, short ipver){
 
     struct sock **skpp;
     skpp = currsock.lookup(&pid);
-    if (skpp == NULL || ret != 0) {
+    if (skpp == NULL || ret == -1) {
         return 0;   // missed entry
     }
 
     // pull in details
     struct sock *skp = *skpp;
     u16 port = skp->__sk_common.skc_dport;
+    port = ntohs(port);
     if(port == 0) return 0;
 
     FILTER_RPORT
@@ -70,7 +71,7 @@ static int trace_send_return(struct pt_regs *ctx, short ipver){
         struct ipv4_data_t data4 = {.pid = pid, .ip = ipver};
         data4.saddr = skp->__sk_common.skc_rcv_saddr;
         data4.daddr = skp->__sk_common.skc_daddr;
-        data4.port = ntohs(port);
+        data4.port = port;
         data4.uid = bpf_get_current_uid_gid() & 4294967295;
         bpf_get_current_comm(&data4.task, sizeof(data4.task));
         ipv4_send_events.perf_submit(ctx, &data4, sizeof(data4)); //invio dati allo spazio utente
@@ -80,7 +81,7 @@ static int trace_send_return(struct pt_regs *ctx, short ipver){
             skp->__sk_common.skc_v6_rcv_saddr.in6_u.u6_addr32);
         bpf_probe_read(&data6.daddr, sizeof(data6.daddr),
             skp->__sk_common.skc_v6_daddr.in6_u.u6_addr32);
-        data6.port = ntohs(port);
+        data6.port = port;
         data6.uid = bpf_get_current_uid_gid() & 4294967295;
         bpf_get_current_comm(&data6.task, sizeof(data6.task));
         ipv6_send_events.perf_submit(ctx, &data6, sizeof(data6));
@@ -111,16 +112,20 @@ static int trace_receive(struct pt_regs *ctx, struct sock *sk, short ipver){
         return 0;
     u16 port = 0;
     port = sk->__sk_common.skc_num;
-    if(port == 0) return 0;
+    port = ntohs(port);
 
     FILTER_RPORT_A
     FILTER_PORT_A
+
+    u16 family = 0;
+    bpf_probe_read(&family, sizeof(family), &sk->__sk_common.skc_family);
+    if(family != AF_INET && family != AF_INET6) return 0;
 
     if (ipver == 4) {
         struct ipv4_data_t data4 = {.pid = pid, .ip = ipver};
         data4.saddr = sk->__sk_common.skc_rcv_saddr;
         data4.daddr = sk->__sk_common.skc_daddr;
-        data4.port = ntohs(port);
+        data4.port = port;
         data4.uid = bpf_get_current_uid_gid() & 4294967295;
         bpf_get_current_comm(&data4.task, sizeof(data4.task));
         ipv4_receive_events.perf_submit(ctx, &data4, sizeof(data4));
@@ -128,7 +133,7 @@ static int trace_receive(struct pt_regs *ctx, struct sock *sk, short ipver){
         struct ipv6_data_t data6 = {.pid = pid, .ip = ipver};
         data6.saddr = sk->__sk_common.skc_rcv_saddr;
         data6.daddr = sk->__sk_common.skc_daddr;
-        data6.port = ntohs(port);
+        data6.port = port;
         data6.uid = bpf_get_current_uid_gid() & 4294967295;
         bpf_get_current_comm(&data6.task, sizeof(data6.task));
         ipv6_receive_events.perf_submit(ctx, &data6, sizeof(data6));

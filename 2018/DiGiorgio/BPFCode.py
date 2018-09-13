@@ -74,6 +74,7 @@ static int trace_connect_return(struct pt_regs *ctx, short ipver)
     // pull in details
     struct sock *skp = *skpp;
     u16 port = skp->__sk_common.skc_dport;
+    port = ntohs(port);
 
     FILTER_RPORT
     FILTER_PORT
@@ -82,7 +83,7 @@ static int trace_connect_return(struct pt_regs *ctx, short ipver)
         struct ipv4_data_t data4 = {.pid = pid, .ip = ipver};
         data4.saddr = skp->__sk_common.skc_rcv_saddr;
         data4.daddr = skp->__sk_common.skc_daddr;
-        data4.port = ntohs(port);
+        data4.port = port;
         /*
             prelevo l'id dell'utente chiamante
             prendendo gli ultimi 32 bit
@@ -98,7 +99,7 @@ static int trace_connect_return(struct pt_regs *ctx, short ipver)
             skp->__sk_common.skc_v6_rcv_saddr.in6_u.u6_addr32);
         bpf_probe_read(&data6.daddr, sizeof(data6.daddr),
             skp->__sk_common.skc_v6_daddr.in6_u.u6_addr32);
-        data6.port = ntohs(port);
+        data6.port = port;
         data6.uid = bpf_get_current_uid_gid() & 4294967295;
         bpf_get_current_comm(&data6.task, sizeof(data6.task));
         ipv6_connect_events.perf_submit(ctx, &data6, sizeof(data6));
@@ -133,7 +134,6 @@ int kretprobe__inet_csk_accept(struct pt_regs *ctx)
     // pull in details
     u16 port = 0;
     bpf_probe_read(&port, sizeof(port), &newsk->__sk_common.skc_num);
-
 
     FILTER_RPORT_A
     FILTER_PORT_A

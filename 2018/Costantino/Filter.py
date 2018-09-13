@@ -17,7 +17,7 @@ def filter(args,bpf_text):
     if args.port: #filtraggio su porte
         try:
             dports = [int(dport) for dport in args.port.split(',')]
-            dports_if = ' && '.join(['port != %d' % ntohs(dport) for dport in dports])
+            dports_if = ' && '.join(['port != %d' % dport for dport in dports])
             bpf_text = bpf_text.replace('FILTER_PORT_A',
                 'if (%s) { return 0; }' % dports_if) #accept
             bpf_text = bpf_text.replace('FILTER_PORT',

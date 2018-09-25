@@ -102,12 +102,14 @@ def exporter(haexport):
 
     root = ET.Element("root")
     for h in haexport:
-        doc = ET.SubElement(root, h)
+        doc = ET.SubElement(root, "mac")
+        doc.set('value', str(h))
         idx = 0
         for n in haexport.get(h):
             t = n[0]
             i = n[1]
-            tup = ET.SubElement(doc, str(idx))
+            tup = ET.SubElement(doc, "idx")
+            tup.set('value', str(idx))
             ET.SubElement(tup, "time").text = str(t)
             ET.SubElement(tup, "intensify").text = str(i)
             idx = idx + 1

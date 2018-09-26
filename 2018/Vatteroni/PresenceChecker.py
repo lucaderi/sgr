@@ -110,7 +110,7 @@ def exporter(haexport):
             i = n[1]
             tup = ET.SubElement(doc, "idx")
             tup.set('value', str(idx))
-            ET.SubElement(tup, "time").text = str(t)
+            ET.SubElement(tup, "time").text = t.strftime('%Y-%m-%d %H:%M:%S.%f')
             ET.SubElement(tup, "intensify").text = str(i)
             idx = idx + 1
 

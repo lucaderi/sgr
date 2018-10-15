@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #################################
 #                               #
 #       Presence Checker        #
@@ -13,49 +15,119 @@ import sys
 import time
 import pcapy
 import signal
+import struct
 import thread
 import datetime
+import traceback
+from reprint import output
+from threading import Thread
 import xml.etree.ElementTree as ET
 from impacket.ImpactDecoder import RadioTapDecoder, Dot11ControlDecoder, DataDecoder
 
 ha={}
 delay = 5 # delay per export
 ignore = [] # mac da ignorare (ex. accesspoint della rete)
-max_bytes = 128 # da rivedere si puo accorciare
-read_timeout = 10
+max_bytes = 256
+read_timeout = 100
 promiscuous = True
+pacchetticatturati = 0
 lastexport = datetime.datetime.now()
-
+running = True
 interface = ''
 moninterface = ''
 monitor_disable = 'airmon-ng stop '
 monitor_enable  = 'airmon-ng start '
+canale = 0 #canali da 1-13 (giro i numeri da 0-12)
 directory = os.path.expanduser("~")
+imprexc = None
+
+#rotazione dei canali
+def channelLoop(s):
+    try:
+        while(running):
+            global canale
+            canale = ((canale + 1) % 13)
+            change_channel = 'iw dev '+moninterface+' set channel ' + str(canale+1)
+            os.system(change_channel)
+            time.sleep(s)
+    except KeyboardInterrupt: raise
+
+#stampa di "interfaccia"
+def interfaceLoop(t,nprint):
+    try:
+        with output(output_type='dict') as output_lines:
+            while(running):
+                idict = dict(ha)
+                PC = str(pacchetticatturati)
+                LE = str(lastexport)
+                ch = canale
+                ee = str(imprexc)
+                interfacedict = {}
+
+                output_lines['Channel'] = "[{cc}] - Packet: [{pp}] - Interface: [{ii}]".format(cc=ch, pp=PC, ii=moninterface)
+                output_lines['Last Export'] = "[{le}]".format(le=LE)
+                output_lines['Debug'] = "[{exc}]".format(exc = ee)
+
+                for k in idict:
+                    interfacedict[k] = idict.get(k)[-1][1]
+
+                if (nprint > 0):
+                    ssize = min(nprint, len(interfacedict))
+                else:
+                    ssize = len(interfacedict)
+
+                sorted_d = sorted(interfacedict.items(), key=lambda x: x[1])
+
+                for i in range(0,ssize):
+                    k = sorted_d[i][0]
+                    s = sorted_d[i][1]
+                    output_lines[i] = "MAC: {mc} - Signal: {sg}".format(mc = k, sg = s)
+
+                time.sleep(t)
+    except KeyboardInterrupt: raise
+
+#formattazione MAC
+def addressDecode(x):
+    s = ""
+    aux = [None] * 6
+    for i in range(0,6):
+        #salto i primi 8 byte per ottenere il mac trasmittente
+        aux[i] = hex(x.get_byte(8+i))[2:]
+    s = ':'.join(aux)
+    return s
 
 #scrittura su file
 def exporter(haexport):
-    name = directory + "/wfm "+ str(datetime.datetime.now()) +".log.xml"
+    name = directory + "/prschk "+ str(lastexport) +".log.xml"
 
     root = ET.Element("root")
     for h in haexport:
-        doc = ET.SubElement(root, h)
+        doc = ET.SubElement(root, "mac")
+        doc.set('value', str(h))
         idx = 0
         for n in haexport.get(h):
             t = n[0]
             i = n[1]
-            tup = ET.SubElement(doc, str(idx))
-            ET.SubElement(tup, "time").text = str(t)
+            tup = ET.SubElement(doc, "idx")
+            tup.set('value', str(idx))
+            ET.SubElement(tup, "time").text = t.strftime('%Y-%m-%d %H:%M:%S.%f')
             ET.SubElement(tup, "intensify").text = str(i)
             idx = idx + 1
 
     tree = ET.ElementTree(root)
     tree.write(name)
 
+#scrittura su file di eventuali eccezioni impreviste
+def exporterException(ee):
+    s = str(ee) + "\n"
+    with open('Debug.log', mode='a') as contents:
+        contents.write(s)
+
 # callback per ricevere pacchetti
 def recv_pkts(hdr, data):
     global lastexport
     global ha
-    
+    global pacchetticatturati
     try:
         #decodifica del pacchetto
         radio = RadioTapDecoder().decode(data)
@@ -63,12 +135,8 @@ def recv_pkts(hdr, data):
         ethe = Dot11ControlDecoder().decode(datadown)
         datadowndown = ethe.get_body_as_string()
         decodedDataDownDown = DataDecoder().decode(datadowndown)
-        ethMacS = [None] * 6
-        for i in range(0,6):
-            #salto i primi 8 byte per ottenere il mac trasmittente
-            ethMacS[i] = hex(decodedDataDownDown.get_byte(8+i)) 
-        macS = ':'.join(map(str, ethMacS))
 
+        macS = (addressDecode(decodedDataDownDown))
         s = type(radio.get_dBm_ant_signal())
 
         time = datetime.datetime.now()
@@ -76,13 +144,14 @@ def recv_pkts(hdr, data):
         #aggiunta al dizionario
         #controllo se il segnale ha un valore consistente, in caso contrario scarto
         if (s is int):
-            signal = hex(radio.get_dBm_ant_signal())
+            signal = str(-(256 - radio.get_dBm_ant_signal()))+ " dB"
             t = (time,signal)
             if (ha.has_key(macS)):
                 ha.get(macS).append(t)
             else:
                 l = [t]
                 ha[macS] = l
+            pacchetticatturati = pacchetticatturati + 1
 
         #esporta su file (thread in parallelo)
         if ((time - lastexport).seconds > delay) & len(ha.keys()) :
@@ -92,7 +161,13 @@ def recv_pkts(hdr, data):
             thread.start_new_thread(exporter, (haexport, ) )
     
     except KeyboardInterrupt: raise
-    except: pass
+    except struct.error: pass #perche non lanciano eccezioni custom quelli di Impacket
+    except: 
+        #per evitare che crashi qual'ora ci siano errori imprevisti, ne tengo traccia per il debug
+        global imprexc
+        _, exc_obj, exc_tb = sys.exc_info()
+        imprexc = (exc_obj, exc_tb.tb_lineno)
+        thread.start_new_thread(exporterException, (imprexc, ) )
 
 def mysniff(interface):
     global ignore
@@ -109,8 +184,9 @@ def mysniff(interface):
     pc.loop(packet_limit, recv_pkts) # cattura pacchetti
 
 def main():
-
+    
     global ignore
+    global running
     global directory
     global interface
     global moninterface
@@ -127,7 +203,7 @@ def main():
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        moninterface = interface + 'mon'
+        moninterface = interface # + 'mon'
         monitor_enable = monitor_enable + interface + ';'
         monitor_disable = monitor_disable + moninterface + ';'
 
@@ -138,14 +214,24 @@ def main():
             for child in root:
                 ignore.append(child.text)
 
-        os.system(monitor_enable)
-        try: mysniff(moninterface)
-        except KeyboardInterrupt: sys.exit()
+        #os.system(monitor_enable)
+        t1 = Thread(target=channelLoop, args=(0.1,))
+        t2 = Thread(target=interfaceLoop, args=(0.5,10))
+
+        try:
+            t1.start()
+            t2.start()
+            mysniff(moninterface)
+        except KeyboardInterrupt: 
+            running = False
         finally:
-            os.system(monitor_disable)
+            t1.join()
+            t2.join()
+            #os.system(monitor_disable)
+            sys.exit()
     else:
         print '[!] Insert a valid interface or a valid ignore file'
-        print '[!] example: python ' + sys.argv[0] + ' wlan0'
-        print '[!] example: python ' + sys.argv[0] + ' wlan0 ./ignore.xml'
+        print '[!] example: python ' + sys.argv[0] + ' wlan0mon'
+        print '[!] example: python ' + sys.argv[0] + ' wlan0mon ./ignore.xml'
 
 main()

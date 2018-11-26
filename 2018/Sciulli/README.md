@@ -23,11 +23,6 @@
 
 <meta name="viewport" content="width=device-width">
 
-<title>sgr/README.md at master · fsciulli/sgr · GitHub</title>
-<meta name="description" content="Progetti Corso Gestione di Rete. Contribute to fsciulli/sgr development by creating an account on GitHub.">
-<link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub">
-<link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub">
-<meta property="fb:app_id" content="1401488693436528">
 
 
 <meta property="og:image" content="https://avatars0.githubusercontent.com/u/43413270?s=400&amp;v=4" /><meta property="og:site_name" content="GitHub" /><meta property="og:type" content="object" /><meta property="og:title" content="fsciulli/sgr" /><meta property="og:url" content="https://github.com/fsciulli/sgr" /><meta property="og:description" content="Progetti Corso Gestione di Rete. Contribute to fsciulli/sgr development by creating an account on GitHub." />

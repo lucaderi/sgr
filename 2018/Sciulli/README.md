@@ -93,7 +93,7 @@
 <p>Controllare se nella cartella src/lib/protocols sia presente il file modbus.c 
 <p>Se è presente allora è possibile passare direttamente a Compilazione ed Esecuzione</p>
 <p>Altrimenti è necessario eseguire la seguente operazione</p>
-<pre>$ ./update.sh nomecartella     (es ./update.sh nDPi-dev)<p>Copia i nuovi file all'interno di nDPi </p></pre></div>
+<pre>$ ./update.sh nomecartella     (es ./update.sh nDPI-dev)<p>Copia i nuovi file all'interno di nDPI </p></pre></div>
 
 
 <p>  </p>

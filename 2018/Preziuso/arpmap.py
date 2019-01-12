@@ -3,8 +3,8 @@ import sys
 import pyshark
 from pyshark import LiveCapture
 
-from interfaces import interfaces
-from interfaces import default
+# default interface to scan
+default = 'en0'
 
 
 # extract packets' info from captured data
@@ -24,35 +24,32 @@ def gen_arp_communications_matrix(data: LiveCapture):
 			
 		except StopIteration:
 			break
-			
-	return arp_communications_matrix
+	
+	def get_key(p):
+		return p[2]
+	
+	return sorted(arp_communications_matrix.values(), key=get_key, reverse=True)
 
 
 # read interface from args
-interface = sys.argv[1] if len(sys.argv) > 1 else default
-if len(sys.argv) <= 1:
-	print("Interface not specified!\nMonitoring default interface.\n", file=sys.stderr)
-
-if interface not in interfaces:
-	print("Interface not supported!\n\nSupported interfaces:", file=sys.stderr)
-	for i_key in interfaces:
-		print("- " + i_key, file=sys.stderr)
-	quit(1)
-
+if len(sys.argv) > 1:
+	interface = sys.argv[1]
+else:
+	print("Interface not specified! Monitoring default interface.\n", file=sys.stderr)
+	interface = default
+	
 # capture setup
-capture = pyshark.LiveCapture(interface=interfaces[interface], bpf_filter='arp')
+capture = pyshark.LiveCapture(interface=interface, bpf_filter='arp')
 
-print("Scanning for ARP packets over " + interface + "...")
+print("Scanning for ARP packets over interface \'" + interface + "\'...")
 try:
 	# capture
 	capture.sniff()
 except KeyboardInterrupt:
 	
 	# format and print results
-	print("\nCaptured packets: ", len(capture), "\n")
+	print("\n\tCaptured packets: ", len(capture), "\n")
 	
-	communications_matrix = gen_arp_communications_matrix(capture)
-	
-	print("\n\t", "Source", "\t|\t", "Destination", "\t|\t", "# Packets", "\t|\t", "# Bytes\n")
-	for comm in communications_matrix.values():
-		print("\t", comm[0], "\t|\t", comm[1], "\t|\t", comm[2], "\t|\t", comm[3])
+	print("\n\t", "Source", "\t\t|", "Destination", "\t\t|", "# Pkts", "\t|", "# Bytes\n")
+	for comm in gen_arp_communications_matrix(capture):
+		print("\t", comm[0], "\t\t|", comm[1], "\t\t|", comm[2], "\t\t|", comm[3])

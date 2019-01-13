@@ -5,7 +5,7 @@ from pyshark import LiveCapture
 from pyshark.tshark.tshark import get_tshark_interfaces
 
 # default interface to scan
-default = ''
+default = None
 
 
 # check selected interface goodness

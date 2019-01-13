@@ -26,11 +26,10 @@ Da terminale, accedere alla directory dov'è situato il file `arpmap.py` ed eseg
 ```bash
 python3 arpmap.py <interface>
 ```
-dove `<interface>` va sostituito con la **chiave** dell'interfaccia da esaminare. È possibile omettere il parametro <interface>, in tal caso verrà segnalato l'utilizzo dell'interfaccia wifi (`en0`), impostata come default.
+dove `<interface>` va sostituito con l' **identificativo** dell'interfaccia da esaminare<sup>[1](#interfaces)</sup>. È possibile omettere il parametro <interface>, in tal caso verrà segnalato l'utilizzo dell'interfaccia wifi (`en0`), impostata come default.
 
-## Interfacce
-
-Per visualizzare la lista delle interfacce o aggiungerne/rimuoverne: aprire il file `interfaces.py`, situato nella stessa directory di `arpmap.py`, e modificare il dizionario `interfaces` tenendo presente che:
-
-* la **chiave** è arbitraria e costituisce il **parametro `<interface>`** da passare ad `arpmap.py`
-* il **valore** è il **codice identificativo dell'interfaccia** che si vuole monitorare quando indicata la corrispondente chiave (es. `eth0`, `eth1`, `en0`, ...)
+<a name="interfaces">1</a>: Per controllare la lista delle interfacce disponibili sul proprio sistema, se si ha Wireshark installato sulla macchina, eseguire il comando
+```bash
+wireshark -D
+```
+da linea di comando.

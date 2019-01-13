@@ -2,9 +2,25 @@ import sys
 
 import pyshark
 from pyshark import LiveCapture
+from pyshark.tshark.tshark import get_tshark_interfaces
 
 # default interface to scan
-default = 'en0'
+default = None
+
+
+# check selected interface goodness
+def check_interface(i):
+	parameters = [pyshark.tshark.tshark.get_process_path(), '-D']
+	tshark_interfaces = pyshark.tshark.tshark.check_output(parameters, stderr=None).decode("utf-8")
+	interfaces = tshark_interfaces.splitlines()
+	
+	for inter in interfaces:
+		if i == inter.split(' ')[1]:
+			return
+		
+	print("Unknown interface!\n")
+	print(tshark_interfaces, file=sys.stderr)
+	quit(1)
 
 
 # extract packets' info from captured data
@@ -31,17 +47,18 @@ def gen_arp_communications_matrix(data: LiveCapture):
 	return sorted(arp_communications_matrix.values(), key=get_key, reverse=True)
 
 
-# read interface from args
+# interface selection
 if len(sys.argv) > 1:
 	interface = sys.argv[1]
+	check_interface(interface)
 else:
-	print("Interface not specified! Monitoring default interface.\n", file=sys.stderr)
+	print("Interface not specified! Monitoring default interface(s).\n", file=sys.stderr)
 	interface = default
-	
+
 # capture setup
 capture = pyshark.LiveCapture(interface=interface, bpf_filter='arp')
 
-print("Scanning for ARP packets over interface \'" + interface + "\'...")
+print("Scanning for ARP packets over interface(s) ", ['{}'.format(i) for i in capture.interfaces], "...")
 try:
 	# capture
 	capture.sniff()
@@ -50,6 +67,11 @@ except KeyboardInterrupt:
 	# format and print results
 	print("\n\tCaptured packets: ", len(capture), "\n")
 	
-	print("\n\t", "Source", "\t\t|", "Destination", "\t\t|", "# Pkts", "\t|", "# Bytes\n")
-	for comm in gen_arp_communications_matrix(capture):
-		print("\t", comm[0], "\t\t|", comm[1], "\t\t|", comm[2], "\t\t|", comm[3])
+	communication_matrix = gen_arp_communications_matrix(capture)
+	
+	dash = '-' * 72
+	print(dash)
+	print('{:^20}{:^20}{:^15}{:^15}'.format("SOURCE", "DESTINATION", "# PACKETS", "# BYTES"))
+	print(dash)
+	for comm in communication_matrix:
+		print('{:<20}{:<20}{:>15}{:>15}'.format(comm[0], comm[1], comm[2], comm[3]))

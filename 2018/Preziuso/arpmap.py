@@ -4,9 +4,6 @@ import pyshark
 from pyshark import LiveCapture
 from pyshark.tshark.tshark import get_tshark_interfaces
 
-# default interface to scan
-default = None
-
 
 # check selected interface goodness
 def check_interface(i):
@@ -21,6 +18,12 @@ def check_interface(i):
 	print("Unknown interface!\n")
 	print(tshark_interfaces, file=sys.stderr)
 	quit(1)
+
+
+def select_first_interface():
+	parameters = [pyshark.tshark.tshark.get_process_path(), '-D']
+	tshark_interfaces = pyshark.tshark.tshark.check_output(parameters, stderr=None).decode("utf-8")
+	return tshark_interfaces.splitlines()[0].split(' ')[1]
 
 
 # extract packets' info from captured data
@@ -52,13 +55,13 @@ if len(sys.argv) > 1:
 	interface = sys.argv[1]
 	check_interface(interface)
 else:
-	print("Interface not specified! Monitoring default interface(s).\n", file=sys.stderr)
-	interface = default
+	print("Interface not specified! Monitoring first available interface.\n", file=sys.stderr)
+	interface = select_first_interface()
 
 # capture setup
 capture = pyshark.LiveCapture(interface=interface, bpf_filter='arp')
 
-print("Scanning for ARP packets over interface(s) ", ['{}'.format(i) for i in capture.interfaces], "...")
+print("Scanning for ARP packets over interface ", ['{}'.format(i) for i in capture.interfaces], "...")
 try:
 	# capture
 	capture.sniff()

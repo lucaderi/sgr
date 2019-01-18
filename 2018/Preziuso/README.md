@@ -26,7 +26,7 @@ Da terminale, accedere alla directory dov'è situato il file `arpmap.py` ed eseg
 ```bash
 python3 arpmap.py <interface>
 ```
-dove `<interface>` va sostituito con l' **identificativo** dell'interfaccia da esaminare<sup>[1](#interfaces)</sup>. È possibile omettere il parametro <interface>, in tal caso verranno sondate tutte le interfacce disponibili sulla macchina.
+dove `<interface>` va sostituito con l' **identificativo** dell'interfaccia da esaminare<sup>[1](#interfaces)</sup>. È possibile omettere il parametro <interface>, in tal caso verrà sondata la prima interfaccia disponibile sulla macchina.
 
 <a name="interfaces">1</a>: Per controllare la lista delle interfacce disponibili sul proprio sistema, se si ha Wireshark installato sulla macchina, eseguire il comando
 ```bash

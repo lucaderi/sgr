@@ -18,7 +18,7 @@ echo "Inizio a generare traffico DNS"
 while read -r line; #risolvo i nommi contenuti nel file lista.txt per generare traffico DNS
 do
   #echo "$line"
-  host $line &> dev/null
+  host $line &> /dev/null
 done < lista.txt
 
 echo "ASPETTO LA TERMINAZIONE DEL dns_sniffer"

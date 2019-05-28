@@ -21,12 +21,12 @@ if len(sys.argv) != 7: #controllo il numero di parametri
 	sys.exit(0)
 
 
-nome_scrip, first_option, interface, second_option, minuti, thrid_option, n = sys.argv #prendo parametri
+nome_script, first_option, interface, second_option, minuti, third_option, n = sys.argv #prendo parametri
 
 
 #controllo opzioni
 
-if first_option != "-i" or second_option != "-m" or thrid_option != "-n":
+if first_option != "-i" or second_option != "-m" or third_option != "-n":
 	print("Opzione sbagliata")
 	usage()
 	sys.exit(0)
@@ -49,7 +49,7 @@ except ValueError :
 
 
 #istanzio oggetto per la cattura
-cap = pyshark.LiveCapture(interface=interface,bpf_filter='udp port 53 or tcp port 53') #filitro i pacchetti dns 
+cap = pyshark.LiveCapture(interface=interface,bpf_filter='udp port 53 or tcp port 53') #filtro i pacchetti dns 
 
 
 
@@ -78,7 +78,7 @@ def findTop(l,n):
 	print("(nome, numero di richieste)")
 	print("-------------------------------------------------------------------------")
 	if len(top) == 0:
-		print("Non sono state rilevate richieste DNS sull interfaccia: "+interface)
+		print("Non sono state rilevate richieste DNS sull' interfaccia: "+interface)
 	else:	
 		for t in top:
 			if n > 0: 

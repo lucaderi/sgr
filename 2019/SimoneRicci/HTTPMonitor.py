@@ -17,7 +17,7 @@ def parse_argv():
     parser = optparse.OptionParser(description='HTTP traffic analyzer')
     parser.add_option('-t', '--time', help='Time to sniff (in seconds)')
     parser.add_option('-M', '--minutes', help='Time expressed in minutes', default=False, action='store_true', dest='minutes')
-    parser.add_option('-H', '--hour', help='Time expressed in minutes', default=False, action='store_true', dest='hours')
+    parser.add_option('-H', '--hour', help='Time expressed in hours', default=False, action='store_true', dest='hours')
     parser.add_option('-f', '--file', help='File pcap (Use only once between -f and -t')
     parser.add_option('-i', '--interface', help='Interface of capture', default='eth0')
     parser.add_option('-r', '--resolve', help='Resolve IP addresses', default=False, action='store_true', dest='resolve')

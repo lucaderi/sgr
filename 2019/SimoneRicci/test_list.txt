@@ -1,0 +1,11 @@
+google.com 
+facebook.com
+twitter.com
+repubblica.it
+gazzetta.it
+github.com
+instagram.com
+stackoverflow.com
+di.unipi.it
+forum.ubuntu-it.org
+python.org

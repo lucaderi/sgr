@@ -17,8 +17,9 @@ def parse_argv():
     parser = optparse.OptionParser(description='HTTP traffic analyzer')
     parser.add_option('-t', '--time', help='Time to sniff (in seconds)')
     parser.add_option('-M', '--minutes', help='Time expressed in minutes', default=False, action='store_true', dest='minutes')
-    parser.add_option('-H', '--hour', help='Time expressed in hours', default=False, action='store_true', dest='hours')
+    parser.add_option('-H', '--hour', help='Time expressed in minutes', default=False, action='store_true', dest='hours')
     parser.add_option('-f', '--file', help='File pcap (Use only once between -f and -t')
+    parser.add_option('-m', '--host', help='Target host. (Use only with -f option)', default=None)
     parser.add_option('-i', '--interface', help='Interface of capture', default='eth0')
     parser.add_option('-r', '--resolve', help='Resolve IP addresses', default=False, action='store_true', dest='resolve')
     parser.add_option('-v', '--verbose', help='Ability verbose mode', default=False, action='store_true', dest='verbose')
@@ -38,12 +39,17 @@ def parse_argv():
     return options
 
 
-def offline_analisys(file, buffer, verbose=False):
+def offline_analisys(file, buffer, target_ip, verbose=False):
     if verbose:
         print('Reading pcap file...')
     packets = sniff(offline=file)
     for p in packets:
-        buffer.add_packet(p)
+        ip = p.getlayer('IP')
+        tcp = p.getlayer('TCP')
+        if ip != None and tcp != None:
+            if (ip.src == target_ip or ip.dst == target_ip) and \
+                    (tcp.sport in (80, 443) or tcp.dport in (80, 443)):
+                buffer.add_packet(p)
 
 def online_analisys(buffer, stopper, interface, target_ip, verbose=False):
     filter = '(tcp port 80 or tcp port 443) and host {}'.format(target_ip)
@@ -63,10 +69,10 @@ def online_analisys(buffer, stopper, interface, target_ip, verbose=False):
 
 def main():
     args = parse_argv()
-    target_ip4 = socket.gethostbyname(socket.gethostname())
+    target_ip4 = args.host if args.host != None and args.file != None else socket.gethostbyname(socket.gethostname())
     buff = ClientStats([target_ip4])
     if args.file != None:
-        offline_analisys(args.file, buff, args.verbose)
+        offline_analisys(args.file, buff, str(target_ip4), args.verbose)
     else:
         STOP = threading.Event()
         # converto il tempo in secondi

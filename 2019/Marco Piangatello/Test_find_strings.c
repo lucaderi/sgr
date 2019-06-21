@@ -19,7 +19,7 @@ unsigned char* ReadFile(char *name, int* size){
 	file = fopen(name, "rb");
 	if (!file)
 	{
-		fprintf(stderr, "Unable to open file %s", name);
+		perror("Errore apertura file");
 		return NULL;
 	}
 
@@ -33,8 +33,8 @@ unsigned char* ReadFile(char *name, int* size){
 	//Allocate memory
 	buffer=(unsigned char *)malloc(fileLen+1);
 	if (!buffer){
-		fprintf(stderr, "Memory error!");
-                                fclose(file);
+		perror("Errore allocazione memoria");
+                fclose(file);
 		return NULL;
 	}
 
@@ -43,16 +43,15 @@ unsigned char* ReadFile(char *name, int* size){
 	fclose(file);
 
 	return buffer ;
-
-	//free(buffer);
 }
 
 int main(int argc, char *argv[]){
 
     int i = 0;
     unsigned char *tmp = ReadFile(argv[1],&i);
-    //printf("%d\n", i);
-    printf("%d\n",find_strings (i, (char*) tmp,4));
+    if ( tmp != NULL){
+        printf("%d\n",find_strings (i, (char*) tmp,4));
+    }
     free(tmp);
     return 0;
 

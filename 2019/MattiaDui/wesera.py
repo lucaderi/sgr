@@ -37,9 +37,16 @@ def countPackets(pkt):
     elif (destPort == portRedis):
         try:
             t = bytearray.fromhex(pkt.data.data).decode().lower()
-            if ("set" in t):
+            setIndex = t.find("set")
+            getIndex = t.find("get")
+            if (setIndex >= 0 and getIndex >= 0):
+                if(setIndex < getIndex):
+                    captured['redis']['set'] += 1
+                else:
+                    captured['redis']['hit'] += 1
+            elif (setIndex >= 0):
                 captured['redis']['set'] += 1
-            elif ("get" in t):
+            elif (getIndex >= 0):
                 captured['redis']['hit'] += 1
             else:
                 captured['redis']['adm'] += 1

@@ -1,0 +1,25 @@
+Progetto Gestione di Rete
+
+Titolo: nDPI - modificato
+Anno: 2018-19
+Studente: Alessandro Bondielli
+Matricola: 503777
+
+1. INTRODUZIONE
+nDPI è una libreria open source per l'ispezione dei pacchetti. E’ stato modificato il file nDPIReader per fare in modo che ci sia la possibilità di stampare in un file la lista univoca dei DHCP - Fingerprint.
+
+2. FUNZIONAMENTO
+L'eseguibile di nDPIReader, contenuto nella sottocartella example di nDPI, permette con l'opzione -i che gli venga passato un file da cui leggere dati, questo file è di tipo pcap, ossia è una cattura di wireshark di un insieme di pacchetti, da cui nDPI riesce a estrapolare il DHCP di ogni pacchetto e stamparlo a video.
+La modifica consiste nell’aggiungere la funzionalità per poter fare stampare la lista dei DHCP in un file, il cui nome è passato come parametro all'eseguibile.
+
+3. IMPLEMENTAZIONE
+E' stata aggiunta una variabile globale per contenere il nome del file da creare (e aprire) e su cui scrivere i DHCP.
+Per poter richiedere la stampa in un file bisogna lanciare l'eseguibile con l'opzione -k <file> dove <file> indica il nome del file ed è obbligatorio che ci sia (si potrebbe rendere opzionale la presenza del nome e nel caso non sia specificato creare un file nuovo con un nome 'predefinito' es. fingerprint_list.txt); quindi quando viene lanciato l'eseguibile viene controllato se è presente -k nelle varie opzioni e nel caso ci sia creo il file col nome associato, ritornando un errore se è gia presente un file con quel nome (questa è una scelta personale perchè non volevo nè cancellare il vecchio contenuto del file nè aggiungere dati in append, però è possibile cambiarlo).
+Prima di scrivere un nuovo DHCP - fingerprint nel file viene controllato (scorrendo il file riga per riga) se non fosse già presente, per evitare di scrivere due o più volte lo stesso fingerprint.
+Alla terminazione del programma, il file se era stato aperto viene chiuso.
+Un problema è che se non è presente l'opzione -verbose 1 (o 2), la stampa dei DHCP non avviene, questo perchè non vengono letti tutti i pacchetti e calcolati i relativi DHCP; una possibile soluzione sarebbe quella di 'forzare' l'opzione -v 1 quando è presente -k, però questo risolve parzialmente il problema perchè se per esempio il programma viene lanciato con -v 3 dopo -k (es. ./ndpireader -i dhcp.pacp -k fingerprint_list.txt -v 3), in questo caso il -v 3 sovrascrive la forzatura di k e non viene stampato nulla nel file. Ovviamente è sempre possbile stampare a video senza stampare nel file.
+
+4. TESTING
+Per testare l'opzione bisogna spostarsi nella sottocartella example di nDPI e lanciare il comando './ndpireader -i dhcp.pcap -v 1 -k fingerprint_list.txt'.
+Oltre tutti i prerequisti che bisogna avere per far funzionare nDPI, serve un file da passare come parametro -i da dove leggere tutti i pacchetti DHCP, precedentemente sniffati, di cui si vuole avere il fingerprint (il file .pcap deve trovarsi dentro la cartella nDPI e, analogamente, il file desiderato viene creato li).
+E' stato testato su un pc con sistema operativo MacOS Sierra ed anche sulla macchina virtuale con una versione di linux (Ubuntu), però entrambe solo con un file .pcap (potrei  fare uno script per provarlo sequenzialmente su più file .pcap).

@@ -1,5 +1,5 @@
 # ContainerTrafficCounter
 
-<img src="/Graphic_Sample/term.png"/>
-<img src="/Graphic_Sample/graph.png"/>
+<img src="/2019/Libro/Graphic_Sample/term.png"/>
+<img src="/2019/Libro/Graphic_Sample/graph.png"/>
 

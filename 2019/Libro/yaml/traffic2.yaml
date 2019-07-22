@@ -1,0 +1,15 @@
+ apiVersion: extensions/v1beta1
+ kind: Deployment
+ metadata:
+   name: downloadtraffic2
+ spec:
+   replicas: 1
+   template:
+     metadata:
+       labels:
+         app: web
+     spec:
+       containers:
+          - name: ubuntu
+            image: 'raarts/netutils'
+            args: [bash, -c, 'while [ 1 ]; do wget http://ipv4.download.thinkbroadband.com/200MB.zip; sleep 5; done']

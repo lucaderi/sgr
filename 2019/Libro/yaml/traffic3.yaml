@@ -1,0 +1,19 @@
+ apiVersion: extensions/v1beta1
+ kind: Deployment
+ metadata:
+   name: pingtraffic
+ spec:
+   replicas: 4
+   template:
+     metadata:
+       labels:
+         app: web
+     spec:
+       containers:
+          - name: ubuntu
+            image: 'raarts/netutils'
+            args: [bash, -c, 'lista_ip="google.it youtube.com facebook.com google.com amazon.it wikipedia.org whatsapp.com instagram.com twitter.com
+ tim.it reddit.com ilmeteo.it virgilio.it ilfattoquotidiano.it blogspot.it
+ paypal.com bing.com wordpress.com lastampa.it tripadvisor.it mozilla.org yandex.ru amazon.com aliexpress.com 3bmeteo.com pinterest.com
+ ilgiornale.it kijiji.it gelocal.it dropbox.com wordreference.com pec.it trovaprezzi.it amazonaws.com ";
+ while [ 1 ]; do for ip in $lista_ip; do x=$(ping -c 1 $ip); sleep 1; done; sleep 1; done']

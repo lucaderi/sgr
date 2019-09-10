@@ -50,36 +50,37 @@ var opt = {
 var udpDataset = [];
 var tcpDataset = [];
 var icmpDataset = [];
-
+var maxPayload = 0;
+var radScalingFactor = 10000;
+jsonData.dataset.forEach(getMaxPayload);
 jsonData.dataset.forEach(parse);
 
+function getMaxPayload(item) {
+    if (item.udp_bytes > maxPayload)
+        maxPayload = item.udp_bytes;
+    if (item.tcp_bytes > maxPayload)
+        maxPayload = item.tcp_bytes;
+    if (item.icmp_bytes > maxPayload)
+        maxPayload = item.icmp_bytes;
+}
+
 function parse(item) {
+    var newBubble = {x: item.tx_addr, y: item.rx_addr, r: 0, pktcount: item.pktcount, payload: 0};
+
     if (item.udp_bytes > 0) {
-        udpDataset.push({
-            x: item.tx_addr,
-            y: item.rx_addr,
-            r: Math.cbrt(item.udp_bytes),
-            payload: item.udp_bytes,
-            pktcount: item.pktcount
-        });
+        newBubble.r = Math.sqrt(item.udp_bytes / maxPayload * radScalingFactor);
+        newBubble.payload = item.udp_bytes;
+        udpDataset.push(newBubble);
     }
     if (item.tcp_bytes > 0) {
-        tcpDataset.push({
-            x: item.tx_addr,
-            y: item.rx_addr,
-            r: Math.cbrt(item.tcp_bytes),
-            payload: item.tcp_bytes,
-            pktcount: item.pktcount
-        });
+        newBubble.r = Math.sqrt(item.tcp_bytes / maxPayload * radScalingFactor);
+        newBubble.payload = item.tcp_bytes;
+        tcpDataset.push(newBubble);
     }
     if (item.icmp_bytes > 0) {
-        icmpDataset.push({
-            x: item.tx_addr,
-            y: item.rx_addr,
-            r: Math.cbrt(item.icmp_bytes),
-            payload: item.icmp_bytes,
-            pktcount: item.pktcount
-        })
+        newBubble.r = Math.sqrt(item.icmp_bytes / maxPayload * radScalingFactor);
+        newBubble.payload = item.icmp_bytes;
+        icmpDataset.push(newBubble);
     }
 }
 

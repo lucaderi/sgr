@@ -25,8 +25,9 @@ u_int get_ip4_totlength(const u_char *packet) {
 }
 
 u_int get_udp_payload(const u_char *packet) {
-    u_int offst = ETH_HEAD_SIZE + (get_ip4_ihl(packet) * 4) + UDP_LENGTH_OFFST;
-    return twobytecnc(packet[offst], packet[offst + 1]) - UDP_HEADER_SIZE;
+    u_int ip_head = get_ip4_ihl(packet) * 4;
+    u_int offst = ETH_HEAD_SIZE + ip_head + UDP_LENGTH_OFFST;
+    return twobytecnc(packet[offst], packet[offst + 1]);
 }
 
 u_int get_tcp_payload(const u_char *packet) {

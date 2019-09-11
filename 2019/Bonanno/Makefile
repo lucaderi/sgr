@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -Wall -pedantic -lpcap
+CFLAGS = -Wall -pedantic
 
 .PHONY: clean
 
 sniffer: sniffer.o parser.o hash.o
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ -lpcap
 
 sniffer.o: sniffer.c parser.h
 

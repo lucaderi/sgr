@@ -12,7 +12,7 @@
 #define FALSE 0
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
-#define BPF_FILTER "ip && (tcp || udp)"
+#define BPF_FILTER "ip && (tcp || udp || icmp)"
 #define TBSNIFFED_DEFAULT 100
 #define TABLE_BUCKETS 16
 
@@ -63,9 +63,12 @@ void pkt_process(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 int main(int argc, char **argv) {
 
     int opt;
+    // specify a pcap file to capture from
     int offline_mode = FALSE;
     // specify a nic name instead of letting pcap autodetect it
     int nic_mode = FALSE;
+    // specify the exact number of packets to be captured
+    int n_mode = FALSE;
     int tbsniffed = TBSNIFFED_DEFAULT;
     FILE *report;
     char *device = NULL;
@@ -87,14 +90,16 @@ int main(int argc, char **argv) {
                 if (!nic_mode) {
                     offline_mode = TRUE;
                     device = optarg;
+                    if (!n_mode)
+                        tbsniffed = -1;
                 }
                 break;
             case 'v' :
                 verbose_mode = TRUE;
                 break;
             case 'n':
-                if (!offline_mode)
-                    tbsniffed = atoi(optarg);
+                n_mode = TRUE;
+                tbsniffed = atoi(optarg);
                 break;
             default : /* '?' */
                 printf("Usage: %s [-v] [-o filename] [-n packets]\n", argv[0]);
@@ -107,11 +112,6 @@ int main(int argc, char **argv) {
     report = fopen("report.js", "w+");
     if (report == NULL) {
         printf("Error opening report.js");
-        return EXIT_FAILURE;
-    }
-
-    if (chmod("report.js", S_IROTH | S_IWOTH) == -1) {
-        printf("Error setting access permissions to report.js");
         return EXIT_FAILURE;
     }
 
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
 
     //Finding device infos
     if (pcap_lookupnet(device, &ipaddr, &netmask, error_buffer) == PCAP_ERROR) {
-        printf("Error finding informations on %s: %s", device, error_buffer);
+        printf("Error finding informations on %s: %s\n", device, error_buffer);
         return EXIT_FAILURE;
     }
 
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
 
     //Loop starts
     if (pcap_loop(handle, tbsniffed, pkt_process, NULL) == PCAP_ERROR) {
-        printf("Error during capture");
+        printf("Error during capture\n");
         return EXIT_FAILURE;
     }
 

@@ -8,26 +8,26 @@ These instructions will allow you to set up and run a copy of the project on you
 
 ### Prerequisites
 
-This software has been tested under python 3.5, but every python version higher or equal 3 would also be suitable
+This software has been tested under python 3.5, but every python version higher or equal 3 would also be suitable. To execute the ndpi_example.py you also need to install scapy
 
 ### Installing
 
-Navigate to the folder /example/ and extract all the files of the nDPI-wrapper contained in the folder. Then, create a shared library, by typing
+Navigate to the folder nDPI/ and create a folder containing all the file of my project. Then, navigate into this folder, and write
 
 ```
-make -f Makefile.wrap
+. ./automatic.sh
 ```
 
-To test it, just use
+To test it, use
 
 ```
-python3 ndpi_Reader_wrap.py -i <interface>
+python3 ndpi_example.py <interface>
 ```
 
-Alternatively, run it like this and see what it can offer you
+or 
 
 ```
-python3 ndpi_Reader_wrap.py
+python3 ndpi_example.py <pcap_file>
 ```
 
 ### More information

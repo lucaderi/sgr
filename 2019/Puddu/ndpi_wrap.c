@@ -1,4 +1,26 @@
-#include <ndpiReader.c>
+/*
+ * ndpi_wrap.c
+ *
+ * Copyright (C) 2011-19 - ntop.org
+ *
+ * nDPI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * nDPI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with nDPI.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#include "sys/types.h"
+#include "ndpi_config.h"
+#include "ndpi_main.h"
 
 int ndpi_wrap_get_api_version(){
 	return NDPI_API_VERSION;
@@ -28,35 +50,6 @@ int ndpi_wrap_ndpi_procol_size(){
 	return NDPI_PROTOCOL_SIZE;
 }
 
-int ndpi_wrap_idle_scan_budget(){
-	return IDLE_SCAN_BUDGET;
-}
-
-struct reader_thread* execute(int argc, char** argv, struct ndpi_detection_module_struct * replace, struct timeval time){
-	int i = 0;
-	startup_time = time;
-	ndpi_info_mod = replace;
-	memset(ndpi_thread_info, 0, sizeof(ndpi_thread_info));
-
-    parseOptions(argc, argv);
-
-    if((!json_flag) && (!quiet_mode)) {
-
-      printf("Using nDPI (%s) [%d thread(s)]\n", ndpi_revision(), num_threads);
-    }
-
-    signal(SIGINT, sigproc);
-
-    for(i=0; i<num_loops; i++)
-      test_lib();
-    if(results_path)  free(results_path);
-    if(results_file)  fclose(results_file);
-    if(extcap_dumper) pcap_dump_close(extcap_dumper);
-
-    return ndpi_thread_info;
-}
-
-void free_detection_module_struct(struct ndpi_detection_module_struct * replace){
-	ndpi_info_mod = replace;
-	if(ndpi_info_mod) ndpi_exit_detection_module(ndpi_info_mod);
+void ndpi_wrap_NDPI_BITMASK_SET_ALL(NDPI_PROTOCOL_BITMASK* bitmask){
+	NDPI_ONE(bitmask);
 }

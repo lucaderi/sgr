@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -43,7 +43,7 @@
       },
       "lines": true,
       "linewidth": 1,
-      "nullPointMode": "null as zero",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -62,7 +62,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Bytes in ingresso interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Bytes IN: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -84,7 +84,7 @@
             },
             {
               "params": [
-                "linear"
+                "null"
               ],
               "type": "fill"
             }
@@ -115,7 +115,7 @@
           "tags": []
         },
         {
-          "alias": "Bytes in uscita interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Bytes OUT: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -137,7 +137,7 @@
             },
             {
               "params": [
-                "linear"
+                "null"
               ],
               "type": "fill"
             }
@@ -235,7 +235,7 @@
       },
       "lines": true,
       "linewidth": 1,
-      "nullPointMode": "null as zero",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -249,7 +249,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Pacchetti ricevuti a livello rete interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Pkts IN: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -267,7 +267,7 @@
           "measurement": "Flow",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT non_negative_difference(mean(\"ifInUcastPkts\"))+non_negative_difference(mean(\"ifInMulticastPkts\"))+non_negative_difference(mean(\"ifInErrors\"))+non_negative_difference(mean(\"ifInDiscards\"))+non_negative_difference(mean(\"ifInUnknownProtos\"))+non_negative_difference(mean(\"ifInBroadcastPkts\")) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(linear)",
+          "query": "SELECT non_negative_difference(mean(\"ifInUcastPkts\"))+non_negative_difference(mean(\"ifInMulticastPkts\"))+non_negative_difference(mean(\"ifInErrors\"))+non_negative_difference(mean(\"ifInDiscards\"))+non_negative_difference(mean(\"ifInUnknownProtos\"))+non_negative_difference(mean(\"ifInBroadcastPkts\")) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(null)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -340,7 +340,7 @@
           "tags": []
         },
         {
-          "alias": "Pacchetti trasmessi interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Pkts OUT: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -358,7 +358,7 @@
           "measurement": "Flow",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT non_negative_difference(mean(\"ifOutBroadcastPkts\"))+non_negative_difference(mean(\"ifOutUcastPkts\"))+non_negative_difference(mean(\"ifOutMulticastPkts\"))-non_negative_difference(mean(\"ifOutErrors\"))-non_negative_difference(mean(\"ifOutDiscards\")) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(linear)",
+          "query": "SELECT non_negative_difference(mean(\"ifOutBroadcastPkts\"))+non_negative_difference(mean(\"ifOutUcastPkts\"))+non_negative_difference(mean(\"ifOutMulticastPkts\"))-non_negative_difference(mean(\"ifOutErrors\"))-non_negative_difference(mean(\"ifOutDiscards\")) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(null)",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series",
@@ -514,7 +514,7 @@
       },
       "lines": true,
       "linewidth": 1,
-      "nullPointMode": "null as zero",
+      "nullPointMode": "connected",
       "options": {
         "dataLinks": []
       },
@@ -537,7 +537,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Bandwidth  interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Bandwidth: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -556,7 +556,7 @@
           "measurement": "Flow",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT ((non_negative_difference(mean(\"ifOutOctets\"))+non_negative_difference(mean(\"ifInOctets\")))*800)/(mean(\"ifSpeed\")*20) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(linear)",
+          "query": "SELECT ((non_negative_difference(mean(\"ifOutOctets\"))+non_negative_difference(mean(\"ifInOctets\")))*800)/(mean(\"ifSpeed\")*20) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(null)",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series",
@@ -597,7 +597,7 @@
           "tags": []
         },
         {
-          "alias": "Utilizzo per input  interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Usage IN: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -616,7 +616,7 @@
           "measurement": "Flow",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT (non_negative_difference(mean(\"ifInOctets\"))*800)/(20*(mean(\"ifSpeed\"))) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(linear)",
+          "query": "SELECT (non_negative_difference(mean(\"ifInOctets\"))*800)/(20*(mean(\"ifSpeed\"))) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(null)",
           "rawQuery": true,
           "refId": "C",
           "resultFormat": "time_series",
@@ -642,7 +642,7 @@
           "tz": ""
         },
         {
-          "alias": "Utilizzo per output  interfaccia: [[tag_ifIndex]], agent: [[tag_Agent]]",
+          "alias": "Usage OUT: [[tag_ifIndex]]@[[tag_Agent]]",
           "groupBy": [
             {
               "params": [
@@ -660,7 +660,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT (non_negative_difference(mean(\"ifOutOctets\"))*800)/(20*(mean(\"ifSpeed\"))) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(linear)",
+          "query": "SELECT (non_negative_difference(mean(\"ifOutOctets\"))*800)/(20*(mean(\"ifSpeed\"))) FROM \"Flow\" WHERE $timeFilter GROUP BY time($__interval), \"Agent\", \"ifIndex\" fill(null)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -725,7 +725,7 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 18,
+  "schemaVersion": 19,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -755,5 +755,5 @@
   "timezone": "",
   "title": "Counters",
   "uid": "_nZdbyNWz",
-  "version": 2
+  "version": 38
 }

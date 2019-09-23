@@ -1,11 +1,3 @@
-
-//SSH-Fingerprint Progetto del corso di Gestione Rete 2018/2019 
-
-// Dipartimento di Informatica Università di Pisa
-// Docente: Luca Deri
-
-
-
   #include <stdio.h>
   #include <string.h>
   #include <pcap.h>
@@ -17,8 +9,6 @@
   #include <arpa/inet.h>
   #include <signal.h>
   #include "md5_nDPI.h"
-  
-  #define MAX_DIM 10 //dimensione iniziale, si rialloca con la nuova dimensione(vedi GetPos)
   
   //struttura che riassume tutte le informazioni da stampare 
   typedef struct _SSH{
@@ -42,7 +32,7 @@
   }SSH;
 
   // array di struttura SSH
-  SSH *ssh;
+  SSH ssh[1024];
  
   //descrittore di pcap
   pcap_t *handle = NULL;
@@ -86,9 +76,9 @@
   u_char* GetAlgo(int start, int end){
     const u_char *temp_pointer = payload;
     temp_pointer += start;
+    char *algo = calloc(end,sizeof(char));
     int i = 0;
-    u_char *algo = calloc(end,sizeof(char));
-    while(i < end){
+    while(i < (end-start)){
       algo[i] = temp_pointer[i];
       i++;
     }
@@ -137,7 +127,6 @@
         return i;
     }
     ncount++;
-    if(ncount>=MAX_DIM)ssh=realloc(ssh,ncount*sizeof(SSH));
     return ncount-1;
   }
   
@@ -147,9 +136,9 @@
     u_char pl2 = *(payload + 1 + start);
     u_char pl3 = *(payload + 2 + start);
     u_char pl4 = *(payload + 3 + start);
-    u_char packet_length[20];
+    u_char packet_length[20] = "";
     sprintf(packet_length,"-%x-%x-%x-%x-",pl1,pl2,pl3,pl4);
-    int i = 0, j = 0; char temp[255];
+    int i = 0, j = 0; char temp[255] = "";
     while(packet_length[i]){
       if(packet_length[i]=='-' && packet_length[i+2]=='-'){
         temp[j] = '0';
@@ -172,19 +161,27 @@
   void Algorithms(char *str){
     int l1 = GetLength(22);//lunghezza del primo blocco di algoritmi
     if(l1<-1)return ;
-    strcpy(str,GetAlgo(26,26+l1));
+    char *str1 = GetAlgo(26,26+l1);
+    strcpy(str,str1);
+    free(str1);
     int l2 = GetLength(26 + l1);//lunghezza del secondo blocco di algoritmi
     int l3 = GetLength(26 + l1 + l2 + 4);//lunghezza terzo blocco di algoritmi
     strcat(str,";");
-    strcat(str,GetAlgo(26+l1 + 4 + l2 + 4,26+l1+ 4 + l2 + 4 + l3));
+    char *str2 = GetAlgo(26+l1 + 4 + l2 + 4,26+l1+ 4 + l2 + 4 + l3);
+    strcat(str,str2);
+    free(str2);
     int l4 = GetLength(26 + l1 + 4 + l2 +4 + l3);//lunghezza quarto blocco di algoritmi
     int l5 = GetLength(26 + l1+4+l2+4+l3+4+l4);//lunghezza quinto blocco di algoritmi
     strcat(str,";");
-    strcat(str,GetAlgo(26+l1+4+l2+4+l3+4+l4+4,26+l1+4+l2+4+l3+4+l4+4+l5));
+    char *str3 = GetAlgo(26+l1+4+l2+4+l3+4+l4+4,26+l1+4+l2+4+l3+4+l4+4+l5);
+    strcat(str,str3);
+    free(str3);
     int l6 = GetLength(26 + l1+4+l2+4+l3+4+l4+4+l5);//lunghezza sesto blocco di algortimi
     int l7 = GetLength(26 + l1+4+l2+4+l3+4+l4+4+l5+4+l6);//lunghezza settimo blocco di algoritmi
     strcat(str,";");
-    strcat(str,GetAlgo(26+l1+4+l2+4+l3+4+l4+4+l5+4+l6+4,26+l1+4+l2+4+l3+4+l4+4+l5+4+l6+4+l7));
+    char *str4 = GetAlgo(26+l1+4+l2+4+l3+4+l4+4+l5+4+l6+4,26+l1+4+l2+4+l3+4+l4+4+l5+4+l6+4+l7);
+    strcat(str,str4);
+    free(str4);
     int l8 = GetLength(26 + l1+4+l2+4+l3+4+l4+4+l5+4+l6+4+l7);
   }
 
@@ -340,11 +337,8 @@
       printf("Error setting filter - %s\n", pcap_geterr(handle));
       return 2;
     }
-
-    ssh = malloc(MAX_DIM*sizeof(SSH));
     pcap_loop(handle,-1, my_packet_handler,NULL);
     pcap_close(handle);
     PrintInfo();
-    free(ssh);
     return 0;
   }

@@ -25,5 +25,5 @@ class Hashtable():
             if key == k:
                 return v
 
-    def printt(self):
+    def print_table(self):
         print self.hashmap

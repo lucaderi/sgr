@@ -9,8 +9,11 @@
 #include "grafoBigrammi.h"
 #include <getopt.h>
 #include <signal.h>
+#include <arpa/inet.h>
 
-
+#ifndef ETH_HLEN
+#define ETH_HLEN 14
+#endif
 #define SIZE_UDP 8
 #define SIZE_DNS_HEADER 12 
 #define LENGHT_DNS_NAME 64

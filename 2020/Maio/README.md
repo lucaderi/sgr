@@ -7,6 +7,7 @@ DESCRIPTION:
     
 USAGE:
 
+    chmod u+x memCpuCheck.py
     python3 memCpuCheck.py
 
 PARAMETERS:

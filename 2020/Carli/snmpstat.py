@@ -3,12 +3,19 @@
 #PYTHON SCRIPT TO MONITOR CPU LOAD AND MEMORY USAGE WITH SNMP AGENT
 
 #IMPORT
+import sys
 from easysnmp import Session, snmp_get
 
 #PARAMETERS
 community = input('Enter the community --> ')
 hostname = input('Enter hostname --> ')
-version = int(input('Enter SNMP version --> '))
+version = input('Enter SNMP version --> ')
+
+if (len(community)==0 or len(hostname)==0 or len(version)==0):
+	print('Invalid parameters ... Try again!')
+	sys.exit()
+	
+version = int(version)
 
 #########################################
 

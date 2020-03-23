@@ -2,27 +2,30 @@
 
 walk() {
 	#Save cursor position
-	tput sc
+	#tput sc
 
 	GROUP=$1
 	HOST=$2
-	TIME=$3
 	KEYS=()
 	VALUES=()
 
-	if [[ ! ( $1 && $2 && $3 ) ]]; then
-		echo "usage: snmp-status <group> <hostname> <time>"
+	if [[ ! ( $1 && $2 ) ]]; then
+		echo "usage: snmp-status.sh <community> <hostname>"
 		return 1
 	fi
-
-	IFS=$'\n'
 	
+	IFS=$'\n'
+
 	#Check if the system has lm_sensors and if positive grab data
-	if snmpget -v1 -c $GROUP $HOST lmTempSensorsIndex.1 &> /dev/null; then
-		read -d '' -r -a KEYS <<< $(snmpwalk -v1 -OQv -c $GROUP $HOST lmTempSensorsDevice | head -5)
-		while read -r value; do
- 			VALUES+=("$(( $value / 1000 )).0 C")
-   		done <<< $(snmpwalk -v1 -OQv -c $GROUP $HOST lmTempSensorsValue | head -5)
+
+	INDEXES=($(snmpwalk -v1 -OQv -c $GROUP $HOST LM-SENSORS-MIB::lmTempSensorsIndex 2> /dev/null))
+	if (( ${#INDEXES[@]} )); then
+		for index in ${INDEXES[@]}; do
+			#Sensor name
+			KEYS+=($(snmpget -v1 -OQv -c $GROUP $HOST LM-SENSORS-MIB::lmTempSensorsDevice.$index))
+			#Sensor value
+			VALUES+=($(( $(snmpget -v1 -OQv -c $GROUP $HOST LM-SENSORS-MIB::lmTempSensorsValue.$index) / 1000))".00 C")
+		done
 	fi
 	
 	KEYS+=("cpu usage")
@@ -35,14 +38,6 @@ walk() {
 	for i in $(seq 0 $(( ${#KEYS[@]} - 1)) ); do	
 		echo ${KEYS[$i]}: ${VALUES[$i]}
 	done
-	
-	#wait $TIME
-	sleep $TIME
-	
-	#Clear screen and walk again
-	tput rc
-    tput ed
-	walk $GROUP $HOST $TIME
 }
 
-walk $1 $2 $3
+walk $1 $2

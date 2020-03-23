@@ -1,23 +1,48 @@
+#!/usr/bin/python3
+
+#
+# Documentation
+# https://github.com/lucaderi/sgr/tree/master/2020/Maio
+#
+# Installation
+# pip3 install easysnmp
+
+# Import
 import time
-import os
-import sys
-import subprocess
+from easysnmp import Session
+from easysnmp import snmp_get
 
+# Parameters
 
-community = input("Please enter community: ")
-host = input("Please enter host name: ")
+community      = "public"
+host           = "localhost"
+version        = 1
+num_processors = 4
 
+#####################################################
+
+# Create an SNMP session to be used for all our requests.
+session = Session(hostname=host,community=community,version=version)
+
+# Continuous loop stopped for 5 seconds after each iteration.
 while True:
-    ticks = os.popen('snmpget -v1 -c '+community+' '+host+' '+'ssCpuRawIdle.0').read()
-    ticksR = ticks[ticks.index('Counter32:')+11:]
-    realTicks = int(ticksR)
-    print("The number of ticks spent idle, for 4 processors: ",realTicks*4, "\n")
 
-    memAvail = os.popen('snmpget -v1 -c '+community+' '+host+' '+'memAvailReal.0').read()
-    print("Available memory: "+memAvail[memAvail.index('INTEGER:')+9:])
+    # Revenue number of ticks.
+    ticks = session.get('ssCpuRawIdle.0')
+    ticksReal = int(ticks.value) * num_processors
+    print("The number of ticks spent idle, for "+str(num_processors)+" processors: "+str(ticksReal))
 
-    memTot = os.popen('snmpget -v1 -c '+community+' '+host+' '+'memTotalReal.0').read()
-    print("Total memory: "+memTot[memTot.index('INTEGER:')+9:])
+    # Revenue value of available memory.
+    memAvail = session.get('memAvailReal.0')
+    print("Available memory: "+str(memAvail.value)+ " kb")
+
+    # Revenue value of total memory.
+    memTot = session.get('memTotalReal.0')
+    print("Total memory: "+str(memTot.value)+" kb")
 
     print("-------------------------------------------------------------")
+
+    # Wait 5 seconds.
     time.sleep(5)
+
+#####################################################

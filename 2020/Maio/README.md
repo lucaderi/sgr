@@ -17,8 +17,8 @@ PARAMETERS:
     version: version of snmp for the requestes.
     num_processors: number of the agent processors.
     
-OUTPUT: 
-
+OUTPUT:
+	
 	The number of ticks spent idle, for num_processors processors: ...
 	Available memory: ... kb
 	Total memory: ... kb

@@ -19,7 +19,6 @@ PARAMETERS:
     
 OUTPUT:
 	
-	The number of ticks spent idle, for num_processors processors: ...
-	Available memory: ... kb
-	Total memory: ... kb
-	------------------------------------------------------------------
+- The number of ticks spent idle, for num_processors processors: ...
+- Available memory: ... kb
+- Total memory: ... kb

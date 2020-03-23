@@ -7,7 +7,6 @@ the value of the total memory and the value of the available memory.
     
 USAGE:
 
-- chmod u+x memCpuCheck.py
 - python3 memCpuCheck.py
 
 PARAMETERS:

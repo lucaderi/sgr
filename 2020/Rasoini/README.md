@@ -1,2 +1,6 @@
 ### snmp-status.sh
-usage: snmp-status.sh \<group\> \<hostname\>
+
+Shows memory usage, cpu usage and cpu temperatures if the `lm-sensors` package is installed on the target host
+
+`usage: snmp-status.sh <community> <hostname>`
+

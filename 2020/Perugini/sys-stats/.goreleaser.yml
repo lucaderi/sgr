@@ -1,0 +1,31 @@
+project_name: sys-stats
+
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: ./sys-stats.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - 386
+      - arm64
+      - arm
+      - ppc64le
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Version }}-{{ .ShortCommit }}"
+
+release:
+  draft: true
+  prerelease: true

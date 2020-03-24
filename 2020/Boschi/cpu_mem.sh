@@ -24,16 +24,16 @@ function getCpuInfo {
 #FUNZIONE CHE PRENDE LE VARIE INFORMAZIONI SULLA MEMORIA-------------------------------------------------------
 function getMemInfo {
 	#prendo la memoria disponibile, usando l'OBJECT-TYPE memAvailReal del MIB
-	MEMORY_AVAIABLE=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.memAvailReal.0)
+	MEMORY_AVAIABLE=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.6.0)
 
 	#prendo la memoria totale, usando l'OBJECT-TYPE memTotalReal del MIB
-	MEMORY_TOTAL=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.memTotalReal.0)
+	MEMORY_TOTAL=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.5.0)
 
 	#prendo la memoria usata per buffer, usando l'OBJECT_TYPE memBuffer
-	MEMORY_BUFFER=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.memBuffer.0)
+	MEMORY_BUFFER=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.14.0)
 
 	#prendo la memoria usata per la cache, usando l'OBJECT_TYPE memCached
-	MEMORY_CACHED=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.memCached.0)
+	MEMORY_CACHED=$(snmpget -v 1 -c $COMMUNITY $HOST .1.3.6.1.4.1.2021.4.15.0)
 
 
 

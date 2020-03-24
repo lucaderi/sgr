@@ -1,5 +1,11 @@
 ## memCpuCheck
 
+INSTALLATION
+
+- You need to install this packages before running the script:
+    - sudo apt-get install libsnmp-dev snmp-mibs-downloader gcc python-dev
+    - pip3 install easysnmp
+
 DESCRIPTION:
 
 - It's a simple python script that returns the ticks values of the processors, 

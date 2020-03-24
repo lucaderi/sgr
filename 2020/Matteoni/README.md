@@ -6,6 +6,17 @@ sudo apt install python3 python3-pip
 pip3 install pysnmp
 ```
 
+The script makes SNMP requests to OIDs in the `.1.3.6.1.4.1.2021` tree. Be sure to grant
+the read permissions for those OIDs in your `snmpd.conf` by adding `view systemonly included .1.3.6.1.4.1.2021`.
+
+For example
+```
+view systemonly included .1.3.6.1.2.1.1
+view systemonly included .1.3.6.1.2.1.25.1
+view systemonly included .1.3.6.1.4.1.2021
+```
+
+
 ##### Usage
 Usage: `python3 simplesnmpstat.py community hostname [port]`
 

@@ -38,7 +38,7 @@ python3 snmpstat.py
 Total: .... kB
 Available: .... kB
 Buffered: .... kB
-Cached: .... kb
+Cached: .... kB
 ************ END OF REPORT ************
 ```
 

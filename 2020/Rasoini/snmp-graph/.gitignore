@@ -1,0 +1,4 @@
+hosts
+rrd
+__pycache__
+*.html

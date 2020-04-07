@@ -1,6 +1,5 @@
 import yaml
 import easysnmp
-import jinja2
 import sys
 import argparse
 import rrdhandler
@@ -19,18 +18,19 @@ parser.add_argument("hostname", action="store", type=str, help="SNMP agent hostn
 
 #Load the configuration file for hostname
 def loadconf(hostname):
+    hostdir = Path("./hosts")
+    hostdir.mkdir(parents=True, exist_ok=True)
     try:
         conf_file = open(f"./hosts/{hostname}.yaml")
         try:
-            config = yaml.load(conf_file, Loader=yaml.SafeLoader)
+            hostconf = yaml.load(conf_file, Loader=yaml.SafeLoader)
             session = easysnmp.Session(
-                hostname="{ip}:{port}".format(ip=config['ip'], port=config['port']),
-                community='community' in config.keys() and config['community'] or "public",
-                version='version' in config.keys() and config['version'] or 1
+                hostname="{ip}:{port}".format(ip=hostconf['ip'], port=hostconf['port']),
+                community='community' in hostconf.keys() and hostconf['community'] or "public",
+                version='version' in hostconf.keys() and hostconf['version'] or 1
             )
-            elog("[SNMP] Started SNMP session on {ip}:{port}".format(ip=config['ip'], port=config['port']))
-            print(session.get("sysLocation.0").value)
-            rrdhandler.start(hostname, config['data'], session)
+            elog("[SNMP] Started SNMP session on {ip}:{port}".format(ip=hostconf['ip'], port=hostconf['port']))
+            rrdhandler.start(hostname, hostconf['step'], hostconf['data'], session)
         except yaml.YAMLError:
             sys.exit(f"The config file for '{hostname}' is not valid YAML. Exiting.")
     except FileNotFoundError:

@@ -30,7 +30,7 @@
                 for (var img of document.getElementsByTagName("img")) {
                     img.src = img.src.split("?")[0] + "?" + Date.now();
                 }
-                setTimeout(refresh, 1500);
+                setTimeout(refresh, {{step}});
             }
             refresh();
         </script>
@@ -38,7 +38,7 @@
     <body>
         <header></header>
         {% for svg in svgs %}
-            <img src=rrd/{{hostname}}/{{svg}}.svg></img>
+            <img src={{graph_root}}/{{hostname}}/{{svg}}.svg></img>
         {% endfor %}
         <footer></footer>
     </body>

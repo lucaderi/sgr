@@ -1,4 +1,5 @@
-hosts
-rrd
-__pycache__
-*.html
+*
+!hosts
+!hosts/localhost.yaml.example
+!default.template
+!*.py

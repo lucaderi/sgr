@@ -11,41 +11,51 @@ env = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
-def rrdcreate_to_tuple(hostname, name, rrd):
-    return (f"rrd/{hostname}/{name}.rrd", "--start", "now", "--step", str(rrd["step"]), *rrd['ds'], *rrd['rra'])
+def rrdcreate_to_list(hostname, name, step, rrd):
+    return (f"rrd/{hostname}/{name}.rrd", "--start", "now", "--step", str(step), *rrd['ds'], *rrd['rra'])
 
-def rrdgraph_to_tuple(name, data):
-    tup = []
-    for option, value in data[name]['rrd']['graph']['options'].items():
+def rrdupdate_to_list(queries, session):
+    #Build --template flag
+    args = ["--template", ":".join(list(queries.keys()))]
+    
+    #Query the SNMP agent
+    values = [session.get(oid).value for oid in queries.values()]
+    
+    #Join both template and values
+    args.append("N:{0}".format(":".join(values)))
+    return args
+
+def rrdgraph_to_list(name, hostconf):
+    #Use SVG by default
+    tup = ["--imgformat", config.IMGFORMAT.upper()]
+    for option, value in hostconf[name]['rrd']['graph']['options'].items():
         tup.append(f"--{option}")
         tup.append(value)
-    tup.extend(data[name]['rrd']['graph']['def'])
+    tup.extend(hostconf[name]['rrd']['graph']['defs'])
     return tup
 
-def writetemplate(hostname, data):
+def writetemplate(hostname, step, hostconf):
     with open(f"{hostname}.html", "w") as f:
-        f.write(env.get_template("default.template").render(hostname=hostname, svgs=list(data.keys())))
+        f.write(env.get_template("default.template").render(hostname=hostname, graph_root=config.GRAPH_ROOT, svgs=list(hostconf.keys()), step=step * 1000))
 
-def runupdate(hostname, data, session):
+def runupdate(hostname, step, hostconf, session):
+    #Update the RRDs
+    for name in hostconf.keys():
+        rrdtool.update(f"rrd/{hostname}/{name}.rrd", *rrdupdate_to_list(hostconf[name]['snmpqueries'], session))
+        rrdtool.graph(f"{config.GRAPH_ROOT}/{hostname}/{name}.{config.IMGFORMAT}", *rrdgraph_to_list(name, hostconf))
+    #...and update the graphs
     elog("[RRD] Updated RRDs")
-    for name in data.keys():
-        val = session.get(data[name]['snmpquery']).value
-        rrdtool.update(f"rrd/{hostname}/{name}.rrd", f"N:{val}")
-        rrdtool.graph(f"rrd/{hostname}/{name}.svg", *rrdgraph_to_tuple(name, data))
-    thread = threading.Timer(15.0, runupdate, args=(hostname, data, session))
+    thread = threading.Timer(step, runupdate, args=(hostname, step, hostconf, session))
     thread.start()
 
             
 
-def start(hostname, data, session):
-    folder = Path(f"rrd/{hostname}")
-    folder.mkdir(parents=True, exist_ok=True)
-    for rrd in data.keys():
-        rrdtool.create(*rrdcreate_to_tuple(hostname, rrd, data[rrd]['rrd']['create']))
-    writetemplate(hostname, data)
-    thread = threading.Timer(15.0, runupdate, args=(hostname, data, session))
-    thread.start()
-
-
-        
-    
+def start(hostname, step, hostconf, session):
+    rrdfolder = Path(f"rrd/{hostname}")
+    rrdfolder.mkdir(parents=True, exist_ok=True)
+    graphfolder = Path(f"{config.GRAPH_ROOT}/{hostname}")
+    graphfolder.mkdir(parents=True, exist_ok=True)
+    for measurement in hostconf.keys():
+        rrdtool.create(*rrdcreate_to_list(hostname, measurement, step, hostconf[measurement]['rrd']['create']))
+    writetemplate(hostname, step, hostconf)
+    runupdate(hostname, step, hostconf, session)

@@ -11,6 +11,8 @@ struct configuration {
     char ** topics;
     int qos;
     int n_topics;
+    char * username;
+    char * password;
 };
 
 //Initialize the memory that will contains the configuration parameters

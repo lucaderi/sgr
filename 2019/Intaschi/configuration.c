@@ -17,7 +17,7 @@ void configuration_initialize(struct configuration * conf) {
     	perror("in malloc");
     	exit(EXIT_FAILURE);
     }
-    conf->topics = malloc(50*sizeof(char *));
+    conf->topics = malloc(50*sizeof(char *)+2*sizeof(int));
     if (conf->topics == NULL) {
     	perror("in malloc");
     	exit(EXIT_FAILURE);
@@ -30,6 +30,8 @@ void configuration_initialize(struct configuration * conf) {
     		exit(EXIT_FAILURE);
     	}
     }
+    conf->username = NULL;
+    conf->password = NULL;
     conf->qos = 0;
     conf->n_topics = 0;
 }
@@ -58,6 +60,8 @@ void configuration_free(struct configuration * conf) {
 		free(conf->topics[i]);
 	}
 	free(conf->topics);
+	if (conf->username != NULL) free(conf->username);
+	if (conf->password != NULL) free(conf->password);
 }
 
 //Parses the configuration file
@@ -91,7 +95,7 @@ int configuration_parsing(struct configuration * conf, char * filename) {
 		if (fgets(bufconf[i], 99, fdconf) == NULL) {
 			break;
 		}
-		//Case comment line: don't increase i
+		//Case comment line: don't increase i and ignore it
     	if (bufconf[i][0] == '#') {
     		c = 0;
     		for (c=0; c<81; c++) {
@@ -132,6 +136,34 @@ int configuration_parsing(struct configuration * conf, char * filename) {
 				conf->clientid = string_cleaner(conf->clientid);
 				conf->clientid = strtok(conf->clientid, " ");
 			}
+			else if (strcmp(var, "username") == 0) {
+				conf->username = malloc(50);
+				if (conf->username == NULL) {
+					perror("in malloc");
+					exit(EXIT_FAILURE);
+				}
+				while (var != NULL) {
+					if (p == 2) strcpy(conf->username, var);
+					var = strtok(NULL, " ");
+					p++;
+				}
+				conf->username = string_cleaner(conf->username);
+				conf->username = strtok(conf->username, " ");
+			}
+			else if (strcmp(var, "password") == 0) {
+				conf->password = malloc(50);
+				if (conf->password == NULL) {
+    				perror("in malloc");
+    				exit(EXIT_FAILURE);
+    			}
+				while (var != NULL) {
+					if (p == 2) strcpy(conf->password, var);
+					var = strtok(NULL, " ");
+					p++;
+				}
+				conf->password = string_cleaner(conf->password);
+				conf->password = strtok(conf->password, " ");
+			}
 			else if (strcmp(var, "qos") == 0) {
 				while (var != NULL) {
 					if (p == 2) strcpy(sup, var);
@@ -151,6 +183,7 @@ int configuration_parsing(struct configuration * conf, char * filename) {
 				conf->topics[topic] = strtok(conf->topics[topic], " ");
 				topic++;
 			}
+			
 		}
 	}
 

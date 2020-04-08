@@ -43,4 +43,4 @@ tar:
 	tar -cf mqttmonitor.tar $(INCLUDE_FILES) $(SRC_FILES) $(CONF_FILE) Makefile
 
 zip:
-	zip -r mqttmonitor.zip $(INCLUDE_FILES) $(SRC_FILES) $(CONF_FILE) relazione.pdf  Makefile
+	zip -r mqttmonitor.zip $(INCLUDE_FILES) $(SRC_FILES) $(CONF_FILE) relazione.pdf MQTTMonitor.json Makefile

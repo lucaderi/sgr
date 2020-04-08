@@ -4,6 +4,19 @@
 #include "configuration.h"
 #include "database.h"
 
+//Get the index of this topic name in the configuration struct
+int topic_index(char * topic, struct configuration conf) {
+
+	int i = 0;
+	for (i=0; i<conf.n_topics; i++) {
+		if (strcmp(topic, conf.topics[i]) == 0) {
+			return i;
+		}
+	}
+	return -1;
+
+}
+
 //Variable to stop the program with SIGINT
 volatile sig_atomic_t stop = 0;
 
@@ -79,6 +92,9 @@ int main(int argc, char* argv[]) {
     conn_opts.keepAliveInterval = 20;
     //Boolean value, if true, in case of client connection, the server clear the previous session information for this client, if any
     conn_opts.cleansession = 1;
+    //If the username and password are specified in the configuration file include it in the connect options
+    if (conf.username != NULL) conn_opts.username = conf.username;
+    if (conf.password != NULL) conn_opts.password = conf.password;
 
     if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS) {
         printf("Failed to connect, return code %d\n", rc);
@@ -105,7 +121,22 @@ int main(int argc, char* argv[]) {
     int topicLen = 0;
     int r = 0;
     size_t dim = 0;
-	
+	//Arrays used for compute the average values
+	float * sums = malloc(conf.n_topics * sizeof(int));
+	if (sums == NULL) {
+		perror("in malloc");
+		exit(EXIT_FAILURE);
+	}
+	int * cnts = malloc(conf.n_topics * sizeof(int));
+	if (cnts == NULL) {
+		perror("in malloc");
+		exit(EXIT_FAILURE);
+	}
+	for(i=0; i<conf.n_topics; i++) {
+		sums[i] = 0;
+		cnts[i] = 0;
+	}
+
     while (stop == 0) {
         //Wait a message for 3000 ms
     	r = MQTTClient_receive(client, &topic, &topicLen, &msg, 3000);
@@ -115,6 +146,20 @@ int main(int argc, char* argv[]) {
             	//Transform the message in value
             	n = atof(msg->payload);
             	printf("Value received for %s: %4.2f\n", topic, n);
+            	char b[10];
+            	dim = 0;
+            	float avg = 0;
+				//Get the index of the topic in the struct
+				int j = topic_index(topic, conf);
+				if (j != -1) {
+					//Update the sum and the number of values if the specified topic
+					cnts[j]++;
+					sums[j] = (float)(sums[j] + n);
+					//Compute the average value
+					avg = (double)(sums[j] / (float)cnts[j]);
+					//Transform the value in string
+					snprintf(b, 10, "%4.2f", avg);
+				}
 
             	/*----- Query creation -----*/
 
@@ -167,12 +212,24 @@ int main(int argc, char* argv[]) {
 
             	database_insert(conf.db_address, "MQTTMonitor", field);
 
-            	/*----- Allocated memory free -----*/
-
-            	MQTTClient_freeMessage(&msg);
-            	MQTTClient_free(topic);
-            	free(temp);
+				//Create and send the query to insert the average value in the database 
             	free(f);
+            	free(field);
+        		f = malloc(16);
+        		f = strncpy(f, "avg=", 5);
+        		f = strncat(f, b, 16);
+            	dim = strlen(f) + strlen(temp) + 1;
+        		char * field = malloc(dim);
+        		field = strncpy(field, temp, strlen(temp) + 1);
+        		field = strncat(field, f, strlen(f)+1);            		
+				database_insert(conf.db_address, "MQTTMonitor", field);
+
+				/*----- Allocated memory free -----*/
+
+        		MQTTClient_freeMessage(&msg);
+        		MQTTClient_free(topic);
+        		free(temp);            		
+				free(f);
             	free(field);
     	    }
 	       	//else Time exceeded
@@ -208,6 +265,8 @@ int main(int argc, char* argv[]) {
     MQTTClient_destroy(&client);
     configuration_free(&conf);
     free(filename);
+	free(sums);
+	free(cnts);
 
     return 0;
     

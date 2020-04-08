@@ -17,7 +17,7 @@ void configuration_initialize(struct configuration * conf) {
     	perror("in malloc");
     	exit(EXIT_FAILURE);
     }
-    conf->topics = malloc(50*sizeof(char *)+2*sizeof(int));
+    conf->topics = malloc(50*sizeof(char *));
     if (conf->topics == NULL) {
     	perror("in malloc");
     	exit(EXIT_FAILURE);

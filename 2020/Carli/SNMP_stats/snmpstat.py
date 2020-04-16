@@ -32,9 +32,9 @@ if(num_iter <= 0):
 def CPU_load(session):
 	print('[CPU LOAD]')
 
-	CPU_1minuteload = session.get('laLoad.1') #UDC-SNMP-MIB::laLoad.1
-	CPU_5minuteload = session.get('laLoad.2')  #UDC-SNMP-MIB::laLoad.2
-	CPU_10minuteload = session.get('laLoad.3')  #UDC-SNMP-MIB::laLoad.3
+	CPU_1minuteload = session.get('laLoad.1') #UCD-SNMP-MIB::laLoad.1
+	CPU_5minuteload = session.get('laLoad.2')  #UCD-SNMP-MIB::laLoad.2
+	CPU_10minuteload = session.get('laLoad.3')  #UCD-SNMP-MIB::laLoad.3
 
 	print('1 minute load: ' + CPU_1minuteload.value)
 	print('5 minute load: ' + CPU_5minuteload.value)
@@ -47,10 +47,10 @@ def CPU_load(session):
 def MEM_stats(session):
 	print('[MEMORY STATISTICS]')
 
-	MEM_tot = session.get('memTotalReal.0')  #UDC-SNMP-MIB::memTotalReal.0
-	MEM_avail = session.get('memAvailReal.0') #UDC-SNMP-MIB::AvailReal.0
-	MEM_buff = session.get('memBuffer.0') #UDC-SNMP-MIB::memBuffer.0
-	MEM_cache = session.get('memCached.0') #UDC-SNMP-MIB::memCached.0
+	MEM_tot = session.get('memTotalReal.0')  #UCD-SNMP-MIB::memTotalReal.0
+	MEM_avail = session.get('memAvailReal.0') #UCD-SNMP-MIB::memAvailReal.0
+	MEM_buff = session.get('memBuffer.0') #UCD-SNMP-MIB::memBuffer.0
+	MEM_cache = session.get('memCached.0') #UCD-SNMP-MIB::memCached.0
 
 	print('Total:    ' + MEM_tot.value + ' kB')
 	print('Available: ' + MEM_avail.value + ' kB')
@@ -69,4 +69,5 @@ for i in range(num_iter):
 	MEM_stats(session)
 	print('********** END OF REPORT **********\n\n')
 	sleep(5)
+
 

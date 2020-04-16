@@ -9,7 +9,7 @@ The script makes many reports as many as the number of iterations given by input
 ## Configuration
 To avoid problems like "no such object", you have to add the following line to snmpd.conf file:
 ```bash
-view systemonly included .1.3.6.1.4.1.8072
+view systemonly included .1.3.6.1.4.1.2021
 ```
 
 ## Installation

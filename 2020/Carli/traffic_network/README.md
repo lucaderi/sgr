@@ -44,6 +44,5 @@ python3 build_graphs.py
 ```
 
 ## Output
-Monitoring during a Microsoft Teams session
+In the current folder the user can see two graphs about a Microsoft Teams session
 
-![example](traffic_network\example.png)

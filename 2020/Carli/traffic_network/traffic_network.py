@@ -7,6 +7,7 @@ import sys
 import time
 import rrdtool
 import os.path
+import subprocess
 from time import sleep
 from easysnmp import Session, snmp_get
 
@@ -81,37 +82,40 @@ num_iter = 0
 prec_in = 0
 prec_out = 0
 
-while(True):
-	bit_input = 8*int(session.get(f'ifInOctets.{interface}').value) #IF-MIB::ifInOctets
-	bit_out = 8*int(session.get(f'ifOutOctets.{interface}').value) #IF-MIB::ifOutOctets
-	
-	db = rrdtool.update(filename,'N:%s:%s' %(str(bit_input),str(bit_out)))
+try:
+	while(True):
+		bit_input = 8*int(session.get(f'ifInOctets.{interface}').value) #IF-MIB::ifInOctets
+		bit_out = 8*int(session.get(f'ifOutOctets.{interface}').value) #IF-MIB::ifOutOctets
+		
+		db = rrdtool.update(filename,'N:%s:%s' %(str(bit_input),str(bit_out)))
 
-	#Mbits in input sull'interfaccia scelta negli ultimi 10 secondi 
-	diff_in = abs(prec_in - bit_input)
-	bps_in = int(diff_in/step)
-	mbps_in = round(bps_in/(2**20),3)
-	prec_in = bit_input
+		#Mbits in input sull'interfaccia scelta negli ultimi 10 secondi 
+		diff_in = abs(prec_in - bit_input)
+		bps_in = int(diff_in/step)
+		mbps_in = round(bps_in/(2**20),3)
+		prec_in = bit_input
 
-	#Mbits in output sull'interfaccia scelta negli ultimi 10 secondi 
-	diff_out = abs(prec_out - bit_out)
-	bps_out = int(diff_out/step)
-	mbps_out = round(bps_out/(2**20),3)
-	prec_out = bit_out
-	
-	#Utilizzo della banda dell'interfaccia scelta (in Mbps) negli ultimi 10 secondi
-	tmp = int((diff_in + diff_out)/step)
-	bandwidth = round(tmp/(2**20),3)
+		#Mbits in output sull'interfaccia scelta negli ultimi 10 secondi 
+		diff_out = abs(prec_out - bit_out)
+		bps_out = int(diff_out/step)
+		mbps_out = round(bps_out/(2**20),3)
+		prec_out = bit_out
+		
+		#Utilizzo della banda dell'interfaccia scelta (in Mbps) negli ultimi 10 secondi
+		tmp = int((diff_in + diff_out)/step)
+		bandwidth = round(tmp/(2**20),3)
 
-	print('\n' + time.ctime())
-	print('------------ [TRAFFIC NETWORK] ------------')
-	print(f'Inbound Traffic: {mbps_in} Mbps')
-	print(f'Outbound Traffic: {mbps_out} Mbps')
-	print(f'Bandwidth Usage: {bandwidth} Mbps')
-	print('-----------------------------------------')
-	
-	sleep(step)
-	
-	
-	
+		print('\n' + time.ctime())
+		print('------------ [TRAFFIC NETWORK] ------------')
+		print(f'Inbound Traffic: {mbps_in} Mbps')
+		print(f'Outbound Traffic: {mbps_out} Mbps')
+		print(f'Bandwidth Usage: {bandwidth} Mbps')
+		print('-----------------------------------------')
+		
+		sleep(step)
+		
+except KeyboardInterrupt:
+	subprocess.call('clear',shell=True)
+	ifname = session.get(f'ifName.{interface}').value
+	print(f'\nStop monitoring on {ifname}\n')
 	

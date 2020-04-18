@@ -18,9 +18,9 @@
                 width: 48em;
             }
 
-            footer {
+            header {
                 min-height: 100%;
-                margin-top: auto;
+                margin-bottom: 2em;
                 vertical-align: text-bottom;
             }
 
@@ -30,16 +30,15 @@
                 for (var img of document.getElementsByTagName("img")) {
                     img.src = img.src.split("?")[0] + "?" + Date.now();
                 }
-                setTimeout(refresh, {{step}});
+                setTimeout(refresh, {{step * 1000}});
             }
             refresh();
         </script>
     </head>
     <body>
-        <header></header>
+        <header>The graphs are automatically refreshed every {{step}} seconds</header>
         {% for graph in graphs %}
-            <img src={{graph_root}}/{{hostname}}/{{graph}}.svg></img>
+            <img src={{graph_root}}/{{configname}}/{{graph}}.svg></img>
         {% endfor %}
-        <footer></footer>
     </body>
 </html>

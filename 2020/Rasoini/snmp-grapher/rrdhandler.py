@@ -15,12 +15,12 @@ env = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
-def rrd_check_equality(hostname, rrd_name, rrd_conf):
+def rrd_check_equality(configname, rrd_name, rrd_conf):
     dsequality = False
     rraequality = False
     
     try:
-        info = rrdtool.info(f"rrd/{hostname}/{rrd_name}.rrd")
+        info = rrdtool.info(f"rrd/{configname}/{rrd_name}.rrd")
         if info['step'] != config.STEP:
             return False
     except rrdtool.OperationalError:
@@ -45,9 +45,8 @@ def rrd_check_equality(hostname, rrd_name, rrd_conf):
     return dsequality and rraequality
         
 
-def rrdcreate_to_tuple(hostname, name, rrd):
-    print(config.STEP)
-    return (f"rrd/{hostname}/{name}.rrd", "--start", "now", "--step", str(config.STEP), *rrd['ds'], *rrd['rra'])
+def rrdcreate_to_tuple(configname, name, rrd):
+    return (f"rrd/{configname}/{name}.rrd", "--start", "now", "--step", str(config.STEP), *rrd['ds'], *rrd['rra'])
 
 def rrdupdate_to_list(queries, session):
     #Build --template flag
@@ -67,44 +66,44 @@ def rrdgraph_to_list(graph_conf):
     #Build options list
     for option, value in graph_conf['options'].items():
         lst.append(f"--{option}")
-        lst.append(value)
+        lst.append(str(value))
 
     #Add all the defs
     lst.extend(graph_conf['defs'])
     return lst
 
-def writetemplate(hostname, graphs_conf):
-    with open(f"{hostname}.html", "w") as f:
-        f.write(env.get_template("default.jinja").render(hostname=hostname, graph_root=config.GRAPH_ROOT, graphs=list(graphs_conf.keys()), step=config.STEP * 1000))
+def writetemplate(configname, graphs_conf):
+    with open(f"{configname}.html", "w") as f:
+        f.write(env.get_template("default.jinja").render(configname=configname, graph_root=config.GRAPH_ROOT, graphs=list(graphs_conf.keys()), step=config.STEP))
 
-def runupdate(hostname, rrds_conf, graphs_conf, session):
+def runupdate(configname, rrds_conf, graphs_conf, session):
     #Update the RRDs
     while True:
         for rrd_name in rrds_conf.keys():
-            rrdtool.update(f"rrd/{hostname}/{rrd_name}.rrd", *rrdupdate_to_list(rrds_conf[rrd_name]['snmpqueries'], session))
-            elog(f"[rrd] Updated {hostname}/{rrd_name}.rrd")
+            rrdtool.update(f"rrd/{configname}/{rrd_name}.rrd", *rrdupdate_to_list(rrds_conf[rrd_name]['snmpqueries'], session))
+            elog(f"[rrd] Updated {configname}/{rrd_name}.rrd")
         for graph_name in graphs_conf.keys():
-            rrdtool.graph(f"{config.GRAPH_ROOT}/{hostname}/{graph_name}.{config.IMGFORMAT}", *rrdgraph_to_list(graphs_conf[graph_name]))
-            elog(f"[graph] Updated graph on {config.GRAPH_ROOT}/{hostname}/{graph_name}.{config.IMGFORMAT}")
+            rrdtool.graph(f"{config.GRAPH_ROOT}/{configname}/{graph_name}.{config.IMGFORMAT}", *rrdgraph_to_list(graphs_conf[graph_name]))
+            elog(f"[graph] Updated graph on {config.GRAPH_ROOT}/{configname}/{graph_name}.{config.IMGFORMAT}")
         #...and update the graphs
         sleep(config.STEP)
 
             
 
-def start(hostname, step, rrds_conf, graphs_conf, session, forcereplace):
+def start(configname, step, rrds_conf, graphs_conf, session, forcereplace):
 
     config.STEP = step
 
-    rrdfolder = Path(f"rrd/{hostname}")
+    rrdfolder = Path(f"rrd/{configname}")
     rrdfolder.mkdir(parents=True, exist_ok=True)
 
-    graphfolder = Path(f"{config.GRAPH_ROOT}/{hostname}")
+    graphfolder = Path(f"{config.GRAPH_ROOT}/{configname}")
     graphfolder.mkdir(parents=True, exist_ok=True)
 
     for rrd_name in rrds_conf.keys():
-        if (not rrd_check_equality(hostname, rrd_name, rrds_conf[rrd_name]['rrd'])) or forcereplace:
-            elog(f"[rrd] Created RRD {hostname}/{rrd_name}.rrd")
-            rrdtool.create(*rrdcreate_to_tuple(hostname, rrd_name, rrds_conf[rrd_name]['rrd']))
+        if (not rrd_check_equality(configname, rrd_name, rrds_conf[rrd_name]['rrd'])) or forcereplace:
+            elog(f"[rrd] Created RRD {configname}/{rrd_name}.rrd")
+            rrdtool.create(*rrdcreate_to_tuple(configname, rrd_name, rrds_conf[rrd_name]['rrd']))
 
-    writetemplate(hostname, graphs_conf)
-    runupdate(hostname, rrds_conf, graphs_conf, session)
+    writetemplate(configname, graphs_conf)
+    runupdate(configname, rrds_conf, graphs_conf, session)

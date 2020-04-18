@@ -1,0 +1,81 @@
+#This is an example snmp_grapher host configuration file
+ip: localhost  #SNMP hostname
+port: 161  #SNMP port
+step: 5  #How often to update the RRDs (in seconds)
+rrds:  #Here you define your RRDs
+  outoctets:  #Name of the .rrd file
+    descr: "Outbound octets from net interface"
+    snmpqueries: 
+      outoctets: "ifOutOctets.2"
+      #You can add more queries as long as the key string matches the name of a DS defined below
+    rrd:
+      ds:  #Define your data sources here
+        - "DS:outoctets:COUNTER:10:0:4294967295" #32 bit
+      rra:  #Define your round robin archives here
+        - "RRA:AVERAGE:0.5:1:120" #step*cdp*rows = 5*1*120 = 600s = 10min
+  inoctets:
+    descr: "Inbound octets from net interface"
+    snmpqueries: 
+      inoctets: "ifInOctets.2"
+    rrd:
+      ds:
+        - "DS:inoctets:COUNTER:10:0:4294967295"
+      rra:
+        - "RRA:AVERAGE:0.5:1:120" 
+graphs: #Here you define your graphs
+  inoctets: #Name of the .(config.IMGFORMAT) graph image
+    options:
+      start: "now-10min"
+      end: "now-5s"
+      vertical-label: "Mbit"
+      #You can add more options here, they are parsed as --{key} {value}, check man rrdgraph for more options
+    defs: #You can add your graph DEFs here
+      - "DEF:inoctets=rrd/example/inoctets.rrd:inoctets:AVERAGE"
+      - "CDEF:real_inoctets=inoctets,131072,/"
+      - "VDEF:mb_max=real_inoctets,MAXIMUM"
+      - "VDEF:mb_avg=real_inoctets,AVERAGE"
+      - "VDEF:mb_min=real_inoctets,MINIMUM"
+      - "AREA:real_inoctets#FF0000:Inbound traffic"
+      - "GPRINT:mb_max:Max %6.2lf Mb"
+      - "GPRINT:mb_avg:Avg %6.2lf Mb"
+      - "GPRINT:mb_min:Min %6.2lf Mb"
+  outoctets:
+    options:
+      start: "now-10min"
+      end: "now-5s"
+      vertical-label: "Mbit"
+    defs:
+      - "DEF:outoctets=rrd/example/outoctets.rrd:outoctets:AVERAGE"
+      - "CDEF:real_outoctets=outoctets,131072,/"
+      - "VDEF:mb_max=real_outoctets,MAXIMUM"
+      - "VDEF:mb_avg=real_outoctets,AVERAGE"
+      - "VDEF:mb_min=real_outoctets,MINIMUM"
+      - "AREA:real_outoctets#0000FF:Outbound traffic"
+      - "GPRINT:mb_max:Max %6.2lf Mb"
+      - "GPRINT:mb_avg:Avg %6.2lf Mb"
+      - "GPRINT:mb_min:Min %6.2lf Mb"
+  alloctets:
+    options:
+      start: "now-10min"
+      end: "now-5s"
+      vertical-label: "Mbit"
+      height: 250
+    defs:
+      - "DEF:inoctets=rrd/example/inoctets.rrd:inoctets:AVERAGE"
+      - "DEF:outoctets=rrd/example/outoctets.rrd:outoctets:AVERAGE"
+      - "CDEF:real_inoctets=inoctets,131072,/"
+      - "VDEF:mbin_max=real_inoctets,MAXIMUM"
+      - "VDEF:mbin_avg=real_inoctets,AVERAGE"
+      - "VDEF:mbin_min=real_inoctets,MINIMUM"
+      - "CDEF:real_outoctets=outoctets,131072,/"
+      - "VDEF:mbout_max=real_outoctets,MAXIMUM"
+      - "VDEF:mbout_avg=real_outoctets,AVERAGE"
+      - "VDEF:mbout_min=real_outoctets,MINIMUM"
+      - "AREA:real_inoctets#FF0000:Inbound traffic"
+      - "GPRINT:mbin_max:Max %6.2lf Mb"
+      - "GPRINT:mbin_avg:Avg %6.2lf Mb"
+      - "GPRINT:mbin_min:Min %6.2lf Mb"
+      - "LINE:real_outoctets#0000FF:Outbound traffic"
+      - "GPRINT:mbout_max:Max %6.2lf Mb"
+      - "GPRINT:mbout_avg:Avg %6.2lf Mb"
+      - "GPRINT:mbout_min:Min %6.2lf Mb"

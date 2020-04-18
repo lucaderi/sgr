@@ -37,8 +37,8 @@
     </head>
     <body>
         <header></header>
-        {% for svg in svgs %}
-            <img src={{graph_root}}/{{hostname}}/{{svg}}.svg></img>
+        {% for graph in graphs %}
+            <img src={{graph_root}}/{{hostname}}/{{graph}}.svg></img>
         {% endfor %}
         <footer></footer>
     </body>

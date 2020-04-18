@@ -1,3 +1,4 @@
+﻿
 # **snmpstat.py**
 
 ## Description
@@ -12,7 +13,7 @@ view systemonly included .1.3.6.1.4.1.2021
 ```
 
 ## Installation
-To install [EasySNMP](https://easysnmp.readthedocs.io/en/latest/) library on Debian/Ubuntu systems:
+To install Easy SNMP library on Debian/Ubuntu systems:
 
 ```bash
 sudo apt-get install libsnmp-dev snmp-mibs-downloader
@@ -38,6 +39,9 @@ python3 snmpstat.py
 Total: .... kB
 Available: .... kB
 Buffered: .... kB
-Cached: .... kB
+Cached: .... kb
 ************ END OF REPORT ************
 ```
+
+
+

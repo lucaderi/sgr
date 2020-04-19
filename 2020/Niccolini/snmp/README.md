@@ -19,7 +19,7 @@ Usare (community e host sono opzionali,
  di default sono rispettivamente public 
  e localhost, usare entrambi gli argomenti o nessuno)
 
-     $ python3 main.py communityName hostName
+     $ python3 snmp_mem_cpu.py communityName hostName
 
 Per terminare l'esecuzione usare 
 

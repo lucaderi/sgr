@@ -46,7 +46,7 @@ def walk():
         mem = varBinds[0].prettyPrint().split("=")[1].strip()
         print("Mem totale =\t" + mem + " KB")
 
-    # CPU
+    # CPU libera (in %)
     errorIndication, errorStatus, errorIndex, varBinds = next(getCmd(SnmpEngine(),
                                                                         CommunityData(community),
                                                                         UdpTransportTarget((host, 161)), ContextData(),
@@ -60,7 +60,7 @@ def walk():
          exit(1)
     else:
          cpu = varBinds[0].prettyPrint().split("=")[1].strip()
-         print("uso CPU =\t\t" + cpu + "%")
+         print("CPU libera =\t\t" + cpu + "%")
     print('------------------')
 
 while True:

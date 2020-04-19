@@ -84,7 +84,7 @@ avgOUT='VDEF:avgOUT=byteOUT,AVERAGE'
 
 
 #creazione del database del traffico (bit in, bit out e relativi max, min, avg)
-database=rrdtool.graph(nome_grafico_traffico, '--start', startTime, '--end', endTime,"--title","Network Traffic",  f"-w {larghezza}", f"-h {altezza}", f'DEF:inputBit={nomeDB}:InOctets:AVERAGE',CDEF_MEGAbitIN, minIN, maxIN, avgIN, f'DEF:outputBit={nomeDB}:OutOctets:AVERAGE', CDEF_MEGAbitOUT, minOUT,maxOUT, avgOUT,  'VDEF:ninefiveIN=inputBit,95,PERCENT', 'COMMENT: Unit of measure\: Mbit \c', 'LINE2:inputBit#12b1ff:INPUT  TRAFFIC\t', 'GPRINT:minIN:MIN %6.4lf', 'GPRINT:maxIN:\tMAX %6.4lf', f"GPRINT:avgIN:\tAVG %6.4lf\\n", 'LINE2:outputBit#04c425:OUTPUT TRAFFIC\t', 'GPRINT:minOUT:MIN %6.4lf', 'GPRINT:maxOUT:\tMAX %6.4lf', f'GPRINT:avgOUT:\tAVG %6.4lf\\n', f'LINE1:ninefiveIN#fd6602:95% INPUT TRAFFIC')
+database=rrdtool.graph(nome_grafico_traffico, '--start', startTime, '--end', endTime,"--title","Network Traffic",  f"-w {larghezza}", f"-h {altezza}", f'DEF:inputBit={nomeDB}:InOctets:AVERAGE',CDEF_MEGAbitIN, minIN, maxIN, avgIN, f'DEF:outputBit={nomeDB}:OutOctets:AVERAGE', CDEF_MEGAbitOUT, minOUT,maxOUT, avgOUT,  'VDEF:ninefiveIN=inputBit,95,PERCENT', 'COMMENT: Unit of measure\: Mbit \c', 'LINE2:inputBit#12b1ff:INPUT  TRAFFIC\t', 'GPRINT:minIN:MIN %6.4lf', 'GPRINT:maxIN:\tMAX %6.4lf', f"GPRINT:avgIN:\tAVG %6.4lf\\n", 'LINE2:outputBit#04c425:OUTPUT TRAFFIC\t', 'GPRINT:minOUT:MIN %6.4lf', 'GPRINT:maxOUT:\tMAX %6.4lf', f'GPRINT:avgOUT:\tAVG %6.4lf\\n', f'LINE1:ninefiveIN#fd6602:95th PERCENTILE (input)')
 
 
 #-----------------------------------------------------

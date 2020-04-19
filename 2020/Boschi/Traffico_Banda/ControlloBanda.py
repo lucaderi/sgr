@@ -78,7 +78,7 @@ Celle_1=str(int(monitoringTime_1/step)) #celle di memoria che mi servono per ten
 #SECONDO ROUND ROBIN ARCHIVE: conterrà la media al minuto dei valori del precedente RRA (cioè la media al minuto dei valori della memoria)
 monitoringTime_2=60 #IN SECONDI: voglio la media ogni cinque minuti dei valori del RRA precedente.
 NumValori_2=str(int(monitoringTime_2/step)) #il numero dei valori di RRA1 (quello con i valori "singoli" della memoria ) che mi servono per fare la media
-Celle_2=7*24*60 #Tengo l'ultima settimana di dati --> minuti in una settimana:7*24*60 (voglio la media al minuto, quindi mi interessano i minuti)
+Celle_2=4*7*24*60 #Tengo l'ultim mese di dati --> minuti in un mese:4*7*24*60 (voglio la media al minuto, quindi mi interessano i minuti)
 
 
 maxVal=(2**32) -1 #massimo di pacchetti che passano in 5 secondi

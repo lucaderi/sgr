@@ -1,0 +1,44 @@
+<html>
+    <head>
+        <style type="text/css">
+            body {
+                display: flex;
+                flex-direction: column;
+                flex-flow: column;
+                align-items: center;
+                background-color: #FAFAFA;
+                color: #BDBDBD;
+                font-family: sans-serif;
+                font-size: 0.75em;
+
+            }
+
+            img {
+                margin-top: 4em;
+                width: 48em;
+            }
+
+            header {
+                min-height: 100%;
+                margin-bottom: 2em;
+                vertical-align: text-bottom;
+            }
+
+        </style>
+        <script type="text/javascript">
+            function refresh() {
+                for (var img of document.getElementsByTagName("img")) {
+                    img.src = img.src.split("?")[0] + "?" + Date.now();
+                }
+                setTimeout(refresh, {{step * 1000}});
+            }
+            refresh();
+        </script>
+    </head>
+    <body>
+        <header>The graphs are automatically refreshed every {{step}} seconds</header>
+        {% for graph in graphs %}
+            <img src={{graph_root}}/{{configname}}/{{graph}}.svg></img>
+        {% endfor %}
+    </body>
+</html>

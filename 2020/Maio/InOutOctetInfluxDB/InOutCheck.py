@@ -6,7 +6,7 @@
 #
 # Installation
 # pip3 install easysnmp
-# pip3 install rrdtool
+# pip3 install influxdb-client
 
 # Import
 import os
@@ -24,8 +24,6 @@ version = 1
 
 #####################################################
 
-
-
 try:
     # Create an SNMP session to be used for all our requests.
     session = Session(hostname=host, community=community, version=version)
@@ -35,20 +33,22 @@ try:
     write_api = client.write_api()
     while True:
 
+        # Revenue InOctet and OutOctet values
         InOctet = session.get('ifInOctets.2')
+        OutOctet = session.get('ifOutOctets.2')
 
-        #data = "InOctet,host=host1 InOctet="+str(InOctet.value)+" "+str(os.system("date +%s"))
+        # building Influx measurements
+        point = Point("InOctet") \
+            .tag("location", "localhost")\
+            .field("bytes", int(InOctet.value))
 
-        #write_api.write("InOutOctet", "0590c71673a9d000", data)
+        point2 = Point("OutOctet") \
+            .tag("location", "localhost") \
+            .field("bytes", int(OutOctet.value))
 
-        point = Point("system") \
-            .tag("location", "Pisa")\
-            .field("in", InOctet.value) \
-            .time(os.system("date +%s"))
-
+        # writing on InfluxDB Bucket choosen the values
         write_api.write(bucket="InOutOctet",record=point,org='0590c71673a9d000')
-
-        # Update the .rrd files and print the graph.
+        write_api.write(bucket="InOutOctet", record=point2, org='0590c71673a9d000')
 
 except exce.EasySNMPError as error:
     print(error)

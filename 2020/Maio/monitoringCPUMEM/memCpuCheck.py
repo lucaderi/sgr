@@ -25,7 +25,10 @@ version        = 1
 
 # Create the .rrd file for the cpu percentage
 if os.path.isfile("cpu.rrd") == False: 
-    rrdtool.create('cpu.rrd','--step','5','DS:cpu:GAUGE:6:0:100', 'RRA:AVERAGE:0.5:1:720',)
+    rrdtool.create('cpu.rrd','--step','5','DS:cpu:GAUGE:6:0:100', 'RRA:AVERAGE:0.5:1:720')
+
+if os.path.isfile("inoctet.rrd") == False:
+    rrdtool.create("inoctet.rrd","--step",'5',"DS:ifInOctets:COUNTER:7:0:4294967295","RRA:AVERAGE:0.5:1:720","RRA:HWPREDICT:300:0.1:0.0035:288")
 
 try:
     # Create an SNMP session to be used for all our requests.
@@ -33,10 +36,9 @@ try:
     
     # Create the .rrd file for the memory data
     if os.path.isfile("memCheck.rrd") == False:
-        rrdtool.create('memCheck.rrd',  '--step', '5', 'DS:mem:GAUGE:6:0:'+str(session.get('memTotalReal.0').value),'RRA:AVERAGE:0.5:1:720')
-    
-    start = os.popen('date +%s').read()
-    
+        rrdtool.create('memCheck.rrd',  '--step', '5', 'DS:mem:COUNTER:7:0:'+str(session.get('memTotalReal.0').value),
+                       'RRA:AVERAGE:0.5:1:720','RRA:HWPREDICT:360:0.1:0.0035:288')
+
     # Continuous loop stopped for 5 seconds after each iteration.
     while True:
 
@@ -62,13 +64,28 @@ try:
         memTot = session.get('memTotalReal.0')
         print("Total memory: " + str(memTot.value) + "kb")
 
+        # Revenue value of InOctets.
+        inOctets = session.get('ifInOctets.2')
+
         print("-------------------------------------------------------------")
 
         # Update the .rrd files and prints the graphs
         usedMeM = int(memTot.value) - int(memAvail.value)
         rrdtool.update('memCheck.rrd', 'N:' + str(usedMeM))
         rrdtool.update('cpu.rrd', 'N:' + str(perc.value))
-        rrdtool.graph("memCheckGraph.png","--start","now-5min","--end","now", "DEF:in=memCheck.rrd:mem:AVERAGE", "CDEF:mem_U=in,1024,*" ,"AREA:mem_U#ff1203:MemUsedReal")
+        rrdtool.update("inoctet.rrd",'N:'+str(int(inOctets.value)))
+        rrdtool.graph("inOctet.gif","--start","now-5min","--end","now",
+                      "DEF:obs=inoctet.rrd:ifInOctets:AVERAGE", "DEF:pred=inoctet.rrd:ifInOctets:HWPREDICT",
+                      "DEF:dev=inoctet.rrd:ifInOctets:DEVPREDICT",
+                      "CDEF:upper=pred,dev,2,*,+","CDEF:lower=pred,dev,2,*,-",
+                      "CDEF:in=obs,8,*","CDEF:scaledupper=upper,8,*","CDEF:scaledlower=lower,8,*",
+                      "LINE2:in#0000ff:Average bits in","LINE1:scaledupper#ff0000:Upper Bound Average bits in","LINE1:scaledlower#ff0000:Lower Bound Average bits in")
+        rrdtool.graph("memCheckGraph.gif","--start","now-5min","--end","now",
+                      "DEF:in=memCheck.rrd:mem:AVERAGE","DEF:pred=memCheck.rrd:mem:HWPREDICT",
+                      "DEF:dev=memCheck.rrd:mem:DEVPREDICT",
+                      "CDEF:upper=pred,dev,2,*,+","CDEF:lower=pred,dev,2,*,-",
+                      "CDEF:mem_U=in,1024,*","CDEF:scaledupper=upper,1024,*","CDEF:scaledlower=lower,1024,*",
+                      "LINE2:mem_U#00BFFF:MemUsedReal","LINE1:scaledupper#ff0000:Upper Bound Average memory used","LINE1:scaledlower#ff0000:Lower Bound Average memory used")
         rrdtool.graph("cpuGraph.png","--start","now-5min","--end","now","DEF:in=cpu.rrd:cpu:AVERAGE","AREA:in#ff1203:CPUusedReal")
 
         # Wait 5 seconds.

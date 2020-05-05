@@ -11,8 +11,8 @@ INSTALLATION
 DESCRIPTION:
 
 - It's a simple python script that returns the ticks values of the processors, 
-the value of the total memory and the value of the available memory.
-Reports the data on two rdd databases which are then represented in graphs.
+the value of the total memory, the value of the available memory and also checks the in_octets values obtained with snmp.
+Reports the data on three rdd databases which are then represented in graphs.
     
 USAGE:
 
@@ -31,3 +31,7 @@ OUTPUT:
 - The number of ticks spent idle, for x processors: ...
 - Available memory: ... kb
 - Total memory: ... kb
+
+![CpuGraph](img/cpuGraph.png)
+![memGraph](img/memCheckGraph.gif)
+![inOctetGraph](img/inOctet.gif)

@@ -9,11 +9,8 @@
 # pip3 install influxdb-client
 
 # Import
-import os
-
 from easysnmp import Session
 from easysnmp import exceptions as exce
-import influxdb_client
 from influxdb_client import InfluxDBClient,Point
 
 # Parameters

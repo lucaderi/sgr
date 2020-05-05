@@ -11,7 +11,7 @@ DESCRIPTION:
 
 - It's a simple python script that monitoring the InOctet and OutOctet counters. When it takes the data
 reports them on rrd databases and then make the graph. In the graph with the colors blue and green we represent the values 
-of the counters when teams is not running, in red and violet tha values of the counters when teams is running.
+of the counters when teams is not running, in red and violet the values of the counters when teams is running.
     
 USAGE:
 

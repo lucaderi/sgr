@@ -1,0 +1,78 @@
+\documentclass[a4paper,12pt]{book}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage[babel]{csquotes}
+
+\usepackage{tocloft} 
+
+\newcommand{\addappendixname}{% 
+  \renewcommand{\cftchappresnum}{\appendixname\space}% 
+    \settowidth{\cftchapnumwidth}{\bfseries \appendixname\space A\hspace{1em}}}
+
+\usepackage{mathtools}
+\usepackage{float}
+\usepackage[center]{caption}
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+\usepackage{listings}
+\addto\captionsitalian{\renewcommand{\lstlistingname}{Codice}}
+
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage[square,comma,numbers,sort]{natbib}
+
+\usepackage[fixlanguage]{babelbib}
+\selectbiblanguage{italian}
+\bibliographystyle{babplain-fl}
+
+% biblio in inglese ?
+%\bibliographystyle{plain}
+
+\usepackage[breaklinks]{hyperref}
+\hypersetup{
+	colorlinks,
+  citecolor=black,
+  filecolor=black,
+  linkcolor=black,
+  urlcolor=black
+}
+\usepackage[all]{hypcap}
+
+
+\begin{document}
+
+\input{frontespizio.tex}
+
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\pagenumbering{roman}
+\pagestyle{plain}
+\tableofcontents
+
+
+\mainmatter
+\pagenumbering{arabic}
+\pagestyle{headings}
+\input{cap/cap1-introduzione.tex}
+\input{cap/cap2-progettazione.tex}
+\input{cap/cap3-implementazione.tex}
+\input{cap/cap4-validazione.tex}
+\input{cap/cap5-relatedworks.tex}
+\input{cap/cap6-conclusioni.tex}
+
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\phantomsection
+\addcontentsline{toc}{chapter}{\bibname}
+\bibliography{bibliografia}
+
+
+\appendix
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\addtocontents{toc}{\protect\addappendixname}
+\input{cap/app1-codice.tex}
+
+\end{document}

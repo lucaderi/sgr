@@ -1,0 +1,59 @@
+<confFile>
+
+	<queueSet masterQueueNumber="10" queueSize="1000">
+		<queue id="0" bandwidth="50"/>
+		<queue id="1" bandwidth="50"/>
+		<queue id="2" bandwidth="32"/>
+		<queue id="3" bandwidth="500"/>
+		<queue id="4" bandwidth="100"/>
+		<queue id="5" bandwidth="1000"/>
+		<queue id="6" bandwidth="250"/>
+		<queue id="7" bandwidth="50"/>
+		<queue id="8" bandwidth="750"/>
+		<queue id="9" bandwidth="1500"/>
+	</queueSet>
+	
+
+	<ruleSet default_v4_rule="DENY" default_v6_rule="DENY">
+		<rule id="1" action="ALLOW" protocol="dns dhcp snmp pcanywhere@3 telnet netbios Radius ssh http@0 smtp@1 imap@2"/>
+		<rule id="2" action="ALLOW" protocol="ALL"/>
+		
+		<match_v4 rule_id="1" ip="192.168.1.0/24"/>
+		<match_v4 rule_id="2" ip="192.168.1.1"/>
+		<match_v4 rule_id="2" ip="192.168.1.2"/>
+		
+		<rule id="13" action="DENY" protocol="snmp pcanywhere telnet netbios Radius"/>
+		<rule id="14" action="ALLOW" protocol="dns dhcp smtp imap pop http@6 gmail@4"/>
+		<rule id="15" action="ALLOW" protocol="ftp@5 http@9 dropbox@8"/>
+		
+		<match_v4 rule_id="13" ip="192.168.2.1"/>
+		<match_v4 rule_id="14" ip="192.168.2.0/24"/>
+		<match_v4 rule_id="15" ip="192.168.2.10"/>
+		<match_v4 rule_id="15" ip="192.168.2.15"/>
+		
+		<rule id="26" action="DENY" protocol="facebook twitter youtube skype Last.fm ftp gnutella edonkey bittorrent"/>
+		<rule id="27" action="ALLOW" protocol="dns http@8 facebook@7 skype@9"/>
+		<rule id="28" action="ALLOW" protocol="ALL"/>
+		<rule id="29" action="DENY" protocol="ftp gnutella edonkey bittorrent"/>
+		<rule id="210" action="DENY" protocol="ALL"/>
+		<rule id="211" action="ALLOW" protocol="dns dropbox@9 gmail@8 http"/>
+		
+		<match_v4 rule_id="26" ip="192.168.3.0/24"/>
+		<match_v4 rule_id="27" ip="192.168.3.22"/>
+		<match_v4 rule_id="27" ip="192.168.3.23"/>
+		<match_v4 rule_id="28" ip="192.168.3.10"/>
+		<match_v4 rule_id="29" ip="192.168.3.91"/>
+		<match_v4 rule_id="29" ip="192.168.3.92"/>
+		<match_v4 rule_id="29" ip="192.168.3.98"/>
+		<match_v4 rule_id="29" ip="192.168.3.99"/>
+		<match_v4 rule_id="29" ip="192.168.3.103"/>
+		<match_v4 rule_id="210" ip="192.168.3.7"/>
+		<match_v4 rule_id="211" ip="192.168.3.67"/>
+		<match_v4 rule_id="211" ip="192.168.3.112"/>
+		
+		<rule id="312" action="DENY" protocol="ALL"/>
+		
+		<match_v4 rule_id="312" ip="192.168.4.0/24"/>
+	</ruleSet>
+	
+</confFile>

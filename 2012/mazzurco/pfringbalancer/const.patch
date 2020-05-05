@@ -1,0 +1,26 @@
+Index: userland/lib/pfring.c
+===================================================================
+--- userland/lib/pfring.c	(revision 5562)
++++ userland/lib/pfring.c	(working copy)
+@@ -79,7 +79,7 @@
+ 
+ /* **************************************************** */
+ 
+-pfring* pfring_open(char *device_name, u_int32_t caplen, u_int32_t flags) {
++pfring* pfring_open(const char *device_name, u_int32_t caplen, u_int32_t flags) {
+   int i = -1;
+   int mod_found = 0;
+   int ret;
+Index: userland/lib/pfring.h
+===================================================================
+--- userland/lib/pfring.h	(revision 5562)
++++ userland/lib/pfring.h	(working copy)
+@@ -276,7 +276,7 @@
+ 
+   /* ********************************* */
+ 
+-  pfring* pfring_open(char *device_name, u_int32_t caplen, u_int32_t flags);
++  pfring* pfring_open(const char *device_name, u_int32_t caplen, u_int32_t flags);
+   pfring* pfring_open_consumer(char *device_name, u_int32_t caplen, u_int32_t flags,
+ 			       u_int8_t consumer_plugin_id,
+ 			       char* consumer_data, u_int consumer_data_len);

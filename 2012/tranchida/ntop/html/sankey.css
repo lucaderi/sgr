@@ -1,0 +1,119 @@
+
+body {
+	font: 12px sans-serif, "Helvetica Neue", Helvetica;
+
+}
+
+/* loading data overlay */
+
+.loader {
+	cursor: wait;
+	height: 100%;
+	width: 100%;
+	position: fixed;
+	left: 0;
+	top: 0;
+	z-index:2 !important;
+	background-color: white;
+	filter: alpha(opacity=30);	/* internet explorer */
+	opacity: 0.50;				/* fx, safari, opera */
+}
+
+.loader img {
+	cursor: wait;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index:1;
+	margin: -64px 0em 0em -64px;
+	filter: alpha(opacity=100);
+	opacity: 1;
+}
+
+/* Formattazione del form */
+
+form {
+	font: 11px sans-serif;
+}
+
+input[type="submit"] {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	margin: 1em 0em 0em 0em;
+}
+
+input[type="reset"] {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	margin: 1em 0em 0em 0em;
+}
+
+input[type="text"] {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	margin: 1em 0em 0em 0em;
+}
+
+input[type="button"] {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	margin: 1em 0em 0em 0em;
+}
+
+input[type="checkbox"] {
+	vertical-align: middle;
+}
+
+select {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	margin: 1em 0em 0em 0em;
+}
+
+ul#layer4 {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	list-style-type: none;
+	margin-left: 0;
+	padding-left: 0;
+	height: 7.5em;
+	overflow: auto;
+	border: 1px solid #ccc;
+}
+
+ul#layer7 {
+	font: 11px sans-serif, "Helvetica Neue", Helvetica;
+	list-style-type: none;
+	margin-left: 0;
+	padding-left: 0;
+	height: 12em;
+	width: 16em;
+	overflow: auto;
+	border: 1px solid #ccc;
+}
+
+/* Formattazione del grafico svg */
+
+svg {
+	font: 10px sans-serif, "Helvetica Neue", Helvetica;
+}
+
+#chart {
+	height: 600px;
+}
+
+.node rect {
+	fill-opacity: .9;
+	shape-rendering: crispEdges;
+}
+
+.node text {
+	pointer-events: none;
+	text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+	fill: none;
+	cursor: pointer;
+	stroke: #000;
+	stroke-opacity: .4;
+}
+
+.link:hover {
+	stroke-opacity: .7;
+}
+

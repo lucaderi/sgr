@@ -1,0 +1,84 @@
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\chapter{Conclusioni}
+
+\section{Sviluppi futuri}
+
+\subsection{Scan probabilistico per il DPI}
+
+L'attuale implementazione della libreria nDPI è piuttosto buona, ma ha un paio di pecche.
+
+La prima è che utilizza una struttura principale dove vengono salvate delle informazioni temporanee inutilmente (ad esempio il puntatore alla struttura che conserva le precedenti informazioni su un flusso). Così facendo, in ambiente multi-threaded è utilizzabile solo se replicandola per ogni thread o mettendo dei meccanismi di sincronizzazione. Se si riscrivesse il codice affinché ad ogni funzione (anche interna) vengano passati tutti i puntatori e valori di cui ha bisogno, si potrebbe facilmente evitare tale problema.
+
+La seconda pecca, decisamente più rilevante rispetto alla precedente, riguarda il modo in cui vengono provate le funzioni che cercano di stabilire il servizio trasportato dal pacchetto. Ora come ora tale scan avviene in modo \emph{lineare}, ovvero dalla prima funzione del buffer in poi. Sarebbe però interessante provare a farlo diventare \emph{probabilistico}, cioè provare per prima quella del protocollo applicativo che è più probabile per quel tipo di pacchetto. Ad esempio, sapendo che DNS usa UDP con porta 53, se ci si trova ad esaminare un pacchetto con queste caratteristiche, la prima funzione da applicare sarebbe quella del servizio DNS e poi eventualmente tutte le altre.
+
+\subsection{Velocizzare il tracking dei flussi}
+
+Sicuramente è la struttura dati più interessata, dovendo essere utilizzata per ogni pacchetto ricevuto.
+
+Nonostante sia stata sviluppata con particolare cura per i dettagli, e seppur i test abbiano già dato ottimi risultati, c'è sempre del margine di miglioramento, anche se per pochi cicli di clock.
+
+Dal punto di vista algoritmico e dello spazio occupato in memoria probabilmente si possono fare ben pochi aggiustamenti.
+
+Dal punto di vista computazionale invece, c'è la possibilità di limare ancora qualche ciclo di clock, che per milioni di pacchetti potrebbe comunque dir tanto in termini di performance.
+
+Si prevede in tal senso di utilizzare istruzioni \emph{Streaming SIMD Extensions} (SSE) \cite{sse}. Con l'ausilio di quest'ultime, ad esempio il calcolo dell'hash risulterebbe fatto con una singola istruzione, offrendo quindi la possibilità di un ulteriore aumento delle performance.
+
+\subsection{Migliorie alla gestione delle regole}
+
+Attualmente le regole vere e proprie vengono salvate in una semplice lista, poiché il miglior modo di gestire un firewall è quello di averne sempre un numero contenuto, in accordo anche con quanto detto in \cite{fsr}.
+
+Nonostante questo abbia un fondo di verità, è anche vero che nessuno può impedire a grosse organizzazioni di avere un elenco di regole immenso.
+
+A seguito di questa considerazione, si potrebbe gestire le regole tramite una hash table, anziché una sola lista, garantendo migliori performance in fase di creazione (notiamo che questo non influirebbe nella fare di ricerca, in quanto l'accesso avverrebbe sempre tramite l'albero binario).
+
+Si prevede anche di provare l'implementazione dell'albero di Patricia con il supporto dell'hash \cite{hpt,hat}, ipotesi che per questa versione del software era stata accantonata.
+
+\subsection{Lockless shaping}
+
+Il trafficShaper costituisce l'unico esempio in cui sono stati utilizzati i meccanismi di sincronizzazione. Questo significa che è un elemento di degrado delle performance.
+
+Si ha quindi intenzione di migliorarlo facendo in modo che ogni thread \emph{monitor} abbia una propria coda dove inserire i propri pacchetti da inviare, così da non dover più utilizzare alcuna lock/unlock.
+
+Per ora questo approccio ha un problema irrisolto, cioè garantire che sia comunque rispettato l'ordine di arrivo all'interno di ogni \emph{masterQueue}, ovviamente in modo efficiente.
+
+Quando si usa un'unica coda, questo avviene immediatamente dall'ordine con cui i pacchetti sono inseriti. Purtroppo dividendola su più sotto-code, questa assunzione non è più valida.
+
+Ovviamente eseguire dei controlli incrociaci su ogni pacchetto in testa ad ogni sotto-coda non sarebbe per nulla efficiente.
+
+Quando sarà trovata soluzione a questo problema, sarà modificato il modulo che gestisce lo shaping.
+
+\subsection{Il prossimo passo per L7-Bridge}
+
+Attualmente per catturare i pacchetti è utilizzata la libreria PF\_RING.
+
+Da qualche tempo è però stata sviluppata e rilasciata una nuova libreria nata dal ramo DNA dalla precedente, si sta parlando di \emph{libzero} \cite{libzero}.
+
+Quest'ultima permetterebbe di ovviare al problema dell'esecuzione del software in zero-copy del pacchetto, essendo studiata appositamente a questo scopo (come suggerisce il nome), garantendo così performance ancora migliori delle attuali.
+
+L'implementazione adottata inoltre permette di passare a questa nuova tecnologia praticamente a costo zero, infatti ciò che viene ora passato ai vari thread \emph{monitor} è un puntatore ad una struttura contenente un buffer per il pacchetto (che sostanzialmente è un puntatore alla sua copia). Basta quindi sostituire questo buffer con il puntatore al pacchetto vero e proprio.
+
+Da un punto di vista estetico, ma anche e soprattutto funzionale, si prevede di fornire un'interfaccia grafica via web con la quale poter configurare l'intero sistema e visualizzare grafici e varie informazioni in tempo reale sul traffico che il bridge sta processando in quel momento, nonché dei log riguardanti problemi registrati durante le operazioni. Questo sia a fini di monitoraggio che di sicurezza della rete.
+
+Dato l'aspetto modulare del sistema, le capacità d'espansione sono pressoché illimitate. Ad esempio si prevede l'inserimento di un modulo per impedire l'\emph{arp poisoning}, uno per impostare filtri \emph{antispam}, e uno per il \emph{fingerprinting} dei sistemi che usano la banda.
+
+\section{Competenze acquisite}
+
+Grazie all'esperienza maturata nel progettare e sviluppare questo software, è stata acquisita grande sensibilità nei confronti delle tecnologie utilizzabili per effettuare monitoraggio di reti, sia a livello di cattura che di analisi del traffico.
+
+Dal punto di vista computazionale è emerso come i costi delle istruzioni, seppur singole e apparentemente semplici, possano garantire le migliori performance possibili (anche perché sono comunque eseguite potenzialmente per ogni pacchetto, e avendone milioni da processare, fanno veramente la differenza). Ad esempio, c'è notevole differenza in termini di istruzioni macchina per effettuare un'operazione di \emph{modulo} rispetto alla stessa funzione fatta attraverso un \emph{if}.
+
+Si è potuto constatare come l'utilizzo dei thread possa far aumentare le capacità di calcolo, ammesso che la loro esecuzione sia veramente disgiunta. Nello specifico, per esempio, evitare meccanismi di sincronizzazione, può far aumentare notevolmente le performance.
+
+Inoltre si è potuto constatare come l'utilizzo di appropriate strutture dati e algoritmi possa davvero fare la differenza in fase d'esecuzione, garantendo immediatezza nella ricerca delle informazioni.
+
+\section{Conclusioni}
+
+Si è realizzato un ottimo firewall applicativo di nuova generazione.
+
+Dando uno sguardo in concreto ai risultati ottenuti, si può notare come con un semplice PC, acquistabile per qualche centinaia d'euro, sia possibile gestire volumi di traffico intorno al Gigabit/s.
+
+Dal punto di vista progettuale, si ritiene che il software sia ormai maturo per un imminente rilascio, grazie anche all'intensa attività di test, che ha dato ottime conferme fin da subito e buoni auspici per il proseguo dello sviluppo.
+
+\emph{L7-Bridge} fornirà agli amministratori di rete un nuovissimo strumento, facilmente configurabile, per effettuare tutte quelle operazioni possibili solo con la congiunzione tra DPI e shaping, e che ora sono praticabili solo con soluzioni proprietarie costose, talvolta anche difficilmente gestibili.
+
+Ovviamente è stato concepito per le reti attuali, ma ha ottime caratteristiche che lo rendono facilmente aggiornabile per rimanere sempre al passo coi tempi.

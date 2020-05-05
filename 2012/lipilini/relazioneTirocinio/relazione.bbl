@@ -1,0 +1,374 @@
+\begin{thebibliography}{10}
+  \providebibliographyfont{name}{}%
+  \providebibliographyfont{lastname}{}%
+  \providebibliographyfont{title}{\emph}%
+  \providebibliographyfont{jtitle}{\btxtitlefont}%
+  \providebibliographyfont{etal}{\emph}%
+  \providebibliographyfont{journal}{}%
+  \providebibliographyfont{volume}{}%
+  \providebibliographyfont{ISBN}{\MakeUppercase}%
+  \providebibliographyfont{ISSN}{\MakeUppercase}%
+  \providebibliographyfont{url}{\url}%
+  \providebibliographyfont{numeral}{}%
+
+\expandafter\btxselectlanguage\expandafter {\btxfallbacklanguage}
+\bibitem {sse}
+\btxnamefont {J. \btxlastnamefont {Abel}}, \btxnamefont {K. \btxlastnamefont
+  {Balasubramanian}}, \btxnamefont {M. \btxlastnamefont {Bargeron}},
+  \btxnamefont {T. \btxlastnamefont {Craver}}\btxandcomma {} \btxandlong {}\
+  \btxnamefont {M. \btxlastnamefont {Phlipot}}\btxauthorcolon\ \btxjtitlefont
+  {\btxifchangecase {Applications tuning for streaming simd
+  extensions}{Applications tuning for streaming SIMD extensions}}.
+\newblock \btxjournalfont {Intel Technology Journal, Q}, 2:1999, 1999.
+\newblock
+  \url{http://download.intel.com/technology/itj/Q21999/PDF/apps_simd.pdf}.
+
+\bibitem {lntc}
+\btxnamefont {W. \btxlastnamefont {Almesberger}} \btxetalfont {\btxetalshort
+  {.}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase {Linux network traffic
+  control—implementation overview}{Linux network traffic
+  control—implementation overview}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Sixth IEEE Symposium on},
+  \btxvolumelong {}\ \btxvolumefont {2001}, \btxpageslong {}\ 296--301, 1999.
+\newblock
+  \url{http://dcn.ssu.ac.kr/~softgear/Linux%20Network%20Traffic%20Control.pdf}.
+
+\bibitem {hat}
+\btxnamefont {N. \btxlastnamefont {Askitis}} \btxandlong {}\ \btxnamefont {R.
+  \btxlastnamefont {Sinha}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase
+  {Hat-trie: a cache-conscious trie-based data structure for strings}{HAT-trie:
+  a cache-conscious trie-based data structure for strings}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Proceedings of the thirtieth
+  Australasian conference on Computer science}, \btxvolumelong
+  {}~\btxvolumefont {62}, \btxpageslong {}\ 97--105. Australian Computer
+  Society, Inc., 2007.
+\newblock \url{http://dl.acm.org/citation.cfm?id=1273749.1273761}.
+
+\bibitem {ts}
+\btxnamefont {M. \btxlastnamefont {Bechler}}, \btxnamefont {H. \btxlastnamefont
+  {Ritter}}, \btxnamefont {G. \btxlastnamefont {Schafer}}\btxandcomma {}
+  \btxandlong {}\ \btxnamefont {J. \btxlastnamefont {Schiller}}\btxauthorcolon\
+  \btxtitlefont {\btxifchangecase {{Traffic Shaping in end systems attached to
+  QoS-supporting networks}}{{Traffic Shaping in end systems attached to
+  QoS-supporting networks}}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Computers and Communications, 2001.
+  Proceedings. Sixth IEEE Symposium on}, \btxpageslong {}\ 296--301. IEEE,
+  2001.
+\newblock \url{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=935390}.
+
+\bibitem {fsr}
+\btxnamefont {W.R. \btxlastnamefont {Cheswick}}, \btxnamefont {S.M.
+  \btxlastnamefont {Bellovin}}\btxandcomma {} \btxandlong {}\ \btxnamefont
+  {A.D. \btxlastnamefont {Rubin}}\btxauthorcolon\ \btxtitlefont {Firewalls and
+  Internet security: repelling the wily hacker}.
+\newblock Addison-Wesley Longman Publishing Co., Inc., 2003\ifbtxprintISBN {,
+  \btxISBN~\btxISBNfont {978-0-201-63466-2}}.
+
+\bibitem {pfringdna}
+\btxnamefont {L. \btxlastnamefont {Deri}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{ntop.org, DNA PF\_RING}}{{ntop.org, DNA PF\_RING}}}.
+\newblock \url{http://www.ntop.org/products/pf_ring/dna/}, 2012.
+
+\bibitem {libzero}
+\btxnamefont {L. \btxlastnamefont {Deri}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{ntop.org, Libzero}}{{ntop.org, Libzero}}}.
+\newblock \url{http://www.ntop.org/products/pf_ring/libzero-for-dna/}, 2012.
+
+\bibitem {ndpi}
+\btxnamefont {L. \btxlastnamefont {Deri}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{ntop.org, nDPI}}{{ntop.org, nDPI}}}.
+\newblock \url{http://www.ntop.org/products/ndpi/}, 2012.
+
+\bibitem {pfring}
+\btxnamefont {L. \btxlastnamefont {Deri}} \btxetalfont {\btxetalshort
+  {.}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase {Improving passive
+  packet capture: beyond device polling}{Improving passive packet capture:
+  beyond device polling}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Proceedings of SANE}, \btxvolumelong
+  {}\ \btxvolumefont {2004}, \btxpagelong {}~85, 2004.
+\newblock \url{http://luca.ntop.org/Ring.pdf}.
+
+\bibitem {trickle}
+\btxnamefont {M.A. \btxlastnamefont {Eriksen}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {Trickle: A userland bandwidth shaper for unix-like
+  systems}{Trickle: A userland bandwidth shaper for unix-like systems}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Proc. of the USENIX 2005 Annual
+  Technical Conference, FREENIX Track}, 2005.
+\newblock \url{http://monkey.org/~marius/trickle/trickle.pdf}.
+
+\bibitem {tba}
+\btxnamefont {J.W. \btxlastnamefont {Evans}} \btxandlong {}\ \btxnamefont {C.
+  \btxlastnamefont {Filsfils}}\btxauthorcolon\ \btxtitlefont {Deploying IP and
+  MPLS QoS for Multiservice Networks: Theory \& Practice}.
+\newblock Morgan Kaufmann Publishers Inc., 2007\ifbtxprintISBN {,
+  \btxISBN~\btxISBNfont {978-0-08-048868-4}}.
+
+\bibitem {pcap}
+\btxnamefont {L.M. \btxlastnamefont {Garcia}}\btxauthorcolon\ \btxjtitlefont
+  {\btxifchangecase {{Programming with Libpcap - Sniffing the Network from our
+  own application}}{{Programming with Libpcap - Sniffing the Network from our
+  own application}}}.
+\newblock \btxjournalfont {Hakin9 - Computer Security Magazine}, 2008.
+\newblock
+  \url{http://repo.mynooblife.org/Developpement/C/libpcapHakin9LuisMartinGarci%
+a.pdf}.
+
+\bibitem {gheorghe}
+\btxnamefont {L. \btxlastnamefont {Gheorghe}}\btxauthorcolon\ \btxtitlefont
+  {Designing and Implementing Linux Firewalls and QoS using netfilter,
+  iproute2, NAT, and L7-filter}.
+\newblock Packt Pub., 2006\ifbtxprintISBN {, \btxISBN~\btxISBNfont
+  {978-1-904-81165-7}}.
+
+\bibitem {rfc3511}
+\btxnamefont {B. \btxlastnamefont {Hickman}}, \btxnamefont {D. \btxlastnamefont
+  {Newman}}, \btxnamefont {S. \btxlastnamefont {Tadjudin}}\btxandcomma {}
+  \btxandlong {}\ \btxnamefont {T. \btxlastnamefont {Martin}}\btxauthorcolon\
+  \btxtitlefont {\btxifchangecase {{Benchmarking Methodology for Firewall
+  Performance}}{{Benchmarking Methodology for Firewall Performance}}}.
+\newblock RFC 3511 (Informational), \btxmonaprlong {}\ 2003.
+\newblock {\latintext \btxurlfont {http://www.ietf.org/rfc/rfc3511.txt}}.
+
+\bibitem {lartc}
+\btxnamefont {B. \btxlastnamefont {Hubert}}, \btxnamefont {T. \btxlastnamefont
+  {Graf}}, \btxnamefont {G. \btxlastnamefont {Maxwell}}, \btxnamefont {R. van
+  \btxlastnamefont {Mook}}, \btxnamefont {M. van \btxlastnamefont
+  {Oosterhout}}, \btxnamefont {P. \btxlastnamefont {Schroeder}}, \btxnamefont
+  {J. \btxlastnamefont {Spaans}}\btxandcomma {} \btxandlong {}\ \btxnamefont
+  {P. \btxlastnamefont {Larroy}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {Linux advanced routing \& traffic control}{Linux advanced
+  routing \& traffic control}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Ottawa Linux Symposium}, \btxpagelong
+  {}\ 213, 2002.
+\newblock
+  \url{http://www.linuxsymposium.org/archives/OLS/Reprints-2002/Proceedings-OL%
+S2002.pdf#page=213}.
+
+\bibitem {rdtsc}
+\btxnamefont {\btxlastnamefont {Intel}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{Using the RDTSC Instruction for Performance
+  Monitoring}}{{Using the RDTSC Instruction for Performance Monitoring}}}.
+\newblock \btxtechreplong {}, Intel Coorporation, 1997.
+\newblock \url{http://www.ccsl.carleton.ca/~jamuir/rdtscpm1.pdf}.
+
+\bibitem {pace}
+\btxnamefont {\btxlastnamefont {Ipoque}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{PACE - Protocol and Application Classification
+  Engine}}{{PACE - Protocol and Application Classification Engine}}}.
+\newblock
+  \url{http://www.ipoque.com/en/products/protocol-and-application-classificati%
+on-engine}, 2012.
+
+\bibitem {hpt}
+\btxnamefont {S. \btxlastnamefont {Kniesburges}} \btxandlong {}\ \btxnamefont
+  {C. \btxlastnamefont {Scheideler}}\btxauthorcolon\ \btxjtitlefont
+  {\btxifchangecase {Hashed patricia trie: efficient longest prefix matching in
+  peer-to-peer systems}{Hashed patricia trie: efficient longest prefix matching
+  in peer-to-peer systems}}.
+\newblock \btxjournalfont {WALCOM: Algorithms and Computation}, \btxpageslong
+  {}\ 170--181, 2011.
+\newblock \url{http://www.springerlink.com/index/Q8035J7554184365.pdf}.
+
+\bibitem {fwsds}
+\btxnamefont {A. \btxlastnamefont {Kogan}} \btxandlong {}\ \btxnamefont {E.
+  \btxlastnamefont {Petrank}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase
+  {A methodology for creating fast wait-free data structures}{A methodology for
+  creating fast wait-free data structures}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Proceedings of the 17th ACM SIGPLAN
+  symposium on Principles and Practice of Parallel Programming}, \btxpageslong
+  {}\ 141--150. ACM, 2012.
+\newblock \url{http://dl.acm.org/citation.cfm?id=2145835}.
+
+\bibitem {redpi1}
+\btxnamefont {S. \btxlastnamefont {Kumar}}, \btxnamefont {S. \btxlastnamefont
+  {Dharmapurikar}}, \btxnamefont {F. \btxlastnamefont {Yu}}, \btxnamefont {P.
+  \btxlastnamefont {Crowley}}\btxandcomma {} \btxandlong {}\ \btxnamefont {J.
+  \btxlastnamefont {Turner}}\btxauthorcolon\ \btxjtitlefont {\btxifchangecase
+  {Algorithms to accelerate multiple regular expressions matching for deep
+  packet inspection}{Algorithms to accelerate multiple regular expressions
+  matching for deep packet inspection}}.
+\newblock \btxjournalfont {ACM SIGCOMM Computer Communication Review},
+  36(4):339--350, 2006.
+\newblock \url{http://dl.acm.org/citation.cfm?id=1159952}.
+
+\bibitem {pcap2}
+\btxnamefont {\btxlastnamefont {{Lawrence Berkeley National
+  Labs}}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase {libpcap}{libpcap}}.
+\newblock \url{http://www.tcpdump.org/}, 2012.
+
+\bibitem {qos}
+\btxnamefont {M. \btxlastnamefont {Menth}}, \btxnamefont {R. \btxlastnamefont
+  {Martin}}\btxandcomma {} \btxandlong {}\ \btxnamefont {J. \btxlastnamefont
+  {Charzinski}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase {Capacity
+  overprovisioning for networks with resilience requirements}{Capacity
+  overprovisioning for networks with resilience requirements}}.
+\newblock \Btxinlong {}\ \btxtitlefont {ACM SIGCOMM Computer Communication
+  Review}, \btxvolumelong {}~\btxvolumefont {36}, \btxpageslong {}\ 87--98.
+  ACM, 2006.
+\newblock \url{http://dl.acm.org/citation.cfm?id=1159925}.
+
+\bibitem {trie}
+\btxnamefont {D.R. \btxlastnamefont {Morrison}}\btxauthorcolon\ \btxjtitlefont
+  {\btxifchangecase {{PATRICIA — Practical Algorithm To Retrieve Information
+  Coded In Alphanumeric}}{{PATRICIA — Practical Algorithm To Retrieve
+  Information Coded In Alphanumeric}}}.
+\newblock \btxjournalfont {Journal of the ACM (JACM)}, 15(4):514--534, 1968.
+\newblock \url{http://dl.acm.org/citation.cfm?id=321481}.
+
+\bibitem {pfsense}
+\btxnamefont {\btxlastnamefont {{pfSense Team}}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{pfSense - An open source firewall distribution}}{{pfSense
+  - An open source firewall distribution}}}.
+\newblock \url{http://www.pfsense.org/}, 2011.
+
+\bibitem {dpi}
+\btxnamefont {T. \btxlastnamefont {Porter}}\btxauthorcolon\ \btxjtitlefont
+  {\btxifchangecase {The perils of deep packet inspection}{The perils of deep
+  packet inspection}}.
+\newblock \btxjournalfont {Security Focus}, 2005.
+\newblock
+  \url{http://www.symantec.com/connect/articles/perils-deep-packet-inspection}.
+
+\bibitem {libevent}
+\btxnamefont {N. \btxlastnamefont {Provos}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{Libevent - An asynchronous event library}}{{Libevent - An
+  asynchronous event library}}}.
+\newblock \url{http://libevent.org/}, 2012.
+
+\bibitem {ixe}
+\btxnamefont {\btxlastnamefont {Qosmos}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{ixEngine - Deep Packet Inspection and Metadata Extraction
+  SDK}}{{ixEngine - Deep Packet Inspection and Metadata Extraction SDK}}}.
+\newblock
+  \url{http://www.qosmos.com/deep-packet-inspection-and-metadata-extraction-sd%
+k}, 2012.
+
+\bibitem {dummynet}
+\btxnamefont {L. \btxlastnamefont {Rizzo}} \btxandlong {}\ \btxnamefont {M.
+  \btxlastnamefont {Carbone}}\btxauthorcolon\ \btxjtitlefont {\btxifchangecase
+  {Dummynet revisited}{Dummynet revisited}}.
+\newblock \btxjournalfont {ACM SIGCOMM Computer Communication Review},
+  40(2):12--20, 2010.
+\newblock \url{http://dl.acm.org/citation.cfm?id=1764873.1764876}.
+
+\bibitem {qfq}
+\btxnamefont {L. \btxlastnamefont {Rizzo}}, \btxnamefont {F. \btxlastnamefont
+  {Checconi}}\btxandcomma {} \btxandlong {}\ \btxnamefont {P. \btxlastnamefont
+  {Valente}}\btxauthorcolon\ \btxjtitlefont {\btxifchangecase {{QFQ: Efficient
+  Packet Scheduling with Tight Bandwidth Distribution Guarantees}}{{QFQ:
+  Efficient Packet Scheduling with Tight Bandwidth Distribution Guarantees}}}.
+\newblock 2012.
+\newblock \url{http://info.iet.unipi.it/~luigi/papers/20120309-qfq.pdf}.
+
+\bibitem {napi}
+\btxnamefont {J.H. \btxlastnamefont {Salim}}, \btxnamefont {R. \btxlastnamefont
+  {Olsson}}\btxandcomma {} \btxandlong {}\ \btxnamefont {A. \btxlastnamefont
+  {Kuznetsov}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase {{Beyond
+  Softnet}}{{Beyond Softnet}}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Proceedings of the 5th annual Linux
+  Showcase \& Conference}, \btxpageslong {}\ 18--18, 2001.
+\newblock
+  \url{http://www.usenix.org/publications/library/proceedings/als01/full_paper%
+s/jamal/jamal.ps}.
+
+\bibitem {drr}
+\btxnamefont {M. \btxlastnamefont {Shreedhar}} \btxandlong {}\ \btxnamefont {G.
+  \btxlastnamefont {Varghese}}\btxauthorcolon\ \btxjtitlefont {\btxifchangecase
+  {Efficient fair queuing using deficit round-robin}{Efficient fair queuing
+  using deficit round-robin}}.
+\newblock \btxjournalfont {Networking, IEEE/ACM Transactions on},
+  4(3):375--385, 1996.
+\newblock \url{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=502236}.
+
+\bibitem {redpi3}
+\btxnamefont {R. \btxlastnamefont {Smith}}, \btxnamefont {C. \btxlastnamefont
+  {Estan}}, \btxnamefont {S. \btxlastnamefont {Jha}}\btxandcomma {} \btxandlong
+  {}\ \btxnamefont {S. \btxlastnamefont {Kong}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {Deflating the big bang: fast and scalable deep packet
+  inspection with extended finite automata}{Deflating the big bang: fast and
+  scalable deep packet inspection with extended finite automata}}.
+\newblock \Btxinlong {}\ \btxtitlefont {ACM SIGCOMM Computer Communication
+  Review}, \btxvolumelong {}~\btxvolumefont {38}, \btxpageslong {}\ 207--218.
+  ACM, 2008.
+\newblock \url{http://dl.acm.org/citation.cfm?id=1402983}.
+
+\bibitem {l7filter}
+\btxnamefont {D. \btxlastnamefont {Sokoloski}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{L7-Filter - A classifier for Linux's
+  Netfilter}}{{L7-Filter - A classifier for Linux's Netfilter}}}.
+\newblock \url{http://l7-filter.clearfoundation.com/}, 2011.
+
+\bibitem {sonicwall}
+\btxnamefont {\btxlastnamefont {{SonicWall}}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{SonicWALL, Inc. - Dynamic Security for the Global
+  Network}}{{SonicWALL, Inc. - Dynamic Security for the Global Network}}}.
+\newblock \url{http://www.sonicwall.com/}, 2012.
+
+\bibitem {lfpdp}
+\btxnamefont {A. \btxlastnamefont {Stivala}}, \btxnamefont {P.J.
+  \btxlastnamefont {Stuckey}}, \btxnamefont {M. Garcia de~la \btxlastnamefont
+  {Banda}}, \btxnamefont {M. \btxlastnamefont {Hermenegildo}}\btxandcomma {}
+  \btxandlong {}\ \btxnamefont {A. \btxlastnamefont {Wirth}}\btxauthorcolon\
+  \btxjtitlefont {\btxifchangecase {Lock-free parallel dynamic
+  programming}{Lock-free parallel dynamic programming}}.
+\newblock \btxjournalfont {Journal of Parallel and Distributed Computing},
+  70(8):839--848, 2010.
+\newblock
+  \url{http://www.sciencedirect.com/science/article/pii/S0743731510000110}.
+
+\bibitem {lba}
+\btxnamefont {A.S. \btxlastnamefont {Tanenbaum}}\btxauthorcolon\ \btxtitlefont
+  {{Computer Networks}}.
+\newblock New Jersey: Prentice Hall, 2003\ifbtxprintISBN {,
+  \btxISBN~\btxISBNfont {978-0-13-066102-9}}.
+
+\bibitem {ms}
+\btxnamefont {A. \btxlastnamefont {Unterkircher}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {{MasterShaper - A network traffic shaper}}{{MasterShaper -
+  A network traffic shaper}}}.
+\newblock \url{http://www.mastershaper.org/index.php/MasterShaper}, 2011.
+
+\bibitem {redpi2}
+\btxnamefont {X. \btxlastnamefont {Wang}}, \btxnamefont {J. \btxlastnamefont
+  {Jiang}}, \btxnamefont {Y. \btxlastnamefont {Tang}}, \btxnamefont {B.
+  \btxlastnamefont {Liu}}\btxandcomma {} \btxandlong {}\ \btxnamefont {X.
+  \btxlastnamefont {Wang}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase
+  {Strid$^2$fa: Scalable regular expression matching for deep packet
+  inspection}{StriD$^2$FA: Scalable Regular Expression Matching for Deep Packet
+  Inspection}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Communications (ICC), 2011 IEEE
+  International Conference on}, \btxpageslong {}\ 1--5. IEEE, 2011.
+\newblock \url{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5963289}.
+
+\bibitem {netfilter}
+\btxnamefont {H. \btxlastnamefont {Welte}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {The netfilter framework in linux 2.4}{The netfilter
+  framework in Linux 2.4}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Proceedings of Linux Kongress}, 2000.
+\newblock
+  \url{http://xn--kln-sna.ccc.de/archiv/congress/17c3-2000/netfilter-lk2000/ne%
+tfilter.ps.gz}.
+
+\bibitem {redpi0}
+\btxnamefont {F. \btxlastnamefont {Yu}}, \btxnamefont {Z. \btxlastnamefont
+  {Chen}}, \btxnamefont {Y. \btxlastnamefont {Diao}}, \btxnamefont {T.V.
+  \btxlastnamefont {Lakshman}}\btxandcomma {} \btxandlong {}\ \btxnamefont
+  {R.H. \btxlastnamefont {Katz}}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {Fast and memory-efficient regular expression matching for
+  deep packet inspection}{Fast and memory-efficient regular expression matching
+  for deep packet inspection}}.
+\newblock \Btxinlong {}\ \btxtitlefont {Architecture for Networking and
+  Communications systems, 2006. ANCS 2006. ACM/IEEE Symposium on},
+  \btxpageslong {}\ 93--102. IEEE, 2006.
+\newblock \url{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=4579527}.
+
+\bibitem {ps}
+\btxnamefont {G. \btxlastnamefont {Zhang}} \btxetalfont {\btxetalshort
+  {.}}\btxauthorcolon\ \btxjtitlefont {\btxifchangecase {El938 report: Packet
+  scheduling}{EL938 Report: Packet Scheduling}}.
+\newblock 2002.
+\newblock
+  \url{http://eeweb.poly.edu/aatcn/pres_reps/Gzhang_packet_scheduling_report.p%
+df}.
+
+\end{thebibliography}

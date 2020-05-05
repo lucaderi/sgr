@@ -1,0 +1,216 @@
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\chapter{Related Work}
+
+\section{Soluzioni per il DPI}
+
+\subsection{Ipoque PACE}
+
+PACE (\emph{Protocol and Application Classification Engine}) \cite{pace} è il motore DPI proprietario della Ipoque, mantenuto aggiornato per i servizi odierni.
+
+Viene distribuita come libreria (statica e dinamica) realizzata interamente in C da utilizzare in user space, ma anche come modulo del kernel.
+
+Naturalmente è compatibile con piattaforme a 32 e 64 bit, architetture Little e Big Endian, sia con sistema operativo Linux che Windows.
+
+Per eseguire i compiti propri del DPI, sfrutta anche il pattern matching e analisi comportamentali, statistiche ed euristiche.
+
+Grazie a questa combinazione di funzionalità, permette di riconoscere anche protocolli applicativi proprietari, cifrati e offuscati. Inoltre ha un tasso molto basso di falsi negativi, e praticamente nessun falso positivo.
+
+I dettagli del codice chiaramente non sono visibili, ma dalle caratteristiche dichiarate della casa produttrice si ha che sono impiegati in media meno di 2000 cicli di clock per identificare un protocollo. La libreria nDPI (che ricordiamo basarsi sulle ceneri della versione free di questa libreria) invece ne impiega circa meno della metà, garantendo quindi migliori performance.
+
+Sono fornite anche funzionalità per il tracking dei flussi di comunicazione (seppur se ne possano usare di proprie), che permettono di estrarre informazioni quali il \emph{Round Trip Time}. Stando a quanto dichiarato dalla Ipoque, consumerebbero in media meno di 1000 cicli di clock. Questo compito è assolto dalla flowHashTable, che però utilizza intorno ai 330 cicli di clock in media, garantendo quindi performance tre volte migliori.
+
+Quindi, complessivamente, PACE impiega mediamente 3000 cicli di clock, mentre la soluzione adottata circa 1200. Ne consegue quindi che quest'ultima è decisamente migliore in termini di consumo di risorse del processore.
+
+Infine questa libreria viene dichiarata come funzionante per reti operanti a velocità di 10 Gbit/s e oltre.
+
+\subsection{Qosmos ixEngine}
+
+ixEngine \cite{ixe} è il motore per il DPI e l'estrazione di metadati della Qosmos. Costruita a blocchi, permette facilmente l'integrazione con nuove o vecchie soluzioni. Grazie a questa caratteristica permette la scrittura di plugin, mediante un software scritto dalla ditta stessa.
+
+L'aggiornamento quindi risulta piuttosto semplice ed è garantito giornalmente e on-demand dalla ditta.
+
+I metadati estratti in tempo reale riguardano ad esempio tipo di file scaricato, IMSI, \dots
+
+Una caratteristica importante di questa soluzione è che permette analisi anche su pacchetti frammentati, mentre la libreria nDPI non lo permette.
+
+Essendo pensata per gestire grosse quantità di dati e l'operatività su reti a 10 Gbit/s, è stata ottimizzata per essere scalabile fino a 96 cores. 
+
+Nonostante sia ottimizzata soprattutto per garantire ottime performance su piattaforme multicore (quali Cavium, Tilera e NetLogic), è comunque compatibile con le CPU prodotte dalle aziende leader di mercato, poiché sviluppata in C.
+
+Supporta distribuzioni Linux con kernel 3.x, su piattaforme a 32 o 64 bit.
+
+Purtroppo in questo caso non sono note le performace di tale libreria. Risulta quindi difficile fare veri e propri confronti con la libreria nDPI.
+
+Viste però le importanti collaborazioni (con ad esempio anche Intel) si ritiene che questa libreria sia ben sviluppata.
+
+\subsection{L7-Filter}
+
+L7-Filter \cite{l7filter} è l'unico dei motori DPI open source degno di nota.
+
+Viene spesso utilizzato come modulo del kernel in distribuzioni Linux specializzate per la gestione di rete (come ZeroShell, Zentyal, Untangle).
+
+C'è comunque una versione beta per l'utilizzo in user space.
+
+Per tentare di riconoscere il protocollo applicativo trasportato, L7-Filter analizza, mediante espressioni regolari, i primi 10 pacchetti di ogni nuova connessione (o  2 kByte di dati). Se l'utente volesse modificare tale limite, dovrebbe agire sul file \emph{layer7\_numpackets} nella directory \mbox{/proc/net/}.
+
+Questa è una buona caratteristica, ma la libreria nDPI non ha di suo un vero e proprio limite (ricordiamo comunque che una volta stabilito il protocollo trasportato, i successivi pacchetti di quel flusso, se analizzati, sarebbero subito riconosciuti senza ulteriori operazioni, ma pagando comunque l'\emph{overhead} di una chiamata a funzione). Per garantirne uno, al fine di diminuire il numero di controlli che altrimenti dovrebbero essere effettuati dal firewall, si è scelto quindi di facilitare la cosa all'utente semplicemente permettendogli di impostarlo tramite riga di comando dell'eseguibile di \emph{L7-Bridge}.
+
+Il problema principale di questa libreria è l'uso di pattern (cioè, nome del protocollo ed espressione regolare da ricercare) per il riconoscimento di un protocollo. Se da una parte questo semplifica la scrittura di nuove regole (caratteristica piuttosto importante, così da garantire facilità nell'estensione ed aggiornamento dei protocolli riconoscibili), dall'altra crea una buona possibilità di falsi positivi nel controllo dei pacchetti.
+
+Quest'ultimo non è un problema da poco. Si potrebbe infatti gestire un certo flusso con una regola errata, ad esempio bloccandolo seppur in realtà sarebbe acconsentito, oppure, peggio ancora, consentire ad un servizio malevolo (\emph{virus}, \emph{backdoor}) di agire.
+
+Una buona libreria DPI dovrebbe quindi limitare il più possibile questo aspetto, cruciale per il buon funzionamento del firewall in generale.
+
+In questo caso, la libreria nDPI è da preferire in quanto, attraverso le proprie funzioni C, riduce al minimo le possibilità di falsi positivi.
+
+L7-Filter in versione modulo del kernel, come anche nDPI, non ha funzionalità di tracking delle connessioni. Bisogna quindi affiancarci una qualche struttura dati per farlo. Per quanto riguarda la beta per user space invece è presente una minimale struttura dati preposta a questo scopo, ma è stata utilizzata la \emph{map} (sostanzialmente, una hash table) fornita dalle librerie standard del C++ con diverse sezioni critiche gestite con meccanismi di sincronizzazione (lock/unlock), quindi con notevole degrado delle performance.
+
+In \emph{L7-Bridge} è stata creata ad hoc ed utilizzata la flowHashTable per questo scopo, con ottimi risultati.
+
+A livello di performance, viene raccomandato l'uso di L7-Filter su macchine che devono gestire al più 5000 pps (pacchetti per secondo) \cite{gheorghe}, ovvero su Megabit LAN. Questa caratteristica la rende quindi inutilizzabile sulle reti Gigabit Ethernet moderne, che sono il target del progetto \emph{L7-Bridge}.
+
+\section{Soluzioni per il Traffic Shaping}
+
+\subsection{MasterShaper}
+
+MasterShaper \cite{ms} fa parte di quei software open source che sfruttano il \emph{traffic control} di Linux al fine di effettuare lo shaping dei servizi.
+
+Come già detto in precedenza, questi meccanismi non sono alla portata di tutti, quindi MasterShaper offre ai suoi utenti una comoda interfaccia web per guidarli nelle varie impostazioni. Questa scelta è piuttosto apprezzabile, in quanto sempre più spesso si ha familiarità con i browser.
+
+Per la configurazione del \emph{trafficShaper} di \emph{L7-Bridge} invece, è stato scelto di far impostare dall'utente un file XML contenente le specifiche delle varie code di priorità da creare. Questo potrebbe risultare meno immediato rispetto ad un'interfaccia web come quella di MasterShaper, ma la semplicità con cui è possibile scrivere il file di regole, magari tramite l'ausilio del proprio editor XML preferito, non dovrebbe farla rimpiangere troppo.
+
+Oltre che per impostare le proprie preferenze, l'utente può sfruttare l'interfaccia web per avere grafici ed informazioni sul traffico in tempo reale. Quest'ottima funzionalità non è al momento implementata in \emph{L7-Bridge}, ma si prevede di fornirla al più presto.
+
+Fra le varie funzionalità è presente la possibilità di integrare L7-Filter come motore d'analisi DPI per effettuare lo shaping in base ai protocolli applicativi. Questo è un altro punto a favore di questo software.
+
+Il problema critico che però si porta dietro lo sviluppo di questo progetto è la dipendenza dal kernel di Linux e anche dai diversi pacchetti supplementari di cui ha bisogno per funzionare (come \emph{iproute2}, package di utility per il networking, che contiene il fondamentale comando \emph{tc}, che permette di manipolare le code di priorità dei pacchetti proprie del kernel).
+
+In pratica ad ogni modifica (e sappiamo che i kernel di Linux cambiano frequentemente), i comandi da impartire tramite \emph{tc} potrebbero dover andar rivisti, con conseguente bisogno di rilascio di patch o nuove versioni del software.
+
+Da queste semplici considerazioni si capisce come sia necessario mantenere lo shaping separato dai vari aspetti del kernel. In questo senso, lo shaper realizzato in \emph{L7-Bridge} è del tutto indipendente da ogni altro componente del sistema operativo, garantendo così la possibilità di non dover essere la preoccupazione numero uno per lo sviluppo del progetto.
+
+\subsection{Trickle}
+
+Trickle \cite{trickle} è una libreria operante in spazio utente, senza che si abbia bisogno di particolari privilegi, che si interpone tra le chiamate a system call quali send, recv, \dots, ritardandone la loro effettiva esecuzione da parte del sistema operativo. Così facendo si realizza un naturale shaping della banda di una qualsiasi applicazione.
+
+Questa interposizione è ottenuta grazie a LD\_PRELOAD che permette di caricare prima questa libreria dinamica rispetto alla standard \emph{libc.so}, utilizzata per garantire varie funzionalità sui socket BSD di rete.
+
+Può essere eseguita su sistemi operativi Linux, FreeBSD, e Solaris, che supportano il preload delle librerie. Ha inoltre bisogno della \emph{libevent} \cite{libevent}, su cui poggia per assolvere al proprio compito.
+
+Quest'ultima è una libreria di notificazione degli eventi asincroni che fornisce un meccanismo per eseguire una funzione di callback quando su un descrittore di file avviene un determinato evento o dopo che è scaduto un timeout. Venne ideata al fine di sostituire l'event loop asincrono nei server di rete pilotati da eventi. Attualmente, \emph{libevent} gestisce importanti system call quali /dev/poll, kqueue, event ports, select, poll, e epoll. Essendo indipendente dall'event API esposta, è possibile garantire nuove funzionalità con semplici aggiornamenti, senza dover riprogettare le applicazioni. Inoltre è utilizzabile anche in programmi multi-threaded.
+
+Da tutte queste premesse si capisce come Trickle sia facilmente portabile, aggiornabile e soprattutto non abbia alcun problema coi kernel di Linux. Inoltre lo shaping di una applicazione avviene con semplici ed intuitivi comandi impartibili via riga di comando (es.: \mbox{trickle -d 50 -u 10 \emph{applicazione},} dove con -d si limita il download e con -u l'upload dell'applicazione, e quindi la socket, specificata). Esiste anche \emph{trickled}, un demone di sistema di Trickle che permette di fare lo shaping di tutte le socket aperte, sempre con le stesse modalità d'uso.
+
+Questo aspetto fa propendere l'uso di Trickle per singoli host, cioè dove è presente una socket per ogni applicativo che apre un flusso di comunicazione. Con qualche modifica, sarebbe però possibile adattarlo al fine di farlo funzionare anche su macchine facenti da bridge o firewall in generale.
+
+Purtroppo questa libreria soffre di alcuni importanti problemi generali.
+
+Innanzitutto, Trickle opera solo su connessioni TCP, anche se questo è il protocollo di trasporto più usato per i servizi Internet.
+
+Per la sua natura, Trickle è in grado di limitare solo applicazioni utilizzanti librerie dinamiche. Se invece l'implementazione di un servizio usasse librerie statiche, non sarebbe possibile attivare le funzionalità di shaping.
+
+Infine, ogni impostazione è da impartire tramite shell, quindi non è possibile stabilire delle vere e proprie politiche di utilizzo della banda, se non tramite comandi espliciti.
+
+Date tutte queste caratteristiche, non è perfettamente integrabile nel firewall \emph{L7-Bridge}.
+
+C'è bisogno di effettuare lo shaping indipendentemente dal protocollo di trasporto utilizzato, e il \emph{trafficShaper} adottato risponde perfettamente a questa prerogativa.
+
+Le \emph{masterQueue} del \emph{trafficShaper} implementato sono astrazioni che permettono di definire delle politiche d'uso della banda, caratteristica desiderabile di ogni shaper.
+
+L'aspetto invece desiderabile che ha Trickle nei confronti del \emph{trafficShaper} di \emph{L7-Bridge} è l'assenza di meccanismi di sincronizzazione.
+
+\subsection{QFQ : Quick Fair Queueing}
+
+QFQ \cite{qfq} è un packet scheduler appartenente alla categoria degli \emph{Approximated Fair Queueing schedulers}. Attualmente è utilizzato anche nell'importante progetto Dummynet \cite{dummynet}.
+
+Questi scheduler hanno la proprietà di avere una piccola deviazione per flusso di comunicazione rispetto al tempo ideale di servizio. La componente che influenza di più questo scostamento è inversamente proporzionale alla banda richiesta dal flusso. Anche se godono di una complessità di tempo nell'ordine di O(1) nel numero di flussi, sono diverse volte più costosi rispetto agli scheduler di tipo Round Robin, che però non danno praticamente alcuna garanzia sulla deviazione. Quest'ultimo tipo di scheduler è stato utilizzato nei principi per l'implementazione del \emph{trafficShaper}, che gode quindi di tutte le relative caratteristiche.
+
+QFQ ha l'interessante proprietà di avere complessità di O(1), dando garanzia quasi ottimale sulla deviazione per flusso.
+
+Per fare questo, sfrutta le basi teoriche proprie della categoria di scheduler alla quale appartiene, ma usa nuovi meccanismi per rimuovere il costo lineare nel numero di gruppi di flussi, o lunghezza dei pacchetti, caratteristici dei precedenti quasi-O(1) schedulers.
+
+In QFQ, i flussi sono divisi in quattro gruppi, ciascuno rappresentato da una parola (\emph{word machine}). Questa è costruita in modo tale che tutte le informazioni necessarie a far prendere le decisioni allo scheduler possano essere effettuate utilizzando istruzioni semplici e costanti in tempo d'esecuzione, come AND, OR, XOR e trovare il primo bit a 1 (\emph{Find First Set bit}), utilizzata per implementare in tempo costante la ricerca del prossimo gruppo da servire.
+
+L'implementazione del \emph{trafficShaper} in Round Robin invece, non necessita di tali strutture dati. Basta semplicemente utilizzare un indice della successiva coda da servire, ottenendo quindi tale informazione con una singola istruzione.
+
+Grazie a questi accorgimenti, e ad un algoritmo che non ha bisogno di alcun ciclo, QFQ ha davvero delle ottime performance, dichiarate nell'ordine del centinaio di nanosecondi per coppia di enqueue()/dequeue().
+
+Il \emph{trafficShaper}, realizzato seguendo i principi del Deficit Round Robin, è comunque ancora più veloce da questo punto di vista, impiegando qualche decina di nanosecondo in meno, ma con minori garanzie sulla deviazione rispetto al tempo ideale di servizio.
+
+Bisogna però dire che in realtà il \emph{trafficShaper} deve utilizzare meccanismi di sincronizzazione che ne degradano le performance rispetto a quelle suddette. Questo aspetto però non è valutato nei test effettuati su QFQ, forse perchè più pensato per l'uso come modulo del kernel, che non in user space.
+
+\section{Soluzioni per firewall applicativi}
+
+\subsection{Netfilter}
+
+Netfilter \cite{netfilter} è un framework che permette l'interazione col modulo kernel di Linux per l'intercettazione e la manipolazione dei pacchetti ricevuti. Col tempo è diventato un componente standard di tutte le moderne distribuzioni di Linux. L'ultima release stabile è quella basata sulla versione 3.1 del kernel.
+
+Netfilter permette di realizzare alcune funzionalità di rete avanzate come l'implementazione del servizio di NAT (\emph{Network Address Translation}), e quindi la condivisione di un'unica connessione Internet tra diversi computer di una rete locale.
+
+Comprende diversi tool specializzati per svolgere tante e diverse funzioni di rete, in continua espansione ed interagenti tra loro. Tale aspetto può essere interpretato come un pregio, ma anche come un difetto.
+
+Un esempio dei vari strumenti disponibili è iptables, che permette di definire le regole per i filtri di rete ed è progettato per poter essere facilmente esteso attraverso moduli che aggiungono funzionalità.
+
+Come si evince quindi, è l'accoppiata Netfilter e iptables che permette la creazione di firewall.
+
+Per aggiungere le funzionalità proprie del DPI, si utilizza un modulo di iptables derivato da L7-Filter.
+
+Ne consegue che qualsiasi firewall si crei, sarà sempre affetto dalla possibilità di falsi positivi e dalle ridotte performance.
+
+Per raccogliere statistiche basate sui flussi di comunicazione, è necessario un altro tool della suite, conntrack-tools. Quest'ultimo ha caratteristiche interessanti, come la possibilità di visualizzare le informazioni collezionare in testo semplice o XML e definire i timeout per gli aggiornamenti ed eliminazioni delle varie connessioni tracciate.
+
+Solo con Netfilter e iptables, non sarebbe possibile effettuare l'importante funzionalità di traffic shaping.
+
+Per poterla permettere c'è bisogno dell'uso di \emph{tc}, per manipolare il \emph{traffic control} di Linux.
+
+Una soluzione basata su questi tool mostra evidenti problemi.
+
+Il primo che salta subito agli occhi è la dipendenza dal kernel di Linux. Questo potrebbe significare il dover mantenere sempre aggiornati tutti i vari strumenti, che inoltre hanno qualche dipendenza tra loro. Da un altro punto di vista, certe funzionalità potrebbe comunque essere limitate dal kernel stesso. Insomma, un firewall basato sul framework di Netfilter potrebbe avere diversi problemi di manutenibilità.
+
+\emph{L7-Bridge} mantiene ben separati i vari moduli del sistema, permettendo una facile manutenzione ed aggiornamento.
+
+Da non sottovalutare anche la difficoltà nella configurazione del firewall. I tanti tool da dover utilizzare per realizzare un firewall completo possono far creare confusione.
+
+\emph{L7-Bridge} invece permette con un solo semplice file XML l'intera configurazione del sistema.
+
+Nonostante questi aspetti, diversi validi prodotti software sono presenti sul mercato, un esempio di essi è Shorewall (Shoreline Firewall).
+
+\subsection{pfSense}
+
+pfSense \citep{pfsense} è un potente firewall software open source basato su FreeBSD.
+
+Incorpora varie funzionalità, da quelle più semplici a quelle più complesse.
+
+Per fare qualche esempio, ricordiamo le funzionalità di NAT (\emph{Network Address Translation}), la possibilità di bilanciare il carico di lavoro tra due o più server che si trovino dietro pfSense, l'affidabilità garantita grazie al modulo CARP e pfsync (permette di configurare due firewall su due macchine identiche per replicarsi e autosostituirsi nel caso di guasto di una delle due), la gestione di uPnP, DHCP, Dynamic DNS, e molte altre. Inoltre è possibile visualizzare e salvare varie statistiche sui flussi della rete.
+
+Insomma, si tratta di un software veramente completo.
+
+Nello specifico \emph{L7-Bridge} non presenta tutte queste caratteristiche, in quanto comunque è ancora un progetto giovane.
+
+I due firewall sono però comparabili in alcune caratteristiche (come l'uso di un file XML per la configurazione) e nelle funzionalità essenziali, quali la possibilità di analizzare approfonditamente i pacchetti per stabilire il protocollo applicativo trasportato e effettuare lo shaping del traffico.
+
+Per effettuare il DPI dei pacchetti, pfSense utilizza \emph{ipfw-classifyd}, sostanzialmente basato su L7-Filter, mentre per lo shaping si appoggia a Dummynet (e quindi implicitamente a QFQ).
+
+Avendo già analizzato entrambe le componenti sono noti i pro e i contro della soluzione.
+
+Nello specifico, mentre Dummynet è comunque una buona scelta per lo shaping, l'uso di un motore d'analisi basato su L7-Filter si dimostra non essere l'alternativa migliore per il DPI (ricordiamo comunque come sia praticamente l'unica possibilità nel mondo open source). Sicuramente i requisiti hardware richiesti sono influenzati da quest'ultima scelta e non solo dalle notevoli funzionalità offerte da questo software.
+
+\emph{L7-Bridge} invece, utilizzando nDPI, permette di analizzare maggiori quantità di pacchetti a parità di hardware, oppure, detta in altri termini, permette di analizzare lo stesso traffico con una macchina decisamente meno all'avanguardia (quindi meno costosa).
+
+Infine, da un punto di vista di usabilità del software, c'è da considerare il fatto che pfSense permette anche di effettuare la gestione del firewall tramite interfaccia grafica web, cosa decisamente apprezzabile per l'utente, mentre, al momento, \emph{L7-Bridge} consente solo l'uso tramite riga di comando.
+
+\subsection{SonicWALL Firewall}
+
+La ditta SonicWALL \cite{sonicwall} produce firewall integrati in appositi apparati di rete con supporto al DPI e allo shaping.
+
+Questo tipo di soluzioni godono di ottime performance, dovute al fatto che sfruttano dell'hardware dedicato. C'è anche la possibilità di modificare varie impostazioni e monitorare lo stato attuale del componente tramite un'intuitiva e semplice interfaccia web.
+
+Il grosso contro è dovuto al prezzo.
+
+La soluzione meno cara costa già oltre 350 euro (senza contare che bisogna pagarne ogni anno altri 200 per il rinnovo), ma gestisce traffico solo fino a 100 Mbps, davvero poco per reti ad alte velocità come quelle attuali.
+
+Per ottenere un prodotto capace di gestire almeno 1 Gbps di traffico, si dovrebbe versare oltre 2500 euro con solo un anno di supporto dalla ditta.
+
+Queste semplici cifre fanno riflettere sulla necessità di avere un firewall applicativo con le stesse funzioni.
+
+In questo senso \emph{L7-Bridge} è in grado di fornire prestazioni analoghe con un PC standard. Inoltre, grazie alla semplicità d'estensione della libreria nDPI, è facilmente aggiornabile e l'utente può scrivere ed utilizzare le proprie funzioni per il riconoscimento dei protocolli.

@@ -32,6 +32,8 @@ OUTPUT:
 - Available memory: ... kb
 - Total memory: ... kb
 
+GRAPHICS
+
 ![CpuGraph](img/cpuGraph.png)
 ![memGraph](img/memCheckGraph.gif)
 ![inOctetGraph](img/inOctet.gif)

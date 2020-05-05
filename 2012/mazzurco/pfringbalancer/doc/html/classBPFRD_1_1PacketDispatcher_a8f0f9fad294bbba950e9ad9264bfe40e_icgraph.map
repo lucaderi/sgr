@@ -1,6 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$classBPFRD_1_1PacketDispatcher.html#a08ae011d21da3588cbc54c94099892e1" title="dispatch dispatch packet" alt="" coords="277,5,523,33"/>
-<area shape="rect" id="node7" href="$classBPFRD_1_1PacketDispatcher.html#a8370348b296ac0c0e1124cba8fbd16b9" title="Source and destination IP hashing function." alt="" coords="283,55,517,83"/>
-<area shape="rect" id="node9" href="$classBPFRD_1_1PacketDispatcher.html#af1a5e6f9df10e9a52ac691b3ab08c00b" title="Source IP, destination IP, transport protocol, source port, destination port hashing function..." alt="" coords="279,106,521,134"/>
-<area shape="rect" id="node5" href="$main_8cpp.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="572,5,625,33"/>
-</map>

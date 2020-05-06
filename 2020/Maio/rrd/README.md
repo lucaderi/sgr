@@ -12,7 +12,7 @@ DESCRIPTION:
 
 - It's a simple python script that returns the ticks values of the processors, 
 the value of the total memory, the value of the available memory and also checks the in_octets values obtained with snmp.
-Reports the data on three rdd databases which are then represented in graphs.
+Reports the data on three rdd databases which are then displayed through graphs.
     
 USAGE:
 

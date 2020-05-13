@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  influxdb:
+    image: quay.io/influxdb/influxdb:2.0.0-beta
+    container_name: 'influxdb'
+    restart: 'always'
+    ports:
+      - "9999:9999"
+    volumes:
+      - /srv/docker/influxdb/data:/var/lib/influxdb

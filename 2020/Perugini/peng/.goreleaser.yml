@@ -1,0 +1,29 @@
+project_name: peng
+
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Version }}-{{ .ShortCommit }}"
+
+release:
+  draft: true
+  prerelease: true
+
+#env_files:
+#  github_token: .env

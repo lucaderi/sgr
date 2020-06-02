@@ -34,7 +34,7 @@ For the program to run correctly, it requires:
     - version: 1 
 
 - Search on telegram the bot to start the conversation after running the bot_main script on your server. <br/>
-<img src="bot/docs/img/search.jpg" width="170" height="240"> <br/>
+<img src="bot/docs/img/search.jpg"> <br/>
     
 ### Notes 
 You can change the password whenever you want, but when you do it, you have to reboot the actual `./bot_main.py` in execution  for the changes to take place.

@@ -55,7 +55,7 @@ For more info abount the code you can check the documentation under `bot/docs/_b
 - Settings: <br/>
 <img src="bot/docs/img/settings.jpg" width="170" height="240"> <br/>
 - Start Monitoring: <br/>
-<img src="ot/docs/img/startMonitoring.jpg" width="170" height="240"> <br/>
+<img src="bot/docs/img/startMonitoring.jpg" width="170" height="240"> <br/>
 - Stop Monitoring: <br/>
 <img src="bot/docs/img/stopMonitoring.jpg" width="170" height="240"> <br/>
 - Graph: <br/>

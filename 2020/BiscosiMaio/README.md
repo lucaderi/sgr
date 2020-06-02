@@ -19,12 +19,12 @@ For the program to run correctly, it requires:
 - On Telegram: 
     start a conversation with `@BotFather` to create a new bot. Take the token and save it on your pc, it's very important. After that, start a new conversation on telegram using the tag choosen for your new bot, or use it to add the bot to a telegram group. Before starting to send message to your bot you need to follow the guide on your server.
     Example:
-    - write /start command to `@BotFather` chat:
-    <img src="bot/docs/img/start.jpg" width="170" height="240"> <br/>
-    - write /newbot command to `@BotFather` chat to create a new bot and choose the name for the bot.
-    <img src="bot/docs/img/newbot.jpg" width="170" height="240">
-    - take to token and save it on your pc.
-    ![token](bot/docs/img/token.jpg)
+    - write /start command to `@BotFather` chat: <br/>
+    <img src="bot/docs/img/start.jpg" width="300" height="600"> <br/>
+    - write /newbot command to `@BotFather` chat to create a new bot and choose the name for the bot. <br/>
+    <img src="bot/docs/img/newbot.jpg" width="240" height="400"> <br/>
+    - take to token and save it on your pc. <br/>
+    <img src="bot/docs/img/token.jpg" width="170" height="240"> <br/>
     
 - On your Server:
     download the github repository, and go into `/bot` directory and insert the token of your bot inside the file `bot_main.py` (line 30, from `token = '11111111'`, to `token = 'new_token'`). After that, if you want to change the password (highly recommended), run the script `./change_password.py old_password new_password` to change the password of the bot (the default password is: gestionedireti). Now run the script `./bot_main.py` and the bot will start. <br /><br />Now you have to invite the bot into a chat in Telegram and call for him with `/start` and you are done!<br /><br />
@@ -33,8 +33,8 @@ For the program to run correctly, it requires:
     - community: public
     - version: 1 
 
-- Search on telegram the bot to start the conversation after running the bot_main script on your server.
-![search](bot/docs/img/search.jpg)
+- Search on telegram the bot to start the conversation after running the bot_main script on your server. <br/>
+<img src="bot/docs/img/search.jpg" width="170" height="240"> <br/>
     
 ### Notes 
 You can change the password whenever you want, but when you do it, you have to reboot the actual `./bot_main.py` in execution  for the changes to take place.
@@ -48,18 +48,18 @@ To change the default snmp agent info you can use the options of the bot from Te
 For more info abount the code you can check the documentation under `bot/docs/_build/html/index.html`
 
 ### Examples
-- Login:
-![login](bot/docs/img/login.jpg)
-- Command list:
-![command list](bot/docs/img/CPU.jpg)
-- Settings:
-![settings](bot/docs/img/settings.jpg)
-- Start Monitoring:
-![Start monitoring](bot/docs/img/startMonitoring.jpg)
-- Stop Monitoring:
-![Stop monitoring](bot/docs/img/stopMonitoring.jpg)
-- Graph:
-![Graph](bot/docs/img/GraphDown.jpg)
+- Login: <br/>
+<img src="bot/docs/img/login.jpg" width="170" height="240"> <br/>
+- Command list: <br/>
+<img src="bot/docs/img/CPU.jpg" width="170" height="240"> <br/>
+- Settings: <br/>
+<img src="bot/docs/img/settings.jpg" width="170" height="240"> <br/>
+- Start Monitoring: <br/>
+<img src="ot/docs/img/startMonitoring.jpg" width="170" height="240"> <br/>
+- Stop Monitoring: <br/>
+<img src="bot/docs/img/stopMonitoring.jpg" width="170" height="240"> <br/>
+- Graph: <br/>
+<img src="bot/docs/img/GraphDown.jpg" width="170" height="240"> <br/>
 
 ### Authors:
 - Nicolò Maio

@@ -23,7 +23,7 @@ For the program to run correctly, it requires:
     <img src="bot/docs/img/start.jpg" width="200" height="300"> <br/>
     - write /newbot command to `@BotFather` chat to create a new bot and choose the name for the bot. <br/>
     <img src="bot/docs/img/newbot.jpg" width="200" height="300"> <br/>
-    - take to token and save it on your pc. <br/>
+    - take the token and save it on your pc. <br/>
     <img src="bot/docs/img/token.jpg" width="200" height="300"> <br/>
     
 - On your Server:

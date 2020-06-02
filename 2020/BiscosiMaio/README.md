@@ -20,11 +20,11 @@ For the program to run correctly, it requires:
     start a conversation with `@BotFather` to create a new bot. Take the token and save it on your pc, it's very important. After that, start a new conversation on telegram using the tag choosen for your new bot, or use it to add the bot to a telegram group. Before starting to send message to your bot you need to follow the guide on your server.
     Example:
     - write /start command to `@BotFather` chat: <br/>
-    <img src="bot/docs/img/start.jpg" width="172" height="300"> <br/>
+    <img src="bot/docs/img/start.jpg" width="200" height="300"> <br/>
     - write /newbot command to `@BotFather` chat to create a new bot and choose the name for the bot. <br/>
-    <img src="bot/docs/img/newbot.jpg" width="172" height="300"> <br/>
+    <img src="bot/docs/img/newbot.jpg" width="200" height="300"> <br/>
     - take to token and save it on your pc. <br/>
-    <img src="bot/docs/img/token.jpg" width="172" height="300"> <br/>
+    <img src="bot/docs/img/token.jpg" width="200" height="300"> <br/>
     
 - On your Server:
     download the github repository, and go into `/bot` directory and insert the token of your bot inside the file `bot_main.py` (line 30, from `token = '11111111'`, to `token = 'new_token'`). After that, if you want to change the password (highly recommended), run the script `./change_password.py old_password new_password` to change the password of the bot (the default password is: gestionedireti). Now run the script `./bot_main.py` and the bot will start. <br /><br />Now you have to invite the bot into a chat in Telegram and call for him with `/start` and you are done!<br /><br />

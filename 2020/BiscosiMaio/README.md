@@ -20,9 +20,9 @@ For the program to run correctly, it requires:
     start a conversation with `@BotFather` to create a new bot. Take the token and save it on your pc, it's very important. After that, start a new conversation on telegram using the tag choosen for your new bot, or use it to add the bot to a telegram group. Before starting to send message to your bot you need to follow the guide on your server.
     Example:
     - write /start command to `@BotFather` chat: <br/>
-    <img src="bot/docs/img/start.jpg" width="300" height="600"> <br/>
+    <img src="bot/docs/img/start.jpg" width="240" height="480"> <br/>
     - write /newbot command to `@BotFather` chat to create a new bot and choose the name for the bot. <br/>
-    <img src="bot/docs/img/newbot.jpg" width="240" height="400"> <br/>
+    <img src="bot/docs/img/newbot.jpg" width="240" height="480"> <br/>
     - take to token and save it on your pc. <br/>
     <img src="bot/docs/img/token.jpg" width="170" height="240"> <br/>
     

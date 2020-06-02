@@ -49,17 +49,17 @@ For more info abount the code you can check the documentation under `bot/docs/_b
 
 ### Examples
 - Login: <br/>
-<img src="bot/docs/img/login.jpg" width="175" height="300"> <br/>
+<img src="bot/docs/img/login.jpg" width="200" height="300"> <br/>
 - Command list: <br/>
-<img src="bot/docs/img/CPU.jpg" width="175" height="300"> <br/>
+<img src="bot/docs/img/CPU.jpg" width="200" height="300"> <br/>
 - Settings: <br/>
-<img src="bot/docs/img/settings.jpg" width="175" height="300"> <br/>
+<img src="bot/docs/img/settings.jpg" width="200" height="300"> <br/>
 - Start Monitoring: <br/>
-<img src="bot/docs/img/startMonitoring.jpg" width="175" height="300"> <br/>
+<img src="bot/docs/img/startMonitoring.jpg" width="200" height="300"> <br/>
 - Stop Monitoring: <br/>
-<img src="bot/docs/img/stopMonitoring.jpg" width="175" height="300"> <br/>
+<img src="bot/docs/img/stopMonitoring.jpg" width="200" height="300"> <br/>
 - Graph: <br/>
-<img src="bot/docs/img/GraphDown.jpg" width="175" height="300"> <br/>
+<img src="bot/docs/img/GraphDown.jpg" width="200" height="300"> <br/>
 
 ### Authors:
 - Nicolò Maio

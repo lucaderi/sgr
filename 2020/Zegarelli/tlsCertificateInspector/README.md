@@ -23,6 +23,7 @@ Each TLS certificate has a temporal validity specified in the validity fields:
 ## Prerequisites
 
 To use this software you need:
+* Python 3.7
 * [tshark](https://www.wireshark.org/docs/man-pages/tshark.html) that lets you capture or read packets
 * [PyShark](https://github.com/KimiNewt/pyshark) which is a python tshark wrapper
 

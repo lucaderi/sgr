@@ -36,10 +36,24 @@ class TLSCert:
         self.subject.append(seq)
 
     def add_not_before(self, time):
-        self.not_before = datetime.strptime(time, '%y-%m-%d %H:%M:%S (%Z)')
+        try:
+            self.not_before = datetime.strptime(time, '%Y-%m-%d %H:%M:%S (%Z)')
+
+        except ValueError:
+            try:
+                self.not_before = datetime.strptime(time, '%y-%m-%d %H:%M:%S (%Z)')
+            except ValueError:
+                raise
 
     def add_not_after(self, time):
-        self.not_after = datetime.strptime(time, '%y-%m-%d %H:%M:%S (%Z)')
+        try:
+            self.not_after = datetime.strptime(time, '%Y-%m-%d %H:%M:%S (%Z)')
+
+        except ValueError:
+            try:
+                self.not_after = datetime.strptime(time, '%y-%m-%d %H:%M:%S (%Z)')
+            except ValueError:
+                raise
 
     def isValid(self):
         now = datetime.now()

@@ -7,16 +7,17 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser(description='TLS certificate inspector to detect if it is invalid/self-signed')
-parser.add_argument('-i', dest="interface", default='eth0', help="Interface from which to capture (Default eth0)")
 parser.add_argument('-l', dest="live", action="store_true", default=False, help="Enables live capture")
+parser.add_argument('-i', dest="interface", default='eth0', help="Interface from which to capture (Default eth0)")
 parser.add_argument('-t', dest="timeout", help="Specify live sniff timeout in seconds (Default 0 means unlimited)",
                     type=int, default=0)
 parser.add_argument('-mp', dest="max_packet", help="Maximum packet i want to read (Default 0 means unlimited)",
                     type=int, default=0)
-parser.add_argument('-fi', dest="input_file", help="File that i want to read")
-parser.add_argument('-fo', dest="output_file", help="Log file where to store the results")
+parser.add_argument('-fi', dest="input_file", help="File that i want to read (Es. test.pcap)")
+parser.add_argument('-fo', dest="output_file", help="Name for the log file where to store the results")
 fo = None
 fi = None
+p_count = 0
 
 
 # TODO chain
@@ -112,31 +113,45 @@ def extract_certs(tls_layer):
 
 
 def analyzePacket(packet):
+    global p_count
     packet: Packet
     layer: Layer
     layer = packet.tls
     field: LayerFieldsContainer
     cert_list = extract_certs(layer)
     for cert in cert_list:
-        out = "{}:{} {} Certificate (Chain position {}/{}):\n {}\n"
+        p_count += 1
+        out = "\n{}:{} {} Certificate (Chain position {}/{}):\n {}\n"
         found = False
         if not cert.isValid() and cert.isSelfSigned():
             out = out.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"),
                              'Not Valid and Self-Signed', cert.num, len(cert_list), cert)
             found = True
+            sys.stdout.write("\r")
+            sys.stdout.flush()
             print(out)
         elif not cert.isValid():
             out = out.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Not Valid', cert.num,
                              len(cert_list), cert)
             found = True
+            sys.stdout.write("\r")
+            sys.stdout.flush()
             print(out)
         elif cert.isSelfSigned():
             out = out.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Self-Signed', cert.num,
                              len(cert_list), cert)
             found = True
+
+        if found:
+            sys.stdout.write("\r ")
+            sys.stdout.flush()
             print(out)
+
+        sys.stdout.write("\r Analyzed certs: {}".format(p_count))
+        sys.stdout.flush()
+
         if results.output_file is not None and found:
-            fo = open(results.output_file, "a")
+            fo = open(results.output_file + ".txt", "a")
             fo.write(out)
             fo.close()
 
@@ -144,20 +159,26 @@ def analyzePacket(packet):
 results = parser.parse_args()
 
 if __name__ == "__main__":
-    if results.live:
-        capture = pyshark.LiveCapture(interface=results.interface, display_filter='tls.handshake.certificate')
-        capture.sniff(timeout=results.timeout)
-        packet: Packet
-        print('Listening on:', results.interface)
-        capture.apply_on_packets(analyzePacket, packet_count=results.max_packet)
-        # for packet in capture.sniff_continuously():
-        #   analyzePacket(packet)
+    if results.live is False:
+        if results.input_file is None:
+            parser.error("At least -l or -fi required")
+        else:
+            capture = pyshark.FileCapture(input_file=results.input_file, display_filter='tls.handshake.certificate')
+            capture.apply_on_packets(analyzePacket, packet_count=results.max_packet)
+            # for packet in capture:
+            #   analyzePacket(packet)
 
     else:
-        capture = pyshark.FileCapture(input_file=results.input_file, display_filter='tls.handshake.certificate')
-        capture.apply_on_packets(analyzePacket, packet_count=results.max_packet)
-        # for packet in capture:
-        #   analyzePacket(packet)
+        if results.input_file is not None:
+            parser.error("You can't use both -l and -fi")
+        else:
+            capture = pyshark.LiveCapture(interface=results.interface, display_filter='tls.handshake.certificate')
+            capture.sniff(timeout=results.timeout)
+            packet: Packet
+            print('Listening on:', results.interface)
+            capture.apply_on_packets(analyzePacket, packet_count=results.max_packet)
+            # for packet in capture.sniff_continuously():
+            #   analyzePacket(packet)
 
     if fo is not None:
         fo.close()

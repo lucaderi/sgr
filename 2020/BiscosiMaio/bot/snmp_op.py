@@ -27,7 +27,7 @@ def get_cpu_usage(chat_id, bot):
         bot.sendMessage(chat_id, 'Back to command list', reply_markup=bot_command.keyboard)
 
     except exce.EasySNMPError as error:
-        bot.sendMessage(chat_id, 'Error during interrogation, agent: <' + host_details.get_host() + ' '
+        bot.sendMessage(chat_id, 'Error during processing the request, agent: <' + host_details.get_host() + ' '
                         + host_details.get_community() + '> on cpu request')
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -50,7 +50,7 @@ def get_tot_mem(chat_id, bot):
         bot.sendMessage(chat_id, 'Back to command list', reply_markup=bot_command.keyboard)
 
     except exce.EasySNMPError as error:
-        bot.sendMessage(chat_id, 'Error during interrogation, agent: <' + host_details.get_host() + ' '
+        bot.sendMessage(chat_id, 'Error during processing the request, agent: <' + host_details.get_host() + ' '
                         + host_details.get_community() + '> on tot mem request')
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -77,7 +77,7 @@ def get_usage_mem(chat_id, bot):
         bot.sendMessage(chat_id, 'Back to command list', reply_markup=bot_command.keyboard)
 
     except exce.EasySNMPError as error:
-        bot.sendMessage(chat_id, 'Error during interrogation, agent: <' + host_details.get_host() + ' '
+        bot.sendMessage(chat_id, 'Error during processing the request, agent: <' + host_details.get_host() + ' '
                         + host_details.get_community() + '> on used mem request')
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -101,7 +101,7 @@ def get_tasks(chat_id, bot):
 
     except exce.EasySNMPError as error:
         bot.sendMessage(chat_id,
-                        'Error during interrogation, agent: <' + host_details.get_host() + ' '
+                        'Error during processing the request, agent: <' + host_details.get_host() + ' '
                         + host_details.get_community() + '> on num tasks request')
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -124,7 +124,7 @@ def get_disk(chat_id, bot):
         bot.sendMessage(chat_id, 'Back to command list', reply_markup=bot_command.keyboard)
 
     except exce.EasySNMPError as error:
-        bot.sendMessage(chat_id, 'Error during interrogation, agent: <' + host_details.get_host() + ' '
+        bot.sendMessage(chat_id, 'Error during processing the request, agent: <' + host_details.get_host() + ' '
                         + host_details.get_community() + '> on disk request')
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -156,7 +156,7 @@ def get_info_sys(chat_id, bot):
                           version=host_details.get_version())
     except exce.EasySNMPError as error:
         bot.sendMessage(chat_id,
-                        'Error during interrogation, agent: <' + host_details.get_host() + ' '
+                        'Error during processing the request, agent: <' + host_details.get_host() + ' '
                         + host_details.get_community() + '> on system info request')
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -287,7 +287,7 @@ def start_monitoring(
             # If there were problems creating the directories or all files, return an error
             if not dir:
                 bot.sendMessage(chat_id,
-                                "Error during interrogation, agent: <" + host_details.get_host() + " "
+                                "Error during processing the request, agent: <" + host_details.get_host() + " "
                                 + host_details.get_community() + "> on start monitoring request")
                 bot_command.back_home(chat_id, bot)
                 return
@@ -299,7 +299,7 @@ def start_monitoring(
                         not in_net and
                         not out_net):
                     bot.sendMessage(chat_id,
-                                    "Error during interrogation, agent: <" + host_details.get_host() + " "
+                                    "Error during processing the request, agent: <" + host_details.get_host() + " "
                                     + host_details.get_community() + "> on start monitoring request")
                     bot_command.back_home(chat_id, bot)
                     return
@@ -328,7 +328,7 @@ def start_monitoring(
 
     except Exception as error:
         bot.sendMessage(chat_id,
-                        "Error during interrogation, agent: <" + host_details.get_host() + " "
+                        "Error during processing the request, agent: <" + host_details.get_host() + " "
                         + host_details.get_community() + "> on start monitoring request")
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -361,7 +361,7 @@ def stop_monitoring(
 
     except Exception as error:
         bot.sendMessage(chat_id,
-                        "Error during interrogation, agent: <" + host_details.get_host() + " "
+                        "Error during processing the request, agent: <" + host_details.get_host() + " "
                         + host_details.get_community() + "> on stop monitoring request")
         bot_command.back_home(chat_id, bot)
         print(error)
@@ -392,7 +392,7 @@ def print_graph(
             bot_command.back_home(chat_id, bot)
 
     except Exception as error:
-        bot.sendMessage(chat_id, "Error during interrogation, agent: <" + host_details.get_host() + " "
+        bot.sendMessage(chat_id, "Error during processing the request, agent: <" + host_details.get_host() + " "
                         + host_details.get_community() + "> on graph request")
         bot_command.back_home(chat_id, bot)
         print(error)

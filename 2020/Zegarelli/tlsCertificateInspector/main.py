@@ -15,12 +15,16 @@ parser.add_argument('-mp', dest="max_packet", help="Maximum packet i want to rea
                     type=int, default=0)
 parser.add_argument('-fi', dest="input_file", help="File that i want to read (Es. test.pcap)")
 parser.add_argument('-fo', dest="output_file", help="Name for the log file where to store the results")
+parser.add_argument('-v', dest="verbose", help="Enable verbose mode", default=False, action="store_true")
 fo = None
 fi = None
-p_count = 0
+p_count_total = 0
+p_count_valid = 0
+p_count_invalid = 0
+p_count_self = 0
+p_count_both = 0
 
 
-# TODO chain
 class TLSCert:
     def __init__(self, x):
         self.not_before = None
@@ -28,6 +32,14 @@ class TLSCert:
         self.issuer = []
         self.subject = []
         self.num = x
+        # self.ca_key = None
+        # self.subject_key = None
+
+    # def add_ca_key(self, key):
+    # self.issuer.append(key)
+
+    # def add_subject_key(self, key):
+    # self.issuer.append(key)
 
     def add_issuer_sequence(self, seq):
         self.issuer.append(seq)
@@ -62,7 +74,7 @@ class TLSCert:
         return True
 
     def isSelfSigned(self):
-        if self.issuer == self.subject:
+        if self.issuer == self.subject:  # or self.ca_key == self.subject_key:
             return True
         return False
 
@@ -92,13 +104,17 @@ def extract_certs(tls_layer):
     :param tls_layer:
     :return:
     """
+
     cert_count = 0
     if_rdnSequence_count = []
     times = []
     af_rdnSequence_count = []
     rdn = []
+    subject_key = []
+    ca_key = []
     field_container: LayerFieldsContainer
-    for field_container in list(tls_layer._all_fields.values()):  # prendo il field container per ogni campo
+    a = list(tls_layer._all_fields.values())
+    for field_container in a:  # prendo il field container per ogni campo
         field: LayerField
         field = field_container.main_field
         # controllo il nome del campo
@@ -112,62 +128,104 @@ def extract_certs(tls_layer):
             times = get_all(field_container)
         elif field.name == 'x509af.rdnSequence':
             af_rdnSequence_count = get_all(field_container)
+        # elif field.name == 'x509ce.SubjectKeyIdentifier':
+        # subject_key = get_all(field_container)
+        # elif field.name == 'x509ce.keyIdentifier':
+        # ca_key = get_all(field_container)
+
     certs = []
     for x in range(cert_count):
-        cert = TLSCert(x)
+        cert = TLSCert(x + 1)  # +1 perchè parte da 0
         for y in range(int(if_rdnSequence_count[x])):
             cert.add_issuer_sequence(rdn.pop(0))
         for y in range(int(af_rdnSequence_count[x])):
             cert.add_subject_sequence(rdn.pop(0))
         cert.add_not_before(times.pop(0))
         cert.add_not_after(times.pop(0))
+        # cert.add_ca_key(ca_key.pop(0))
+        # cert.add_subject_key(subject_key.pop(0))
         certs.append(cert)
 
     return certs
 
 
 def analyzePacket(packet):
-    global p_count
+    global p_count_total
+    global p_count_self
+    global p_count_valid
+    global p_count_invalid
+    global p_count_both
     packet: Packet
     layer: Layer
     layer = packet.tls
     field: LayerFieldsContainer
     cert_list = extract_certs(layer)
+    sys.stdout.write("\r")
+    sys.stdout.flush()
     for cert in cert_list:
-        p_count += 1
-        out = "\n{}:{} {} Certificate (Chain position {}/{}):\n {}\n"
+        sys.stdout.write("\r ")
+        sys.stdout.flush()
+        p_count_total += 1
+        out_verbose = "{}:{} {} Certificate (Chain position {}/{}):\n {}"
+        out_normal = "{}:{} {} Certificate (Chain position {}/{})"
+        out = None
         found = False
         if not cert.isValid() and cert.isSelfSigned():
-            out = out.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"),
-                             'Not Valid and Self-Signed', cert.num, len(cert_list), cert)
+            p_count_both += 1
+            if results.verbose:
+                out = out_verbose.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"),
+                                         'Not Valid and Self-Signed', cert.num, len(cert_list), cert)
+            else:
+                out = out_normal.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"),
+                                        'Not Valid and Self-Signed', cert.num, len(cert_list))
             found = True
-            sys.stdout.write("\r")
-            sys.stdout.flush()
-            print(out)
+
         elif not cert.isValid():
-            out = out.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Not Valid', cert.num,
-                             len(cert_list), cert)
+            p_count_invalid += 1
+            if results.verbose:
+                out = out_verbose.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Not Valid',
+                                         cert.num,
+                                         len(cert_list), cert)
+            else:
+                out = out_normal.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Not Valid',
+                                        cert.num,
+                                        len(cert_list))
             found = True
-            sys.stdout.write("\r")
-            sys.stdout.flush()
-            print(out)
+
         elif cert.isSelfSigned():
-            out = out.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Self-Signed', cert.num,
-                             len(cert_list), cert)
+            p_count_self += 1
+            if results.verbose:
+                out = out_verbose.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Self-Signed',
+                                         cert.num,
+                                         len(cert_list), cert)
+            else:
+                out = out_normal.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"), 'Self-Signed',
+                                        cert.num,
+                                        len(cert_list))
             found = True
 
-        if found:
-            sys.stdout.write("\r ")
-            sys.stdout.flush()
-            print(out)
+        if not found:
+            out = out_normal.format(packet.ip.src, packet.tcp.get_field_by_showname("Source Port"),
+                                    'Valid',
+                                    cert.num,
+                                    len(cert_list))
+            p_count_valid += 1
 
-        sys.stdout.write("\r Analyzed certs: {}".format(p_count))
-        sys.stdout.flush()
+        print(out)
 
-        if results.output_file is not None and found:
+        if results.output_file is not None:
             fo = open(results.output_file + ".txt", "a")
-            fo.write(out)
+            fo.write(out+"\n")
             fo.close()
+    print("")
+    out="Total analyzed certs: {}, Valid certs: {}, Self-Signed certs: {}, Invalid certs: {}, Both Invalid and Self-Signed certs: {}".format(
+            p_count_total, p_count_valid, p_count_self, p_count_invalid, p_count_both)
+    if results.output_file is not None:
+        fo = open(results.output_file + ".txt", "a")
+        fo.write("\n"+out+"\n\n")
+        fo.close()
+    sys.stdout.write("\r"+out)
+    sys.stdout.flush()
 
 
 results = parser.parse_args()

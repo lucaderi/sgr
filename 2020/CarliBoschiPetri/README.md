@@ -5,7 +5,7 @@ This tool uses pyshark library and a Python implementation of the HyperLogLog co
 
 ## Prerequisites
 
-First of all, you have to type the following line on your shell in order to install and manage the other software packages, written in Python, used by this tool (for more info click [here]([https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/))).
+First of all, you have to type the following line on your shell in order to install and manage the other software packages, written in Python, used by this tool (for more info click [here](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04)).
 
 ```bash
 $ sudo apt install python3-pip
@@ -14,15 +14,15 @@ Then, you have to install on Ubuntu:
 
  - [tshark](https://zoomadmin.com/HowToInstall/UbuntuPackage/tshark): allows you to sniff traffic network, read or capture packets
 	  ```bash
-	$ `sudo apt-get install -y tshark`
+	$ sudo apt-get install -y tshark
 	```
- - [pyshark](https://zoomadmin.com/HowToInstall/UbuntuPackage/tshark): Python wrapper for tshark
+ - [pyshark](https://github.com/KimiNewt/pyshark): Python wrapper for tshark
 	 ```bash
 	$ sudo pip3 install pyshark
 	```
  - [hyperloglog](https://pypi.org/project/hyperloglog/): Python implementation of the HyperLogLog and Sliding HyperLogLog cardinality counter algorithms
 	 ```bash
-	$ pip3 install hyperloglog
+	$ sudo pip3 install hyperloglog
 	```
 
 <br>

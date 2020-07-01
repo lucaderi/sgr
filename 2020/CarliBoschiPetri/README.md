@@ -11,14 +11,14 @@ A HyperLogLog is a probabilistic data structure used to count unique values as w
 
 Counting unique values normally requires to keep a support data structure that mantains all different values and grows proportionally to them.  The problem is that for large sets of data this structure could be too big and we have to scan it to verify the uniqueness of each value.
 HyperLogLog algorithm solves this problem with a tradeoff between memory and precision, using a probabilistic data structure fixed in size and relative small. 
-For example, it can estimate cardinalities of sets larger than $10^9$ with a standard error of 2% using only 1.5 kilobytes of memory.
+For example, it can estimate cardinalities of sets larger than 10^9 with a standard error of 2% using only 1.5 kilobytes of memory.
 
 **How it works**
 
 HyperLogLog algorithm is based on the probability to get a certain binary number.
-If a random number is generated, the probability that it has $n$ leading zeros is very low: $1/2^n$; but if you generate $2^n$ random numbers, you expect that at least one of them will have $n$ leading zeros, while the others will have less.  
+If a random number is generated, the probability that it has n leading zeros is very low: 1/2^n; but if you generate 2^n random numbers, you expect that at least one of them will have n leading zeros, while the others will have less.  
 
-If you have a list of $N$ unique numbers and you don't know its exact length, you can estimate it using the probability of each number, represented in binary. When you find a number with $n$ leading zeros, it has a probability of $1/2 ^ n$ being generated, and therefore it is very likely that at least $2 ^ n$ other numbers were generated before it. The length of the list will therefore be approximately $2 ^ n$.
+If you have a list of N unique numbers and you don't know its exact length, you can estimate it using the probability of each number, represented in binary. When you find a number with n leading zeros, it has a probability of 1/2^n being generated, and therefore it is very likely that at least 2^n other numbers were generated before it. The length of the list will therefore be approximately 2^n.
 
 For our specific problem we are interested in detect anomalies on .pcap files, so we use HyperLogLog to count the number of different IPs and ports. In our case, each IP is analyzed, it is represented in binary and only the number of leading zeros is kept.  An average is then made between the leading zeros of the various IPs: this average will be used to estimate the number of unique IPs found, always according to the previous reasoning.
 <br>
@@ -31,9 +31,9 @@ Counts are made on the number of different IPs and ports using a Python implemen
 
 This tool detects the following types of attack:
 
- - **1 IP ---> N IPs**: in this case if $N$ exceed the specific threshold, there is a probability that source IP is infect and it's trying to attack other devices on the network.
- - **1 IP, 1 PORT ---> 1 IP, N PORTS**: in this case if $N$ exceed the specific threshold, there is a probable port scanning on destination IP.
- - **1 IP, N PORTS ---> 1 IP, 1 PORT**: in this case if $N$ exceed the specific threshold, there is a probable attempt to access a specific service on destination IP too many times.
+ - **1 IP ---> N IPs**: in this case if N exceed the specific threshold, there is a probability that source IP is infect and it's trying to attack other devices on the network.
+ - **1 IP, 1 PORT ---> 1 IP, N PORTS**: in this case if N exceed the specific threshold, there is a probable port scanning on destination IP.
+ - **1 IP, N PORTS ---> 1 IP, 1 PORT**: in this case if N exceed the specific threshold, there is a probable attempt to access a specific service on destination IP too many times.
 
 ## Prerequisites
 

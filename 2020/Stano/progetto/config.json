@@ -1,0 +1,15 @@
+{
+    "devices": {
+        "11:11:11:11:11:11": "device-name-here"
+    },
+    "influx": {
+        "bucket": "",
+        "org": "",
+        "token": "",
+        "url": "http://localhost:9999"
+    },
+    "telegram": {
+        "token": "",
+        "chatid": ""
+    }
+}

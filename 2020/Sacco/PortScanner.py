@@ -18,6 +18,6 @@ class PortScanner(Thread):
         while not self.term.is_set():
             self.connections = psutil.net_connections()
             self.pkt_str.connection = self.connections.copy()
-            time.sleep(1)
+            time.sleep(0.5)
 
             

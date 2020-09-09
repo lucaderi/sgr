@@ -6,6 +6,9 @@ from scapy.layers.inet import IP, TCP
 import argparse
 import numpy as np
 
+def ip_proto(pkt):
+    proto_field = pkt.get_field('proto')
+    return proto_field.i2s[pkt.proto]
 
 def updatechain(who, slot, flows):
     if (not (who in flows)):
@@ -48,8 +51,14 @@ def calc_dist(pcap):
         sys.exit(1)
     flows = {}
 
-    for el in [cap for cap in caps if (IP and TCP) in cap]:
-        who = (el[IP].src + ":" + str(el[TCP].sport), "to", el[IP].dst + ":" + str(el[TCP].dport))
+    for el in [cap for cap in caps if IP in cap]:
+        who = None
+        try:
+            who = (el[IP].src + ":" + str(el[TCP].sport), "to", el[IP].dst + ":" + str(el[TCP].dport))
+        except IndexError:
+            who = (el[IP].src, "to", el[IP].dst, "protocol: ", ip_proto(el.payload))
+
+        #print(who)
         updatechain(who, scale(len(el[IP])), flows)
 
     """for host in flows:

@@ -16,10 +16,6 @@ in order to get some meaningful results, read below for more info.
 
 Bins used for the distributions all take 32 bytes each and go from 0 to 1504 bytes.
 
-
-Right now only TCP flows are supported, so please use pcaps containing TCP packets.
-
-
 ### Dependencies
 The tool has the following dependency:
 - **Numpy**

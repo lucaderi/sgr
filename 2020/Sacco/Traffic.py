@@ -9,7 +9,6 @@ import socket
 import netifaces as ni
 
 from Dispatcher import Dispatcher
-from PortScanner import PortScanner
 from Visual import Visual
 from Buffer import Buffer
 from Pkt import PacketsStr
@@ -42,11 +41,9 @@ def main():
 
     #threads used to analyze the flows and their content
     dispatcher = Dispatcher(buff, pkt_str, ipaddress)
-    scanner = PortScanner(pkt_str)
     visual = Visual(pkt_str)
 
     dispatcher.start()
-    scanner.start()
     visual.start()
 
     #starting to sniff packets
@@ -54,7 +51,6 @@ def main():
 
     #at the and of the sniff, when Ctrl+C key is pressed, termination variable is set to notify threads
     dispatcher.term.set()
-    scanner.term.set()
     visual.term.set()
 
     #to wake the threads which are waiting for new packets
@@ -67,7 +63,6 @@ def main():
 
 
     dispatcher.join()
-    scanner.join()
     visual.join()
 
     #print some information about the number of unknown and known packets

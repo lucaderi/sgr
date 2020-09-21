@@ -3,7 +3,7 @@
 #include <stdio.h>
 #define TO_NANO(n) n * 1000000
 
-//Method to get a struct timespec containing a time amount equal to the argument millis value.
+//Metodo che restiuisce una struct timespec contenente l' ammontare di millis millisecondi.
 struct timespec get_timespec(int millis){
   struct timespec sleep_time;
   if(millis < 0){
@@ -17,14 +17,14 @@ struct timespec get_timespec(int millis){
   return sleep_time;
 }
 
-//Method to get a timespec containing ther current time.
+//Metodo che restituisce una struct timespec aggiornata all' orario corrente.
 struct timespec update_timespec(){
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   return now;
 }
 
-//Method to get the elapsed time, in milliseconds, between two struct timespec.
+//Metodo che restituisce, in millisecondi, la differenza di tempo tra due struct timespec.
 long int get_elapsed_time(struct timespec start, struct timespec end){
   long int seconds_in_millis =  (end.tv_sec - start.tv_sec) * 1000;
   long int nseconds_in_millis = (end.tv_nsec - start.tv_nsec) / 1000000;

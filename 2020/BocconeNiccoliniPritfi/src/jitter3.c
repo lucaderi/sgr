@@ -109,7 +109,6 @@ void print_graphic(){
 
         token = strtok(NULL, " ");
         index[i] = atof(token);
-        printf("time: %le(double) or %d(int), jiter: %le(double) or %d(int)\n", d[i], (int)d[i], index[i], (int)index[i]);
         i++;
     }
 

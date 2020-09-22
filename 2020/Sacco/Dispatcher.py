@@ -14,7 +14,7 @@ class Dispatcher(Thread):
         self.pkt_str = pkt_str
         self.ownIP = ipaddress
 
-    #its purpose is to take the packet form the buffer, analyze it and separe the 
+    #Its purpose is to take the packet from the buffer, analyze it and separe the 
     # varius packet information and store it in a dictionary.
     #Finally it inserts the packet in a list of dictionaries with mutal exclusion.
     def run(self):

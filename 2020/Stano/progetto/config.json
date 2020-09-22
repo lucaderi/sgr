@@ -1,0 +1,12 @@
+{
+    "influx": {
+        "bucket": "",
+        "org": "",
+        "token": "",
+        "url": "http://localhost:9999"
+    },
+    "telegram": {
+        "chatid": "",
+        "token": ""
+    }
+}

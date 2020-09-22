@@ -1,11 +1,11 @@
 CC = gcc
 CFLAGS += -Wall -pedantic
 objects = ./src/jitter3.o ./src/gnuplot_i.o ./src/jitter_data.o ./src/time_tools.o
-TARGET = ./bin/jitter
+TARGET = ./jitter
 
 .PHONY: all test clean
 
-./bin/jitter : $(objects)
+./jitter : $(objects)
 	$(CC) -I ./headers $(CFLAGS) $^ -o $@ -lpcap
 
 ./src/jitter3.o : ./src/jitter3.c
@@ -22,18 +22,18 @@ TARGET = ./bin/jitter
 
 all : $(TARGET)
 
-test:	./bin/jitter
+test:	./jitter
 	@echo "Eseguo il test, mandare SIGINT per interrompere"
-	sudo ./bin/jitter
+	sudo ./jitter
 	@echo "Test OK"
 
-test1:	./bin/myprog
+test1:	./myprog
 	@echo "Eseguo il test1, catturo 50 pacchetti"
-	sudo ./bin/jitter 50
+	sudo ./jitter 50
 	@echo "Test1 OK"
 
 clean:
 	@echo "Removing garbage."
-	-rm -f ./bin/jitter
+	-rm -f ./jitter
 	-rm -f ./src/*.o
 	-rm -f *.txt

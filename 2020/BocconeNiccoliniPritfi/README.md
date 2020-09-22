@@ -36,7 +36,11 @@ This is a quite small project, but it's never a bad idea to give a general overv
 ## How to build it
 In order to compile this project, you need to have [libpcap](https://github.com/the-tcpdump-group/libpcap) (*v 1.9.1-3 or newer*) and [gnuplot](http://www.gnuplot.info/) (*v 5.2 or newer*) installed.    
 One way to easily get it, **on Ubuntu**, is to use the following commands:    
-`sudo apt-get install libpcap-dev`&nbsp;&nbsp;&nbsp;`sudo apt-get install gnuplot`    
+`sudo apt-get install libpcap-dev`&nbsp;&nbsp;&nbsp;`sudo apt-get install gnuplot`
+`sudo apt-get install gnuplot-x11` 
+
+### NB :
+**This project must only be used in Ubuntu to avoid compatibility problems with the output terminal.**
 
 To check your current version:    
 `apt-cache show libpcap-dev` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`gnuplot-V`

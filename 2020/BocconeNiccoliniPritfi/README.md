@@ -19,8 +19,6 @@ In this text we will try to cover and explain the essential components of this p
  
  ## Project structure
 This is a quite small project, but it's never a bad idea to give a general overview for a better file exploration.     
-📁bin    
-&nbsp;&nbsp;&nbsp;&nbsp; ⚙️jitter &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *executable file*
 
 📁headers    
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📃jitter_data.h    
@@ -56,8 +54,8 @@ Those two ways to run can are determined by the value of the only parameter that
 |packet_number|Non negative integer            |yes         |
 
 **Examples**:    
-Running `sudo ./bin/jitter 50` will stop after capturing the next 50 packets.    
-If no **packet_number** is provided, so just running `sudo ./bin/jitter` will start sniffing non-stop.
+Running `sudo ./jitter 50` will stop after capturing the next 50 packets.    
+If no **packet_number** is provided, so just running `sudo ./jitter` will start sniffing non-stop.
 
 **In both cases** it can be correctly stopped sending a **SIGINT** (*Ctlr + c*) interruption to this process.
 

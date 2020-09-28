@@ -12,6 +12,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <string.h>
+#include "gnuplot_i.h"
 #include "time_tools.h"
 #include "jitter_data.h"
 
@@ -75,11 +77,50 @@ struct sniff_tcp {
         u_short th_urp;                 /* urgent pointer */
 };
 
+extern anomaly_list *a_list;
+
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 void print_app_banner(void);
 
 void print_app_usage(void);
+
+void print_graphic(){
+    printf("Insert ip source and ip destination, Example: 'Ip-10.0.2.15-99.86.47.11\n");
+    char file_name[40];
+    int i=0;
+    FILE *f;
+    char aux[121], *token;
+    double d[40], index[40];
+    gnuplot_ctrl * h;
+    h = gnuplot_init();
+
+    scanf("%s", file_name);
+    strcat(file_name, ".txt");
+    f = fopen (file_name,"r");
+    if(f == NULL) {
+        perror("Error opening file");
+        return;
+    }
+    gnuplot_setstyle(h, "lines");
+    while(fgets(aux, 120, f) != NULL) {
+        token = strtok(aux, " ");
+        d[i] = i;
+
+        token = strtok(NULL, " ");
+        index[i] = atof(token);
+        i++;
+    }
+
+
+    gnuplot_cmd(h, "set term x11 persist");
+    strcat(file_name, ": Jitter Comunication");
+    gnuplot_plot_xy(h, d, index, i-1,file_name);
+    gnuplot_close(h);
+}
+
+
+
 
 void print_app_banner(void){
 	printf("%s - %s\n", APP_NAME, APP_DESC);
@@ -100,18 +141,18 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	static int count = 1;                   /* packet counter */
 
 	/* declare pointers to packet headers */
-	const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
+	//const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
 	const struct sniff_ip *ip;              /* The IP header */
 	const struct sniff_tcp *tcp;            /* The TCP header */
 
 	int size_ip;
 	int size_tcp;
 
-	//printf("\nSniffed %d packets.\n", count);
+	printf("Sniffed %d packets.\n", count);
 	count++;
 
 	/* define ethernet header */
-	ethernet = (struct sniff_ethernet*)(packet);
+	//ethernet = (struct sniff_ethernet*)(packet);
 
 	/* define/compute ip header offset */
 	ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
@@ -138,16 +179,10 @@ void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *pa
 	struct timespec now = update_timespec();
 
 	char *stream_name = (char *) malloc(sizeof(char) * 60);
-	sprintf(stream_name, "Ip: %s -> %s | Ports: %d -> %d", ip_src_string, ip_dst_string, src_port, dst_port);
-	add_record(stream_name, timespec_to_millis(now));
-    free(ip_src_string);
-    free(ip_dst_string);
-    //free(stream_name);
-    /*free(ethernet);
-    free(ip);
-    free(tcp);*/
+	sprintf(stream_name, "Ip-%s-%s", ip_src_string, ip_dst_string);
+	add_record(stream_name, timespec_to_millis(now), src_port, dst_port);
 
-    return;
+return;
 }
 
 pcap_t *handle = NULL; /*packet capture handle*/
@@ -164,7 +199,6 @@ void sig_handler(int signo){
 void print_capture_info(char *device, int num_packets, char *filter_exp){
 	if(device == NULL || filter_exp == NULL){
 		fprintf(stderr, "Method: print_capture_info    Error: NULL device or filter_exp string.  (unexpected arguments)\n");
-    exit(EXIT_FAILURE);
 	}
 	printf("Device:            %s\n", device);
 	if(num_packets > 0)
@@ -183,14 +217,17 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 	}
 
-  pcap_if_t *dev_list;
+    pcap_if_t *dev_list;
+
 	char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
 
-	char filter_exp[] = "tcp[tcpflags] & (tcp-syn) != 0";		/* filter expression [3] */
+	char filter_exp[] = "tcp[tcpflags] & (tcp-syn) != 0";		/* filter expression */
 	struct bpf_program fp;			/* compiled filter program (expression) */
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
 	int num_packets;			/* number of packets to capture */
+    struct timespec now = update_timespec();
+    long int start = timespec_to_millis(now);
 
 	print_app_banner();
 
@@ -247,7 +284,7 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-	/* make sure we're capturing on an Ethernet device [2] */
+	/* make sure we're capturing on an Ethernet device */
 	if (pcap_datalink(handle) != DLT_EN10MB) {
 		fprintf(stderr, "%s is not an Ethernet\n", dev_list->name);
 		exit(EXIT_FAILURE);
@@ -274,11 +311,34 @@ int main(int argc, char **argv) {
 	pcap_freecode(&fp);
 	pcap_close(handle);
 
-	printf("\nCapture complete.\n");
+	printf("\nCapture complete.\n\n");
+    save_map(start);
 	print_map();
-    //free(handle);
-    free(dev_list);
-    free_map();
+    print_anomaly_list();
+    int comando = 1;
+
+    while(comando != 0 ){
+        printf("\n******USER MENU******\n 0: exit\n 1: draw jitter graphic\n 2: print anomaly list\n 3: print connections list\n");
+        scanf("%d", &comando);
+
+        switch (comando) {
+            case 0:
+                return 0;
+                break;
+            case 1:
+                print_graphic();
+                break;
+            case 2:
+                print_anomaly_list();
+                break;
+            case 3:
+                print_map();
+                break;
+            default:
+                printf("Insert correct command\n");
+                break;
+        }
+    }
 
     return 0;
 }

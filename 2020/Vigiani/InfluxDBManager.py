@@ -2,18 +2,16 @@ from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import ASYNCHRONOUS
 
 #
-# Parametri necessari per connettersi al database
+#   Leggo i parametri dal file AgentSnmp.json
 #
-address = "127.0.0.1"
-port = 9999
-
-#
-#   Parametri per accedere al bucket presente in influxdb
-#
-token = "D0gTwzpTq_DemxKhPrJ3kFdMGaPnFd7Tztz7EJgX9F63ZPwzMgv142wjbP5IiEIfWDE5r9CFQCt-lBWGgNG8lA=="
-org = "060b664c67469000"
-bucket = "Test"
-
+with open("./InfluxDB.json") as json_file:
+    data = json.load(json_file)
+    ip      = data['ip']
+    port    = int(data['port'])
+    tokens  = data['tokens']
+    org     = data['org']
+    bucket  = data["bucket"]
+    
 #
 #   Variabile usata per accedere al database
 #
@@ -26,7 +24,7 @@ client = None
 
 def create():
     global write_api,client
-    url = str.format("http://{}:{}",address,port)
+    url = str.format("http://{}:{}",ip,port)
     client = InfluxDBClient(url=url, token=token)
     write_api = client.write_api(write_options = ASYNCHRONOUS)
 

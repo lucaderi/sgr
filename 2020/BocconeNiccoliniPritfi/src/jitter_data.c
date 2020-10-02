@@ -3,6 +3,9 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <libnotify/notify.h>
+#include <time.h>
+#include <unistd.h>
 
 /*This files defines an hash map used to store informations about captured packets.
   For every stream (pair of <ip_source, ip_dest>) details like jitter and arrive time of
@@ -20,18 +23,31 @@
 
 //Add a captured packet to an already registered stream.
 int  add_to_stream(tcp_stream *stream, char *stream_name, long int packet_arrive_time, int src_port, int dst_port);
+
 //Add a captured packet to a stream that has never been encountered.
 int  add_new_stream(tcp_stream *stream, char *stream_name, long int packet_arrive_time, int src_port, int dst_port);
+
 //Append the new packet records to a stream.
 int add_packet_record(record **head, record **tail, long int packet_arrive_time, int src_port, int dst_port);
+
 //Add the stream name to the anomaly list
 void add_anomaly_list(char *anomaly_name);
+
 //Update the jitter value for a communication and add the stream name to the anomaly list if thresholds are not respect
 void update_jitter(tcp_stream *stream);
+
+//Free all memory allocated by saved data.
+void free_map();
+void free_stream(tcp_stream *str);
+void free_record(record *tmp_r);
+void free_anomaly_list(anomaly_list *list);
 
 //Main data structure.
 tcp_stream* streams_map;
 long int start;
+int streams_number = 0;
+int anomaly_alert_times = 0;
+int anomaly_streams_counter = 0;
 
 void initialize_map() {
 	streams_map = (tcp_stream *) malloc(sizeof(tcp_stream) * SIZE);
@@ -49,6 +65,7 @@ void initialize_map() {
 		tmp->tail = NULL;
 		tmp->next_conflict = NULL;
 	}
+	notify_init("Jitter");
 	return;
 }
 
@@ -58,33 +75,62 @@ void add_anomaly_list(char *anomaly_name){
 		a_list = malloc(sizeof(anomaly_list));
 		a_list->stream_name = anomaly_name;
 		a_list->next = NULL;
+		a_list->times = 1;
 	}
 	else{
 		anomaly_list *new = malloc(sizeof(anomaly_list));
 		new->stream_name = anomaly_name;
 		new->next = a_list;
+		new->times = 1;
 		a_list = new;
 	}
+}
+
+void increase_anomaly_times(char *anomaly_name){
+	if(a_list == NULL){
+		perror("increase_anomaly_times = NULL");
+		exit(EXIT_FAILURE);
+	}
+	anomaly_list *tmp = a_list;
+	while(tmp != NULL){
+		if(strcmp(tmp->stream_name, anomaly_name) == 0)
+			break;
+		tmp = tmp->next;
+	}
+	tmp->times = tmp->times + 1;
+	return;
+}
+
+void send_notification(char *title, char *message){
+	NotifyNotification *notif;
+	notif = notify_notification_new(title, message, NULL);
+	notify_notification_set_timeout(notif, 6000);
+	notify_notification_show(notif, NULL);
 }
 
 //Update the jitter value for a communication and add the stream name to the anomaly list if thresholds are not respect
 void update_jitter(tcp_stream *stream){
 	int average, min_threshold, max_threshold;
 	stream->head->jitter = stream->sum_difference / (stream->pkts_num - 1);
-	printf("Jitter calcolato con update_jitter: %d\n", stream->head->jitter);
 
 	average = stream->sum_jitter / (stream->pkts_num-1);
 	max_threshold = average * 1.5;
 	min_threshold = average * 0.5;
 	if((stream->head->jitter > max_threshold || stream->head->jitter < min_threshold) && stream->pkts_num > 4){
-		if( stream->anomaly == 0){
+		anomaly_alert_times++;
+		if(stream->anomaly == 0){
+			char *message = malloc(sizeof(char) * 128);
+			sprintf(message, "Anomaly observed in communication <IP_src,IP_dst>:\n %s", stream->stream_name);
+			send_notification("Suspicious jitter variation detected", message);
+			anomaly_streams_counter++;
 			add_anomaly_list(stream->stream_name);
 			stream->anomaly = 1;
+			free(message);
 		}
-		printf(RED "	Comunicazione: %s, Jitter ANOMALO!,num_packets: %d, Average: %d, min_threshold: %d, max_threshold: %d\n" RESET, stream->stream_name, stream->pkts_num, average, min_threshold, max_threshold);
+		else{
+			increase_anomaly_times(stream->stream_name);
+		}
 	}
-
-
 	stream->sum_jitter += stream->head->jitter;
 }
 
@@ -120,6 +166,7 @@ int add_to_stream(tcp_stream *stream, char *stream_name, long int packet_arrive_
 		return 1;
 	} else if(stream->next_conflict == NULL){
 			//new stream to monitor!
+			streams_number++;
 			stream->next_conflict = (tcp_stream *) malloc(sizeof(tcp_stream));
 			tcp_stream *new_stream = stream->next_conflict;
 			new_stream->stream_name = stream_name;
@@ -139,6 +186,7 @@ int add_to_stream(tcp_stream *stream, char *stream_name, long int packet_arrive_
 
 //Add a captured packet to a communication that has never been encountered.
 int add_new_stream(tcp_stream *stream, char *stream_name, long int packet_arrive_time, int src_port, int dst_port){
+	streams_number++;
 	stream->stream_name = stream_name;
 	stream->pkts_num = stream->pkts_num + 1;
 	add_packet_record(&stream->head, &stream->tail, packet_arrive_time, src_port, dst_port);
@@ -163,7 +211,7 @@ int add_packet_record(record **head, record **tail, long int packet_arrive_time,
 		new_el->t_arrive = packet_arrive_time;
 		new_el->t_delay =  packet_arrive_time - (*head)->t_arrive;
 		new_el->src_port = src_port;
-		new_el->src_port = dst_port;
+		new_el->dst_port = dst_port;
 		new_el->jitter = 0;
 		new_el->next = *head;
 		*head = new_el;
@@ -172,83 +220,48 @@ int add_packet_record(record **head, record **tail, long int packet_arrive_time,
 
 }
 
-void print_record(record *tmp_r, int pkts_num){
-	if(tmp_r == NULL)
-		return;
-
-	print_record(tmp_r->next, pkts_num - 1);
-	if(pkts_num == 1)
-		printf("                    [Packet %d] Arrive time: %ld. Ports: %d -> %d;\n", pkts_num, tmp_r->t_arrive, tmp_r->src_port, tmp_r->dst_port);
-	else
-		printf("                    [Packet %d] Arrive time: %ld. Delay from previous packet: %ld. Ports: %d -> %d. Jitter: %d;\n", pkts_num, tmp_r->t_arrive, tmp_r->t_delay, tmp_r->src_port, tmp_r->dst_port, tmp_r->jitter);
-}
-
-void print_stream(tcp_stream *str){
-	if(str->stream_name == NULL)
-		return;
-	printf("\n   Comunication: %s\n", str->stream_name);
-
-	printf("Packets sniffed: %d [\n", str->pkts_num);
-	record *tmp_r = str->head;
-	print_record(tmp_r, str->pkts_num);
-	printf("                   ]\n");
+//Free all memory allocated by saved data.
+void free_map(){
+	int i;
+	tcp_stream *tmp;
+	tcp_stream *tmp_prev;
+	for(i = 0; i < SIZE; i++){
+		tmp = &streams_map[i];
+		free_stream(tmp);
+		tmp = tmp->next_conflict;
+		while(tmp != NULL){
+			free_stream(tmp);
+			tmp_prev = tmp;
+			tmp = tmp->next_conflict;
+			free(tmp_prev);
+		}
+	}
+	free(streams_map);
+	free_anomaly_list(a_list);
+	notify_uninit();
 	return;
 }
 
-void print_map(void){
-	printf("Recorded streams:\n");
-	int i;
-	tcp_stream *tmp;
-	for(i = 0; i < SIZE; i++){
-		tmp = &streams_map[i];
-		while(tmp != NULL){
-			print_stream(tmp);
-			tmp = tmp->next_conflict;
-		}
-	}
-	return;
+void free_stream(tcp_stream *str){
+	if(str == NULL)
+		return;
+	if(str->stream_name != NULL)
+		free(str->stream_name);
+
+	free_record(str->head);
 }
 
-void save_record(FILE *fp, record *tmp_r){
+void free_record(record *tmp_r){
 	if(tmp_r == NULL)
 		return;
-
-	save_record(fp, tmp_r->next);
-	fprintf(fp, "%le %le\n", (double)(tmp_r->t_arrive - start), (double)tmp_r->jitter);
+	free_record(tmp_r->next);
+	free(tmp_r);
 }
 
-void save_stream(tcp_stream *str){
-	if(str->stream_name == NULL)
+void free_anomaly_list(anomaly_list *list){
+	if(list == NULL)
 		return;
-	char name_file[40];
-	strcpy(name_file, str->stream_name);
-	strcat(name_file, ".txt");
-	FILE *fp = fopen (name_file,"w");
-	record *tmp_r = str->head;
-	save_record(fp, tmp_r);
-	fclose(fp);
-}
 
-//Save to file all recorded data from every stream encountered.
-void save_map(long int s){
-	int i;
-	tcp_stream *tmp;
-	start = s;
-	for(i = 0; i < SIZE; i++){
-		tmp = &streams_map[i];
-		while(tmp != NULL){
-			save_stream(tmp);
-			tmp = tmp->next_conflict;
-		}
-	}
-}
-
-void print_anomaly_list(){
-	anomaly_list *aux = a_list;
-	printf("\nAnomaly list:\n");
-	while(aux != NULL){
-		printf(RED "%s\n" RESET, aux->stream_name);
-		aux = aux->next;
-	}
-	printf("**********\n");
+	free_anomaly_list(list->next);
+	free(list);
 }

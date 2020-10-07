@@ -82,7 +82,8 @@ struct sniff_tcp {
 
 int num_packets;			/* number of packets to capture */
 extern anomaly_list *a_list;
-pcap_t *handle = NULL; /*packet capture handle*/
+pcap_t *handle = NULL;      /*packet capture handle*/
+char *dev;
 
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
@@ -99,6 +100,10 @@ void sig_handler(int signo);
 int  is_number(char *msg);
 
 int  is_help_flag(char *msg);
+
+int is_interface_flag(char *msg);
+
+int check_interface(char *dev, pcap_if_t *dev_list);
 
 
 int main(int argc, char **argv) {
@@ -124,47 +129,64 @@ int main(int argc, char **argv) {
 		return 0;
 
 	if(pcap_findalldevs(&dev_list, errbuf) == PCAP_ERROR){
-    fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
+        fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
 		exit(EXIT_FAILURE);
   	}
 
+    /* if the interface is not specified, take packets from
+       first interface in the devices list*/
+    if( dev == NULL){
+        dev = malloc(sizeof(char)*40);
+        strcpy(dev, dev_list->name);
+    }
+
+    if(check_interface(dev, dev_list)){
+        fprintf(stderr, "Couldn't find device with this name: %s\n", dev);
+        fprintf(stderr, "\nDevices available:\n");
+        while(dev_list != NULL){
+            fprintf(stderr, "%s\n", dev_list->name);
+            dev_list = dev_list->next;
+        }
+		exit(EXIT_FAILURE);
+    }
+
 	/* get network number and mask associated with capture device */
-	if (pcap_lookupnet(dev_list->name, &net, &mask, errbuf) == -1) {
+	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
 		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev_list->name, errbuf);
 		net = 0;
 		mask = 0;
 	}
 
 	/* print capture info */
-	print_capture_info(dev_list->name, filter_exp);
+	print_capture_info(dev, filter_exp);
 
 	/* open capture device */
-  handle = pcap_create(dev_list->name, errbuf);
+    handle = pcap_create(dev, errbuf);
 	if (handle == NULL) {
-		fprintf(stderr, "Couldn't open device %s: %s\n", dev_list->name, errbuf);
+		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
 		exit(EXIT_FAILURE);
 	}
 
-  if(pcap_set_timeout( handle, 1 ) != 0){
+    if(pcap_set_timeout( handle, 1 ) != 0){
 		fprintf(stderr, "Unable to configure timeout.\n");
     exit(EXIT_FAILURE);
-  }
+    }
 
-  if(pcap_set_immediate_mode( handle, 1 ) != 0 ){
+    if(pcap_set_immediate_mode( handle, 1 ) != 0 ){
 		fprintf(stderr, "Unable to configure immediate mode.\n");
-    exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
 	}
 
-  // Activate packet capture handle to look at packets on the network
-  int activateStatus = pcap_activate(handle);
-  if( activateStatus < 0 ){
-    fprintf(stderr, "Activate failed\n");
-    exit(EXIT_FAILURE);
-  }
+    // Activate packet capture handle to look at packets on the network
+    int activateStatus = pcap_activate(handle);
+    if( activateStatus < 0 ){
+        fprintf(stderr, "Activate failed\n");
+        exit(EXIT_FAILURE);
+    }
 
 	/* make sure we're capturing on an Ethernet device */
 	if (pcap_datalink(handle) != DLT_EN10MB) {
-		fprintf(stderr, "%s is not an Ethernet\n", dev_list->name);
+		fprintf(stderr, "%s is not an Ethernet\n", dev);
 		exit(EXIT_FAILURE);
 	}
 
@@ -192,6 +214,7 @@ int main(int argc, char **argv) {
 	printf("\n                 Capture completed!\n\n");
 	print_summary();
 	main_menu();
+    free(dev);
     free(dev_list);
 	free_map();
 	return 0;
@@ -208,43 +231,99 @@ int read_params(int argc, char **argv){
 				num_packets = 0;
 				break;
 			case 2:
-        strcpy(param, argv[1]);
-        if(is_help_flag(param)){
-        	print_app_usage();
-          return -1;
-        }
-        else if(is_number(param)){
-        	num_packets = atoi(param);
-          if(num_packets < 0){
-            print_app_usage();
-            exit(EXIT_FAILURE);
-          }
-        }
-        else {
-        	print_app_usage();
-        	exit(EXIT_FAILURE);
-        }
-				break;
-      case 3:
-      	strcpy(param, argv[1]);
-        if(is_help_flag(param)){
-        	print_app_usage();
+                strcpy(param, argv[1]);
+                if(is_help_flag(param)){
+        	           print_app_usage();
+                       return -1;
+                   }
+                   else if(is_number(param)){
+        	              num_packets = atoi(param);
+                          if(num_packets < 0){
+                              print_app_usage();
+                              exit(EXIT_FAILURE);
+                          }
+                    }
+                    else {
+        	            print_app_usage();
+        	            exit(EXIT_FAILURE);
+                        }
+                break;
+            case 3:
+      	        strcpy(param, argv[1]);
+                if(is_help_flag(param)){
+        	        print_app_usage();
 					return -1;
-        }
-        else if(is_number(param)){
-        	num_packets = atoi(param);
-          print_app_usage();
-          if(num_packets < 0)
-          	exit(EXIT_FAILURE);
-          strcpy(param, argv[2]);
-          if(is_help_flag(param))
-						return -1;
-        }
+                }
+                else if(is_number(param)){
+        	           num_packets = atoi(param);
+                       if(num_packets < 0){
+                           print_app_usage();
+          	               exit(EXIT_FAILURE);
+                        }
+                        strcpy(param, argv[2]);
+                        if(is_help_flag(param) || is_interface_flag(param)){
+                            print_app_usage();
+                            return -1;
+                        }
+                }
+                else if(is_interface_flag(param)){
+                    dev = malloc(sizeof(char)*40);
+                    strcpy(dev, argv[2]);
+                }
 				else {
-        	print_app_usage();
-          exit(EXIT_FAILURE);
-        }
+        	        print_app_usage();
+                    exit(EXIT_FAILURE);
+                }
 				break;
+            case 4:
+          	    strcpy(param, argv[1]);
+                if(is_help_flag(param)){
+            	    print_app_usage();
+    			    return -1;
+                }
+                else if(is_number(param)){
+            	        num_packets = atoi(param);
+                        if(num_packets < 0){
+                            print_app_usage();
+                            exit(EXIT_FAILURE);
+                        }
+                        strcpy(param, argv[2]);
+                        if(is_help_flag(param)){
+                            print_app_usage();
+                            return -1;
+                        }
+                        else if(is_interface_flag(param)){
+                            dev = malloc(sizeof(char)*40);
+                            strcpy(dev, argv[3]);
+                        }
+                        else{
+                            print_app_usage();
+                            return -1;
+                        }
+                }
+                else if(is_interface_flag(param)){
+                        dev = malloc(sizeof(char)*40);
+                        strcpy(dev, argv[2]);
+                        strcpy(param, argv[3]);
+                        if(is_number(param)){
+             	              num_packets = atoi(param);
+                               if(num_packets < 0){
+                                   print_app_usage();
+                                   exit(EXIT_FAILURE);
+                               }
+                        }
+                        else {
+                	        print_app_usage();
+                            exit(EXIT_FAILURE);
+                        }
+
+
+                    }
+    				else {
+            	        print_app_usage();
+                        exit(EXIT_FAILURE);
+                    }
+    			break;
 			default:
 				fprintf(stderr, "error: unrecognized command-line arguments\n\n");
 				print_app_usage();
@@ -347,6 +426,23 @@ int  is_help_flag(char *msg){
         return 0;
 }
 
+int check_interface(char *dev, pcap_if_t *dev_list){
+    pcap_if_t *aux = dev_list;
+    while(aux != NULL){
+        if(strcmp(aux->name, dev) == 0)
+            return 0;
+        aux = aux->next;
+    }
+    return 1;
+}
+
+int is_interface_flag(char *msg){
+    if(strcmp("-i", msg) == 0)
+        return 1;
+    else
+        return 0;
+}
+
 void print_app_banner(void){
 	printf("%s - %s\n", APP_NAME, APP_DESC);
     return;
@@ -357,8 +453,9 @@ void print_app_usage(void) {
 	printf("Argument:\n");
 	printf("(optional)   packet_number       Capture the next <packet_number> packets.\n");
 	printf("(optional)   -h                  Print an help guide to start this program.\n");
+    printf("(optional)   -i device_name      Capture packets from the device_name.\n");
 	printf("\nIf no packet_number is provided, this process will start sniffing non-stop.\n");
 	printf("In both cases until it can be correctly stopped sending a SIGINT interruption (Ctrl + c) to stop sniffing.\n");
-	printf("Examples: ./jitter -h\n          ./jitter\n          ./jitter 50\n");
+	printf("Examples: ./jitter -h\n          ./jitter\n          ./jitter 50\n          ./jitter -i device_name\n          ./jitter -i device_name 50\n");
   return;
 }

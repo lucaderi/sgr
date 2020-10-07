@@ -6,7 +6,7 @@ TARGET = ./jitter
 .PHONY: all test clean
 
 ./jitter : $(objects)
-	$(CC) -I ./headers $(CFLAGS) $^ -o $@ -lpcap -lnotify
+	$(CC) -I ./headers $(CFLAGS) $^ -o $@ -lpcap
 
 ./src/jitter3.o : ./src/jitter3.c
 	$(CC) -I ./headers -c $(CFLAGS) $^ -o $@
@@ -18,7 +18,7 @@ TARGET = ./jitter
 	$(CC) -I ./headers -c $(CFLAGS) $^ -o $@
 
 ./src/jitter_data.o : ./src/jitter_data.c
-	$(CC) -I ./headers  `pkg-config --cflags --libs libnotify` -c $(CFLAGS) $^ -o $@
+	$(CC) -I ./headers -c $(CFLAGS) $^ -o $@
 
 ./src/time_tools.o : ./src/time_tools.c
 	$(CC) -I ./headers -c $(CFLAGS) $^ -o $@
@@ -26,14 +26,11 @@ TARGET = ./jitter
 all : $(TARGET)
 
 test:	./jitter
-	@echo "Eseguo il test, mandare SIGINT per interrompere"
+	@echo "Testing"
+	chmod +x test.sh
+	xterm -e sudo ./test.sh &
 	sudo ./jitter
 	@echo "Test OK"
-
-test1:	./myprog
-	@echo "Eseguo il test1, catturo 50 pacchetti"
-	sudo ./jitter 50
-	@echo "Test1 OK"
 
 clean:
 	@echo "Removing garbage."

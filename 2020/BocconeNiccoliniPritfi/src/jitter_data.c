@@ -3,9 +3,10 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include <libnotify/notify.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 /*This files defines an hash map used to store informations about captured packets.
   For every stream (pair of <ip_source, ip_dest>) details like jitter and arrive time of
@@ -43,11 +44,13 @@ void free_record(record *tmp_r);
 void free_anomaly_list(anomaly_list *list);
 
 //Main data structure.
-tcp_stream* streams_map;
+tcp_stream *streams_map;
 long int start;
 int streams_number = 0;
 int anomaly_alert_times = 0;
 int anomaly_streams_counter = 0;
+char *name;
+int uid;
 
 void initialize_map() {
 	streams_map = (tcp_stream *) malloc(sizeof(tcp_stream) * SIZE);
@@ -65,7 +68,11 @@ void initialize_map() {
 		tmp->tail = NULL;
 		tmp->next_conflict = NULL;
 	}
-	notify_init("Jitter");
+	name = getlogin();
+	struct passwd *p;
+	p = getpwnam(name);
+
+	uid =(int)p->pw_uid;
 	return;
 }
 
@@ -102,10 +109,10 @@ void increase_anomaly_times(char *anomaly_name){
 }
 
 void send_notification(char *title, char *message){
-	NotifyNotification *notif;
-	notif = notify_notification_new(title, message, NULL);
-	notify_notification_set_timeout(notif, 6000);
-	notify_notification_show(notif, NULL);
+	char *notif = malloc(sizeof(char)*200);
+	sprintf(notif, "sudo -u %s DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%d/bus notify-send '%s' '%s'", name, uid, title, message);
+	system(notif);
+	free(notif);
 }
 
 //Update the jitter value for a communication and add the stream name to the anomaly list if thresholds are not respect
@@ -120,7 +127,7 @@ void update_jitter(tcp_stream *stream){
 		anomaly_alert_times++;
 		if(stream->anomaly == 0){
 			char *message = malloc(sizeof(char) * 128);
-			sprintf(message, "Anomaly observed in communication <IP_src,IP_dst>:\n %s", stream->stream_name);
+			sprintf(message, "Anomaly observed in <IP_src,IP_dst>:\n %s", stream->stream_name);
 			send_notification("Suspicious jitter variation detected", message);
 			anomaly_streams_counter++;
 			add_anomaly_list(stream->stream_name);
@@ -238,7 +245,6 @@ void free_map(){
 	}
 	free(streams_map);
 	free_anomaly_list(a_list);
-	notify_uninit();
 	return;
 }
 

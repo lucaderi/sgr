@@ -1,0 +1,12 @@
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y \
+    sysbench \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /test
+COPY ./Dockerfiles/disco.sh /test/
+RUN chmod +x ./test/disco.sh
+
+CMD ./test/disco.sh
+

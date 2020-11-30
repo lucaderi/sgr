@@ -1,0 +1,7 @@
+FROM ubuntu:latest
+
+RUN mkdir /test
+COPY /Dockerfiles/ram.sh /test/
+RUN chmod +x ./test/ram.sh
+
+CMD ./test/ram.sh

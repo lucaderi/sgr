@@ -1,0 +1,9 @@
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y \
+    sysbench \
+ && rm -rf /var/lib/apt/lists/*
+
+CMD sysbench --test=cpu --cpu-max-prime=20000 --num-threads=4 --time=60 run
+
+

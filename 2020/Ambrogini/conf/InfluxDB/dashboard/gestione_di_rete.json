@@ -1,0 +1,919 @@
+{
+ "meta": {
+  "version": "1",
+  "type": "dashboard",
+  "name": "Gestione di rete-Template",
+  "description": "template created from dashboard: Gestione di rete"
+ },
+ "content": {
+  "data": {
+   "type": "dashboard",
+   "attributes": {
+    "name": "Gestione di rete",
+    "description": "Dashboard progetto"
+   },
+   "relationships": {
+    "label": {
+     "data": []
+    },
+    "cell": {
+     "data": [
+      {
+       "type": "cell",
+       "id": "06bcd33601c38000"
+      },
+      {
+       "type": "cell",
+       "id": "06bcdf580c438000"
+      },
+      {
+       "type": "cell",
+       "id": "06c2e821b1090000"
+      },
+      {
+       "type": "cell",
+       "id": "06c2e921c2090000"
+      },
+      {
+       "type": "cell",
+       "id": "06c2edfd1e090000"
+      },
+      {
+       "type": "cell",
+       "id": "06c2ee145d490000"
+      }
+     ]
+    },
+    "variable": {
+     "data": []
+    }
+   }
+  },
+  "included": [
+   {
+    "id": "06bcd33601c38000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 0,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "06bcd33601c38000"
+      }
+     }
+    }
+   },
+   {
+    "id": "06bcdf580c438000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 0,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "06bcdf580c438000"
+      }
+     }
+    }
+   },
+   {
+    "id": "06c2e821b1090000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 4,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "06c2e821b1090000"
+      }
+     }
+    }
+   },
+   {
+    "id": "06c2e921c2090000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 4,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "06c2e921c2090000"
+      }
+     }
+    }
+   },
+   {
+    "id": "06c2edfd1e090000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 8,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "06c2edfd1e090000"
+      }
+     }
+    }
+   },
+   {
+    "id": "06c2ee145d490000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 8,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "06c2ee145d490000"
+      }
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "06bcd33601c38000",
+    "attributes": {
+     "name": "Traffico verso l'esterno",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"request_flow\"] == \"OUT\")\n  |> filter(fn: (r) => r[\"_field\"] == \"bytes\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: sum, createEmpty: false)",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "legend": {},
+      "geom": "line",
+      "colors": [
+       {
+        "id": "dbe0e765-0964-41a7-8c8d-6fceec8e355a",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "2bb87837-2224-4994-849f-3dbc4aa5c793",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "52d589ed-654a-49ee-b76e-2dfd75e35417",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": null,
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": null,
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": false,
+      "position": "overlaid",
+      "timeFormat": "",
+      "hoverDimension": "",
+      "legendColorizeRows": false,
+      "legendOpacity": 0,
+      "legendOrientationThreshold": 0
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "06bcdf580c438000",
+    "attributes": {
+     "name": "Traffico da esterno",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"request_flow\"] == \"IN\")\n  |> filter(fn: (r) => r[\"_field\"] == \"bytes\")\n  |> group(columns: [\"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: sum, createEmpty: false)\n  |> yield(name: \"sum\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "legend": {},
+      "geom": "line",
+      "colors": [
+       {
+        "id": "dbe0e765-0964-41a7-8c8d-6fceec8e355a",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "2bb87837-2224-4994-849f-3dbc4aa5c793",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "52d589ed-654a-49ee-b76e-2dfd75e35417",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": null,
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": null,
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": false,
+      "position": "overlaid",
+      "timeFormat": "",
+      "hoverDimension": "",
+      "legendColorizeRows": false,
+      "legendOpacity": 0,
+      "legendOrientationThreshold": 0
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "06c2e821b1090000",
+    "attributes": {
+     "name": "Traffico per IP verso l'esterno",
+     "properties": {
+      "shape": "chronograf-v2",
+      "type": "table",
+      "queries": [
+       {
+        "text": "from(bucket: \"data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r._measurement == \"flow\" and \n    r._field == \"bytes\" and\n    r.request_flow == \"OUT\"\n  )\n  |> keep(columns: [\"_value\", \"local_ip\"])\n  |> sum()\n  |> rename(columns: {\"_value\":\"bytes\", \"local_ip\":\"IP locale\"})\n  |> group(columns: [\"_value\", \"local_ip\"])\n  |> sort(columns: [\"_value\"], desc: true)",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "colors": [
+       {
+        "id": "base",
+        "type": "text",
+        "hex": "#ffffff",
+        "name": "white",
+        "value": 0
+       }
+      ],
+      "tableOptions": {
+       "verticalTimeAxis": true,
+       "sortBy": {
+        "internalName": "",
+        "displayName": "",
+        "visible": false
+       },
+       "wrapping": "",
+       "fixFirstColumn": false
+      },
+      "fieldOptions": [
+       {
+        "internalName": "local_ip",
+        "displayName": "local_ip",
+        "visible": true
+       },
+       {
+        "internalName": "_value",
+        "displayName": "_value",
+        "visible": true
+       },
+       {
+        "internalName": "_start",
+        "displayName": "_start",
+        "visible": true
+       },
+       {
+        "internalName": "_stop",
+        "displayName": "_stop",
+        "visible": true
+       },
+       {
+        "internalName": "_time",
+        "displayName": "_time",
+        "visible": true
+       },
+       {
+        "internalName": "_field",
+        "displayName": "_field",
+        "visible": true
+       },
+       {
+        "internalName": "_measurement",
+        "displayName": "_measurement",
+        "visible": true
+       },
+       {
+        "internalName": "dst_port",
+        "displayName": "dst_port",
+        "visible": true
+       },
+       {
+        "internalName": "host",
+        "displayName": "host",
+        "visible": true
+       },
+       {
+        "internalName": "request_flow",
+        "displayName": "request_flow",
+        "visible": true
+       },
+       {
+        "internalName": "src_port",
+        "displayName": "src_port",
+        "visible": true
+       },
+       {
+        "internalName": "url",
+        "displayName": "url",
+        "visible": true
+       },
+       {
+        "internalName": "_key",
+        "displayName": "_key",
+        "visible": true
+       },
+       {
+        "internalName": "bytes",
+        "displayName": "bytes",
+        "visible": true
+       },
+       {
+        "internalName": "IP locale",
+        "displayName": "IP locale",
+        "visible": true
+       }
+      ],
+      "timeFormat": "YYYY-MM-DD HH:mm:ss",
+      "decimalPlaces": {
+       "isEnforced": false,
+       "digits": 2
+      },
+      "note": "",
+      "showNoteWhenEmpty": false
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "06c2e921c2090000",
+    "attributes": {
+     "name": "Traffico per IP dall'esterno",
+     "properties": {
+      "shape": "chronograf-v2",
+      "type": "table",
+      "queries": [
+       {
+        "text": "from(bucket: \"data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r._measurement == \"flow\" and \n    r._field == \"bytes\" and\n    r.request_flow == \"IN\"\n  )\n  |> keep(columns: [\"_value\", \"src_ip\"])\n  |> sum()\n  |> rename(columns: {\"_value\":\"bytes\", \"src_ip\":\"IP pubblico sorgente\"})",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "colors": [
+       {
+        "id": "base",
+        "type": "text",
+        "hex": "#ffffff",
+        "name": "white",
+        "value": 0
+       }
+      ],
+      "tableOptions": {
+       "verticalTimeAxis": true,
+       "sortBy": {
+        "internalName": "",
+        "displayName": "",
+        "visible": false
+       },
+       "wrapping": "",
+       "fixFirstColumn": false
+      },
+      "fieldOptions": [
+       {
+        "internalName": "local_ip",
+        "displayName": "local_ip",
+        "visible": true
+       },
+       {
+        "internalName": "_value",
+        "displayName": "_value",
+        "visible": true
+       },
+       {
+        "internalName": "_start",
+        "displayName": "_start",
+        "visible": true
+       },
+       {
+        "internalName": "_stop",
+        "displayName": "_stop",
+        "visible": true
+       },
+       {
+        "internalName": "_time",
+        "displayName": "_time",
+        "visible": true
+       },
+       {
+        "internalName": "_field",
+        "displayName": "_field",
+        "visible": true
+       },
+       {
+        "internalName": "_measurement",
+        "displayName": "_measurement",
+        "visible": true
+       },
+       {
+        "internalName": "dst_port",
+        "displayName": "dst_port",
+        "visible": true
+       },
+       {
+        "internalName": "host",
+        "displayName": "host",
+        "visible": true
+       },
+       {
+        "internalName": "request_flow",
+        "displayName": "request_flow",
+        "visible": true
+       },
+       {
+        "internalName": "src_port",
+        "displayName": "src_port",
+        "visible": true
+       },
+       {
+        "internalName": "url",
+        "displayName": "url",
+        "visible": true
+       },
+       {
+        "internalName": "_key",
+        "displayName": "_key",
+        "visible": true
+       },
+       {
+        "internalName": "bytes",
+        "displayName": "bytes",
+        "visible": true
+       }
+      ],
+      "timeFormat": "YYYY-MM-DD HH:mm:ss",
+      "decimalPlaces": {
+       "isEnforced": false,
+       "digits": 2
+      },
+      "note": "",
+      "showNoteWhenEmpty": false
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "06c2edfd1e090000",
+    "attributes": {
+     "name": "Porte richieste all'esterno",
+     "properties": {
+      "shape": "chronograf-v2",
+      "type": "table",
+      "queries": [
+       {
+        "text": "from(bucket: \"data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r._measurement == \"flow\" and \n    r._field == \"dst_port\" and\n    r.request_flow == \"OUT\"\n  )\n  |> keep(columns: [\"_value\"])\n  |> distinct(column: \"_value\")\n  |> rename(columns: {\"_value\": \"dst port\"})\n",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "colors": [
+       {
+        "id": "base",
+        "type": "text",
+        "hex": "#ffffff",
+        "name": "white",
+        "value": 0
+       }
+      ],
+      "tableOptions": {
+       "verticalTimeAxis": true,
+       "sortBy": {
+        "internalName": "",
+        "displayName": "",
+        "visible": false
+       },
+       "wrapping": "",
+       "fixFirstColumn": false
+      },
+      "fieldOptions": [
+       {
+        "internalName": "local_ip",
+        "displayName": "local_ip",
+        "visible": true
+       },
+       {
+        "internalName": "_value",
+        "displayName": "_value",
+        "visible": true
+       },
+       {
+        "internalName": "_start",
+        "displayName": "_start",
+        "visible": true
+       },
+       {
+        "internalName": "_stop",
+        "displayName": "_stop",
+        "visible": true
+       },
+       {
+        "internalName": "_time",
+        "displayName": "_time",
+        "visible": true
+       },
+       {
+        "internalName": "_field",
+        "displayName": "_field",
+        "visible": true
+       },
+       {
+        "internalName": "_measurement",
+        "displayName": "_measurement",
+        "visible": true
+       },
+       {
+        "internalName": "dst_port",
+        "displayName": "dst_port",
+        "visible": true
+       },
+       {
+        "internalName": "host",
+        "displayName": "host",
+        "visible": true
+       },
+       {
+        "internalName": "request_flow",
+        "displayName": "request_flow",
+        "visible": true
+       },
+       {
+        "internalName": "src_port",
+        "displayName": "src_port",
+        "visible": true
+       },
+       {
+        "internalName": "url",
+        "displayName": "url",
+        "visible": true
+       },
+       {
+        "internalName": "_key",
+        "displayName": "_key",
+        "visible": true
+       },
+       {
+        "internalName": "dst port",
+        "displayName": "dst port",
+        "visible": true
+       }
+      ],
+      "timeFormat": "YYYY-MM-DD HH:mm:ss",
+      "decimalPlaces": {
+       "isEnforced": false,
+       "digits": 2
+      },
+      "note": "",
+      "showNoteWhenEmpty": false
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "06c2ee145d490000",
+    "attributes": {
+     "name": "Porte richieste da esterno",
+     "properties": {
+      "shape": "chronograf-v2",
+      "type": "table",
+      "queries": [
+       {
+        "text": "from(bucket: \"data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r._measurement == \"flow\" and \n    r._field == \"dst_port\" and\n    r.request_flow == \"IN\"\n  )\n  |> keep(columns: [\"_value\"])\n  |> distinct(column: \"_value\")\n  |> rename(columns: {\"_value\": \"dst port\"})\n",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "colors": [
+       {
+        "id": "base",
+        "type": "text",
+        "hex": "#ffffff",
+        "name": "white",
+        "value": 0
+       }
+      ],
+      "tableOptions": {
+       "verticalTimeAxis": true,
+       "sortBy": {
+        "internalName": "",
+        "displayName": "",
+        "visible": false
+       },
+       "wrapping": "",
+       "fixFirstColumn": false
+      },
+      "fieldOptions": [
+       {
+        "internalName": "local_ip",
+        "displayName": "local_ip",
+        "visible": true
+       },
+       {
+        "internalName": "_value",
+        "displayName": "_value",
+        "visible": true
+       },
+       {
+        "internalName": "_start",
+        "displayName": "_start",
+        "visible": true
+       },
+       {
+        "internalName": "_stop",
+        "displayName": "_stop",
+        "visible": true
+       },
+       {
+        "internalName": "_time",
+        "displayName": "_time",
+        "visible": true
+       },
+       {
+        "internalName": "_field",
+        "displayName": "_field",
+        "visible": true
+       },
+       {
+        "internalName": "_measurement",
+        "displayName": "_measurement",
+        "visible": true
+       },
+       {
+        "internalName": "dst_port",
+        "displayName": "dst_port",
+        "visible": true
+       },
+       {
+        "internalName": "host",
+        "displayName": "host",
+        "visible": true
+       },
+       {
+        "internalName": "request_flow",
+        "displayName": "request_flow",
+        "visible": true
+       },
+       {
+        "internalName": "src_port",
+        "displayName": "src_port",
+        "visible": true
+       },
+       {
+        "internalName": "url",
+        "displayName": "url",
+        "visible": true
+       },
+       {
+        "internalName": "_key",
+        "displayName": "_key",
+        "visible": true
+       },
+       {
+        "internalName": "dst port",
+        "displayName": "dst port",
+        "visible": true
+       }
+      ],
+      "timeFormat": "YYYY-MM-DD HH:mm:ss",
+      "decimalPlaces": {
+       "isEnforced": false,
+       "digits": 2
+      },
+      "note": "",
+      "showNoteWhenEmpty": false
+     }
+    }
+   }
+  ]
+ },
+ "labels": []
+}

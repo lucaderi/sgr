@@ -1,0 +1,39 @@
+SELECT srcaddr, dstaddr, number_packets, Data_flusso
+FROM netflowv5
+WHERE toString(Data_flusso) > toString(subtractMinutes(now('Europe/Rome'),10))
+GROUP BY(srcaddr, dstaddr, number_packets, Data_flusso) And protocol =='UDP'
+ORDER BY(number_packets) desc
+LIMIT 10
+
+
+SELECT  Data_flusso, srcaddr, dstaddr, protocol, number_packets
+FROM netflowv5
+WHERE toString(Data_flusso) > toString(subtractMinutes(now('Europe/Rome'),15)) AND protocol == 'TCP'
+ORDER BY (number_packets) desc
+LIMIT 10
+
+
+SELECT srcaddr, count(srcaddr) as count 
+FROM netflowv5 
+WHERE toString(Data_flusso) > toString(subtractMinutes(now('Europe/Rome'),10))
+GROUP BY(srcaddr) 
+ORDER BY(count) desc
+
+
+SELECT srcaddr, dstaddr, last
+FROM netflowv5 
+WHERE toString(Data_flusso) > toString(subtractMinutes(now('Europe/Rome'),5))
+GROUP BY(srcaddr, dstaddr,last)
+ORDER BY(last) desc
+LIMIT 20
+   
+SELECT srcaddr, dstaddr, protocol, max(number_packets) as numero_pacchetti
+FROM netflowv5
+WHERE toString(Data_flusso) > toString(subtractMinutes(now('Europe/Rome'),25))
+GROUP BY(srcaddr, dstaddr,protocol)
+ORDER BY numero_pacchetti desc
+LIMIT 20
+
+
+
+

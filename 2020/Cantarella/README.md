@@ -47,3 +47,9 @@ lanciare softflowd da terminale con i seguenti parametri:
 softflowd -i [inserire una interfaccia di rete dalla quale 'sniffare i flussi'] -v 5 -P udp -A milli -n 127.0.0.1:2055
 
 Successivamente si possono eseguire delle queries come quelle di esempio nel file Queries.txt direttamente da linea di comando.
+
+Di seguito si possono osservare delle immagini a scopo dimostrativo di come lanciare e come dovrebbe apparire il tutto una volta eseguiti i precedenti passi:
+
+![](img/launching_the_pr.png)
+
+![](img/clickhouse_query.png)

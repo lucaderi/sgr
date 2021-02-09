@@ -1,5 +1,4 @@
 ## Developed by Matteo Fantozzi
-
 from easysnmp import Session
 from easysnmp import snmp_get
 import sys
@@ -169,7 +168,6 @@ while(1):
  
     ## For not flood of requestes the agent sleep some seconds
     time.sleep(2)
-
 
 
 

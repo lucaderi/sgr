@@ -22,6 +22,8 @@ The project consists of a few Python files:
    - **Test.py**: an automatic test for Holt-Winters with default parameters.
 
 ## Usage
-First, create a dataset with `python3 CreateDatasets.py --type normal --days 5`
+First, create a dataset with `python3 CreateDatasets.py --type series --days 5`
 
 Then, we can use `Demo.py` to do a forecasting demo: `python3 Demo.py --dataset dataset.json --season 288 --rsi 24 --alpha 0.57300 --beta 0.00667 --gamma 0.92767`
+
+Or we can use `Test.py` to do another forecasting demo: `python3 Test.py`

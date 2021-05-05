@@ -15,14 +15,6 @@ struct timeval Begin, End, Elapsed;
 int bytesIn, bytesOut, n, lines;
 double predictionIn, predictionOut, confidence_band, lower, upper;
 
-//Funzione per avvertire a linea di comando, chiamata se il DES rileva irregolarità
-void alert(int type,char *source){
-    if(type==0){printf("%s High spike of data received\n",source);}
-    else if(type==1){printf("%s Low spike of data received\n",source);}
-    else if(type==2){printf("%s High spike of data transmitted\n",source);}
-    else if(type==3){printf("%s Low spike of data transmitted\n",source);}
-}
-
 //Funzione per generare una nuova istanza di DES, chiamata più volte a inizio programma
 //L'array Instances contiene tutti gli struct di DES creati, così che scorrendolo si possano aggiornare tutti.
 int newDES(char *line, int num){
@@ -59,13 +51,13 @@ void cycle(char* buff){
     int rc = ndpi_des_add_value(&Instances[i*2], bytesIn, &predictionIn, &confidence_band);
     lower = predictionIn - confidence_band;
     upper = predictionIn + confidence_band;
-    if(bytesIn < lower && rc != 0){alert(1,slice);}
-    if(bytesIn > upper && rc != 0){alert(0,slice);}
+    if(bytesIn < lower && rc != 0){printf("%s Low spike of data received\n",slice);}
+    if(bytesIn > upper && rc != 0){printf("%s High spike of data received\n",slice);}
     rc = ndpi_des_add_value(&Instances[i*2 + 1], bytesOut, &predictionOut, &confidence_band);
     lower = predictionOut - confidence_band;
     upper = predictionOut + confidence_band;
-    if(bytesOut < lower && rc != 0){alert(3,slice);}
-    if(bytesOut > upper && rc != 0){alert(2,slice);}
+    if(bytesOut < lower && rc != 0){printf("%s Low spike of data transmitted\n",slice);}
+    if(bytesOut > upper && rc != 0){printf("%s High spike of data transmitted\n",slice);}
     //Se l'utente ha scelto la modalità estesa, qui viene stampato un recap 
     if(notif == 1){printf("Loop %d for %s  Expected %.2f in, got %d;  Expected %.2f out, got %d\n",n,slice,predictionIn,bytesIn,predictionOut,bytesOut);}
   }

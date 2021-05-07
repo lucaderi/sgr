@@ -6,14 +6,21 @@
 #include <sys/time.h>
 #include "ndpi_api.h"
 
-float alpha = 0.8;
-float beta = 0.8;
+float alpha = 0.75;
+float beta = 0.75;
 int sleeptime = 10;
 struct ndpi_des_struct *Instances;
 int notif = 0;
 struct timeval Begin, End, Elapsed;
 int bytesIn, bytesOut, n, lines;
 double predictionIn, predictionOut, confidence_band, lower, upper;
+
+//Funzione che termina il programma, chiamata quando si riceve il segnale SIGINT
+void receiver(int a){
+  printf(" Terminating program.\n");
+  free(Instances);
+  exit(0);
+}
 
 //Funzione per generare una nuova istanza di DES, chiamata più volte a inizio programma
 //L'array Instances contiene tutti gli struct di DES creati, così che scorrendolo si possano aggiornare tutti.
@@ -88,6 +95,10 @@ int main(int argc, char *argv[]){
           printf("Input error\n");
           return 1;
     }}}
+    //Per liberare la memoria all'uscita, associo SIGINT (Ctrl+C) alla funzione receiver
+    struct sigaction handler;
+    handler.sa_handler = receiver;
+    sigaction(2,&handler,NULL);
     printf("Starting service with alpha = %.2f and beta = %.2f, checking every %d seconds\n",alpha,beta,sleeptime);
     //Preparazione del servizio: si legge per la prima volta il file, contandone le interfacce, e per ognuna si creano due DES,
     //Uno per l'input e uno per l'output. Entrambi vengono inseriti nell'array Instances.

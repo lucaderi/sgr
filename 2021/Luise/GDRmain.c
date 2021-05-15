@@ -6,10 +6,11 @@
 #include <sys/time.h>
 #include "ndpi_api.h"
 
-float alpha = 0.75;
-float beta = 0.75;
+float alpha = 0.9;
+float beta = 0.8;
 int sleeptime = 10;
 struct ndpi_des_struct *Instances;
+int *oldVal;
 int notif = 0;
 struct timeval Begin, End, Elapsed;
 int bytesIn, bytesOut, n, lines;
@@ -19,6 +20,7 @@ double predictionIn, predictionOut, confidence_band, lower, upper;
 void receiver(int a){
   printf(" Terminating program.\n");
   free(Instances);
+  free(oldVal);
   exit(0);
 }
 
@@ -50,11 +52,15 @@ void cycle(char* buff){
   for(int i = 0; i < lines; i++){
     fgets(buff, 255, dev);
     char *slice = strtok(buff," ");
-    bytesIn = atoi(strtok(NULL," "));
+    int temp = atoi(strtok(NULL," "));
+    bytesIn = temp - oldVal[i*2];
+    oldVal[i*2] = temp;
     for(int j=0;j<7;j++){
       atoi(strtok(NULL," "));
     }
-    bytesOut = atoi(strtok(NULL," "));
+    temp = atoi(strtok(NULL," "));
+    bytesOut = temp - oldVal[i*2 + 1];
+    oldVal[i*2 + 1] = atoi(strtok(NULL," "));
     int rc = ndpi_des_add_value(&Instances[i*2], bytesIn, &predictionIn, &confidence_band);
     lower = predictionIn - confidence_band;
     upper = predictionIn + confidence_band;
@@ -99,7 +105,7 @@ int main(int argc, char *argv[]){
     struct sigaction handler;
     handler.sa_handler = receiver;
     sigaction(2,&handler,NULL);
-    printf("Starting service with alpha = %.2f and beta = %.2f, checking every %d seconds\n",alpha,beta,sleeptime);
+    printf("Preparing service with alpha = %.2f and beta = %.2f, checking every %d seconds\n",alpha,beta,sleeptime);
     //Preparazione del servizio: si legge per la prima volta il file, contandone le interfacce, e per ognuna si creano due DES,
     //Uno per l'input e uno per l'output. Entrambi vengono inseriti nell'array Instances.
     lines = -2;
@@ -116,12 +122,31 @@ int main(int argc, char *argv[]){
     }
     Instances = calloc(lines*2,sizeof(struct ndpi_des_struct));
     if(Instances == NULL){printf("Memory allocation error\n");return 1;}
+    oldVal = calloc(lines*2,sizeof(int));
+    if(oldVal == NULL){printf("Memory allocation error\n");return 1;}
     for(int i = 0; i < lines; i++){ //Creazione delle istanze di DES
         fgets(buff, 255, dev1);
         int check = newDES(buff,i);
         if(check!=0){printf("DES Instancing error\n");return 1;}
     }
     fclose(dev1);
+    dev1 = fopen("/proc/net/dev","r");
+    for(int j = 0; j<2; j++){
+      fgets(buff, 255, dev1);
+    }
+    for(int i = 0; i < lines; i++){
+      fgets(buff, 255, dev1);
+      strtok(buff," ");
+      oldVal[i*2] = atoi(strtok(NULL," "));
+      printf("for starting: ");
+      for(int j=0;j<7;j++){
+        strtok(NULL," ");
+      }
+      oldVal[i*2 + 1] = atoi(strtok(NULL," "));
+    }
+    fclose(dev1);
+    usleep(sleeptime * 1000000);
+    printf("Starting Service now.\n");
     while(1){ //Il while chiama cycle fino alla terminazione del programma
         gettimeofday(&Begin,NULL);
         cycle(buff);

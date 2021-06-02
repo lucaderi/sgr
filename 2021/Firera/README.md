@@ -1,6 +1,7 @@
 # SNMP System Monitor
 
-A causa di differenti compatibilità, ho realizzato il progetto su Raspberry PI3
-con la versione 1 di InfluxDB che necessita dei plugin Kapacitor e Chronograf, ho poi realizzato un'altra versione del programma utilizzando InfluxDB 2 che funziona su normali PC.
+System_Monitor_Raspberry: versione testata su Raspberry PI 3 basata su InfluxDB 1, Chronograf e Kapacitor.
+
+sysMonitor_PC: versione basata su InfluxDB 2, compatibile con quasi tutti i computer, testata su Linux Mint su Hypervisor VirtualBox. Non compatibile con raspberry.
 
 Dipendenze: easysnmp, matplotlib(solo versione raspberry), Inflixdb-client.

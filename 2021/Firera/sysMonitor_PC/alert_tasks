@@ -22,8 +22,8 @@ ExtractAlert = diskAlert
 
 if ExtractAlert.level == "warning" then telegram.message(
 	url: "https://api.telegram.org/bot",
-	token: "1837225355:AAGMAngYknkagG6hbeZAeK8XyYApoQcjT7c",
-	channel: "638379981",
+	token: "<your bot token>",
+	channel: "<your chat id>",
 	text: "LAPTOP Disk almost full",
 ) else 0
 
@@ -51,8 +51,8 @@ ExtractAlert = ramAlert
 
 if ExtractAlert.level == "warning" then telegram.message(
 	url: "https://api.telegram.org/bot",
-	token: "1837225355:AAGMAngYknkagG6hbeZAeK8XyYApoQcjT7c",
-	channel: "638379981",
+	token: "<your bot token",
+	channel: "your chat id",
 	text: "LAPTOP Ram Overload",
 ) else 0
 
@@ -80,8 +80,8 @@ ExtractAlert = cpuAlert
 
 if ExtractAlert.level == "warning" then telegram.message(
 	url: "https://api.telegram.org/bot",
-	token: "1837225355:AAGMAngYknkagG6hbeZAeK8XyYApoQcjT7c",
-	channel: "638379981",
+	token: "<your bot token",
+	channel: "your chat id",
 	text: "LAPTOP CPU Overload",
 ) else 0
 

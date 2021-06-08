@@ -11,21 +11,23 @@ sudo apt install python3 snmp snmp-mibs-downloader libsnmp-dev
 pip3 install easysnmp plotly
 ```
 
-
 ### Setup
 
 Modificare il file il file `/etc/snmp/snmpd.conf` inserendo la riga `pass .1.3.6.1.2.1.25.1.0 /bin/sh /etc/snmp/cputemp.sh` e muovere il file `cputemp.sh` dalla repository in `/etc/snmp/`.
 
-Creare un file `credentials.json` nella repository con la seguente struttura:
+Creare un file `config.json` nella repository con la seguente struttura:
 ```json
 {
+	"host": "",
+	"version": ,
+	"community": "",
 	"bot": "",
 	"chat": ""
 }
 ```
-Inserire come primo valore il token di un bot di Telegram di cui abbiamo il controllo (utilizzare @BotFather per crearlo) e come secondo valore il proprio id di chat sul quale vogliamo ricevere i messaggi (per trovarlo è sufficiente iniziare una chat con il bot @getidsbot).
+I primi tre valori da inserire corrispondono al monitoring SNMP (indirizzo ip dell'host da monitorare, versione di SNMP e community). Successivamente, il primo valore rappresenta il token di un bot di Telegram di cui abbiamo il controllo (utilizzare @BotFather per crearlo) e come secondo valore il proprio id di chat sul quale vogliamo ricevere i messaggi (per trovarlo è sufficiente iniziare una chat con il bot @getidsbot).
 
-Come ultima personalizzazione, scrivere l'indirizzo ip del computer che si desidera monitorare (riga 79). NB: se si desidera monitorare un computer diverso da localhost, è necessario che il primo passaggio di setup (con il file `snmpd.conf` e `cputemp.sh`) venga effettuato sulla macchina da monitorare.
+NB: se si desidera monitorare un computer diverso da localhost, è necessario che il primo passaggio di setup (con il file `snmpd.conf` e `cputemp.sh`) venga effettuato sulla macchina da monitorare.
 
 ### Run
 

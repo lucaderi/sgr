@@ -11,7 +11,7 @@ global telegramURL
 class Server(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.send_header("Content-type", "text/html")
+        self.send_header('Content-type', 'text/html')
         self.end_headers()
         self.wfile.write(bytes(divhtml, 'utf8'))
 
@@ -75,24 +75,22 @@ def checkFault(value, min, max, string, unit):
 def snmp():
     try:
 
-        # Setup SNMP
-        host = 'localhost'
-        ver = 1
-        comm = 'public'
+        # Read config file and setup SNMP
+        with open('config.json') as json_file:
+            config = json.load(json_file)
+            global chatID, telegramURL
+            telegramURL = f'https://api.telegram.org/bot{config["bot"]}/sendMessage'
+            chatID = config['chat']
+            host = config['host']
+            ver = int(config['version'])
+            comm = config['community']
         snmpSession = Session(hostname=host, version=ver, community=comm)
-        
+
         # Get location and name of the monitored computer
         info = snmpSession.get(['sysName.0', 'sysLocation.0'])
         global sysInfo
         sysInfo = info[0].value + ' (' + info[1].value + ')'
         print(f'Monitoring {sysInfo}')
-
-        # Setup Telegram bot
-        with open('credentials.json') as json_file:
-            telegram = json.load(json_file)
-            global chatID, telegramURL
-            telegramURL = f'https://api.telegram.org/bot{telegram["bot"]}/sendMessage'
-            chatID = telegram['chat']
 
         # Initialize data structures and variables
         x_time = []
@@ -115,7 +113,7 @@ def snmp():
             inOctNew = int(values[1].value)
             outOctNew = int(values[2].value)
             cputemp = int(values[3].value)
-            cores = snmpSession.walk("hrProcessorLoad")
+            cores = snmpSession.walk('hrProcessorLoad')
             cpuavg = sumValues(cores) / len(cores)
             inOctDiff = inOctNew - inOctOld
             outOctDiff = outOctNew - outOctOld
@@ -140,12 +138,12 @@ def snmp():
             print(f'Stats: uptime {uptimeNew}, in {inOctDiff}, out {outOctDiff}, cpu {cpuavg}, cputemp {cputemp}')
 
             # Create the graph and update server html
-            x_time.append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+            x_time.append(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
             y_cpu.append(cpuavg)
             y_cputemp.append(cputemp)            
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=x_time, y=y_cpu, name="CPU usage"))
-            fig.add_trace(go.Scatter(x=x_time, y=y_cputemp, name="CPU temperature"))
+            fig.add_trace(go.Scatter(x=x_time, y=y_cpu, name='CPU usage'))
+            fig.add_trace(go.Scatter(x=x_time, y=y_cputemp, name='CPU temperature'))
             fig.update_layout(title='CPU usage over time', yaxis_range=[0, 100], xaxis_title='Time', yaxis_title='Percentage/Degrees Celsius', legend_title='Legend', showlegend=True)
             global divhtml
             divhtml = fig.to_html()
@@ -173,7 +171,7 @@ def snmp():
         print(error)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         webServer = http.server.HTTPServer(('localhost', 7777), Server)
         threading.Thread(target=webServer.serve_forever, daemon=True).start()

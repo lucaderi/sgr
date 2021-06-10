@@ -20,7 +20,7 @@ Tramite la web UI di Influx Data è possibile monitorare graficamente i parametr
 
 Per eseguire il programma:
 ```bash
-python3 PCmonitor.py.sh
+python3 PCmonitor.py
 ```  
 Per arrestare il programma:
 ```bash
@@ -38,7 +38,7 @@ Permette di monitorare in tempo reale i seguenti parametri tramite interrogazion
   - Percentuale del disco occupata
   - Carico in percentuale medio della CPU (media ultimo minuto)
 
-A differenza della versione amd64, in questa versione abbiamo un database influx locale che viene scritto mediante lo script Python, questo è associato al servizio Kapacitor che permette alla web UI Chronograph di monitorare costantemente i dati tramite browser alla porta 8888.
+A differenza della versione amd64, in questa versione abbiamo un database influx locale che viene scritto mediante lo script Python, questo è associato al servizio Kapacitor che permette alla web UI Chronograf di monitorare costantemente i dati tramite browser alla porta 8888.
 
 ## Dipendenze Python:
  - easysnmp
@@ -53,7 +53,7 @@ A differenza della versione amd64, in questa versione abbiamo un database influx
 
 Per eseguire il programma:
 ```bash
-python3 sysMonitor_ARM.py.sh
+python3 sysMonitor_ARM.py
 ```  
 Per arrestare il programma:
 ```bash

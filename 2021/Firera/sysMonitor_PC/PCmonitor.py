@@ -20,7 +20,7 @@ HOSTNAME = 'localhost'
 COMMUNITY = 'public'
 OID_RAM_UNUSED = 'iso.3.6.1.4.1.2021.4.11.0'
 OID_DISK_USAGE = 'iso.3.6.1.4.1.2021.9.1.9.1'
-OID_CPU_USAGE = 'iso.3.6.1.2.1.25.3.3.1.2.196608'
+OID_CPU_USAGE = 'iso.3.6.1.2.1.25.3.3.1.2' #...1.2.core_no
 
 # influxdb settings
 client = InfluxDBClient(url="http://localhost:8086", token=INFLUXDB_TOKEN, org=INFLUXDB_ORGANIZATION)
@@ -36,8 +36,14 @@ print('Running...')
 print('Press ctrl+c to stop monitoring ')
 
 while True:
+    cpus = session.walk(OID_CPU_USAGE)
+    nCores = len(cpus)
+    load_sum = 0
+    for c in cpus:
+        load_sum += int(c.value)
+    # print( f'DEBUG >>> cores: {nCores} - load tot: {load_sum}')    
     try:
-        point = Point("sys").tag("device", "laptop").field("availableram", int(session.get(OID_RAM_UNUSED).value)).field("cpuUsage", int(session.get(OID_CPU_USAGE).value)).field("disk_usage", int(session.get(OID_DISK_USAGE).value)).time(datetime.datetime.utcnow(), WritePrecision.NS)
+        point = Point("sys").tag("device", "laptop").field("availableram", int(session.get(OID_RAM_UNUSED).value)).field("cpuUsage_AVG", int(load_sum/nCores)).field("disk_usage", int(session.get(OID_DISK_USAGE).value)).time(datetime.datetime.utcnow(), WritePrecision.NS)
 
         write_api.write(INFLUXDB_BUCKET, INFLUXDB_ORGANIZATION, point)
         time.sleep(5)

@@ -21,11 +21,12 @@ Creare un file `config.json` nella repository con la seguente struttura:
 	"host": "",
 	"version": ,
 	"community": "",
+	"net-interface": ,
 	"bot": "",
 	"chat": ""
 }
 ```
-I primi tre valori da inserire corrispondono al monitoring SNMP (indirizzo ip dell'host da monitorare, versione di SNMP e community). Successivamente, il primo valore rappresenta il token di un bot di Telegram di cui abbiamo il controllo (utilizzare @BotFather per crearlo) e come secondo valore il proprio id di chat sul quale vogliamo ricevere i messaggi (per trovarlo è sufficiente iniziare una chat con il bot @getidsbot).
+I primi tre valori da inserire corrispondono al monitoring SNMP (indirizzo ip dell'host da monitorare, versione di SNMP, community e numero dell'interfaccia di rete da utilizzare). Successivamente, il primo valore rappresenta il token di un bot di Telegram di cui abbiamo il controllo (utilizzare @BotFather per crearlo) e come secondo valore il proprio id di chat sul quale vogliamo ricevere i messaggi (per trovarlo è sufficiente iniziare una chat con il bot @getidsbot).
 
 NB: se si desidera monitorare un computer diverso da localhost, è necessario che il primo passaggio di setup (con il file `snmpd.conf` e `cputemp.sh`) venga effettuato sulla macchina da monitorare.
 

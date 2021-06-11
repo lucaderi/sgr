@@ -1,7 +1,7 @@
 # CONFIGURATION FILE (CHANGE WITH YOUR INFLUXDB DATA)
 
-INFLUXDB_TOKEN = 'Sjw-tnzb3mKiRoQMfSEi_3pjT7Q2ewL3SUSNStqBJX0WtjP5RsPuLXl75iJXIrVQ7FYX_RijAGI2zxhslPKtQA=='
+INFLUXDB_TOKEN = 'insert your bucket token'
 
-INFLUXDB_BUCKET = 'system_monitor'
+INFLUXDB_BUCKET = 'insert your bucket name'
 
-INFLUXDB_ORGANIZATION ='gestionereti'
+INFLUXDB_ORGANIZATION = 'insert bucket organization'

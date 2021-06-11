@@ -84,6 +84,7 @@ def snmp():
             host = config['host']
             ver = int(config['version'])
             comm = config['community']
+            netInterface = config['net-interface']
         snmpSession = Session(hostname=host, version=ver, community=comm)
 
         # Get location and name of the monitored computer
@@ -107,7 +108,7 @@ def snmp():
         while True:
 
             # Get data
-            query = ['sysUpTimeInstance', 'ifInOctets.2', 'ifOutOctets.2', 'hrSystem.0']
+            query = ['sysUpTimeInstance', 'ifInOctets.'+str(netInterface), 'ifOutOctets.'+str(netInterface), 'hrSystem.0']
             values = snmpSession.get(query)
             uptimeNew = int(values[0].value)
             inOctNew = int(values[1].value)

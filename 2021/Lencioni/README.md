@@ -100,8 +100,8 @@ If a flow matches one of those cases the user is notified through CLI.
   	from a normal communication therefore the flow is not highlighted.
   
 	This is true only for open ports, filtered and closed ports will result in a TCP_FLAG of 2 due to the attempted connection.<br/>
-  	![sT scan](/images/sT_scan.png)
-  	![no open](/images/no_open.png)
+  	![sT scan](images/sT_scan.png)
+  	![no open](images/no_open.png)
 	
 	
 * ***Idle Scan***<br/>

@@ -1,0 +1,12 @@
+{
+    "out_file": "./output/capture_results.csv",
+    "soft_error" : "DNS/TLS APPLICATION",
+    "unknown_proto_error" : "UNKNOWN PROTOCOL", 
+    "app_name_error" : "PROTOCOL NEVER USED",
+    "dst_ip_error" : "UNKNOWN DESTINATION IP",
+    "src_ip_error" : "UNKNOWN SOURCE IP",
+    "no_error" : "NONE",
+    "report_file" : "./output/report.json",
+    "servmap_file" : "./output/services_map.json",
+    "device_ips" : ["10.42.0.130"]
+}

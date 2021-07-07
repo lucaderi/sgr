@@ -1,0 +1,88 @@
+// HDD ALERT
+
+import "contrib/sranka/telegram"
+
+option task = {name: "Alert Disk", every: 10m}
+option v = {timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
+
+disk = from(bucket: "system_monitor")
+	|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+	|> filter(fn: (r) =>
+		(r["_measurement"] == "sys"))
+	|> filter(fn: (r) =>
+		(r["_field"] == "disk_usage"))
+	|> last()
+	|> to(bucket: "system_monitor", org: "gestionereti")
+diskAlert = disk
+	|> map(fn: (r) =>
+		({r with level: if r._value > 85 then "warning" else "normal"}))
+ExtractAlert = diskAlert
+	|> findRecord(fn: (key) =>
+		(true), idx: 0)
+
+if ExtractAlert.level == "warning" then telegram.message(
+	url: "https://api.telegram.org/bot",
+	token: "<your bot token>",
+	channel: "<your chat id>",
+	text: "LAPTOP Disk almost full",
+) else 0
+
+// RAM ALERT
+
+import "contrib/sranka/telegram"
+
+option task = {name: "Alert RAM", every: 5s}
+option v = {timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
+
+memory = from(bucket: "system_monitor")
+	|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+	|> filter(fn: (r) =>
+		(r["_measurement"] == "sys"))
+	|> filter(fn: (r) =>
+		(r["_field"] == "availableram"))
+	|> last()
+	|> to(bucket: "system_monitor", org: "gestionereti")
+ramAlert = memory
+	|> map(fn: (r) =>
+		({r with level: if r._value < 400000 then "warning" else "normal"}))
+ExtractAlert = ramAlert
+	|> findRecord(fn: (key) =>
+		(true), idx: 0)
+
+if ExtractAlert.level == "warning" then telegram.message(
+	url: "https://api.telegram.org/bot",
+	token: "<your bot token",
+	channel: "your chat id",
+	text: "LAPTOP Ram Overload",
+) else 0
+
+// CPU LOAD ALERT
+
+import "contrib/sranka/telegram"
+
+option task = {name: "CPU Alert", every: 10s}
+option v = {timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
+
+cpu = from(bucket: "system_monitor")
+	|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+	|> filter(fn: (r) =>
+		(r["_measurement"] == "sys"))
+	|> filter(fn: (r) =>
+		(r["_field"] == "cpuUsage"))
+	|> last()
+	|> to(bucket: "system_monitor", org: "gestionereti")
+cpuAlert = cpu
+	|> map(fn: (r) =>
+		({r with level: if r._value > 85 then "warning" else "normal"}))
+ExtractAlert = cpuAlert
+	|> findRecord(fn: (key) =>
+		(true), idx: 0)
+
+if ExtractAlert.level == "warning" then telegram.message(
+	url: "https://api.telegram.org/bot",
+	token: "<your bot token",
+	channel: "your chat id",
+	text: "LAPTOP CPU Overload",
+) else 0
+
+

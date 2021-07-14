@@ -1,11 +1,12 @@
 {
   "__inputs": [
     {
-      "name": "DS___EXPR__",
-      "label": "__expr__",
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
       "description": "",
       "type": "datasource",
-      "pluginId": "__expr__"
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
     }
   ],
   "__requires": [
@@ -30,13 +31,19 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.5.7"
+      "version": "8.0.5"
     },
     {
       "type": "panel",
       "id": "graph",
-      "name": "Graph",
+      "name": "Graph (old)",
       "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
     },
     {
       "type": "panel",
@@ -62,11 +69,16 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
+  "iteration": 1626174625586,
   "links": [],
   "panels": [
     {
       "collapsed": false,
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -83,7 +95,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -122,7 +134,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -219,7 +231,7 @@
       }
     },
     {
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -228,12 +240,12 @@
           "decimals": 2,
           "mappings": [
             {
-              "from": "",
-              "id": 1,
-              "text": "No data",
-              "to": "",
-              "type": 1,
-              "value": "0"
+              "options": {
+                "0": {
+                  "text": "No data"
+                }
+              },
+              "type": "value"
             }
           ],
           "max": 1,
@@ -274,7 +286,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "targets": [
         {
           "alias": "$tag_host",
@@ -333,7 +345,7 @@
           "tags": []
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "all_packets",
           "hide": true,
@@ -343,7 +355,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "ok_packets",
           "hide": true,
@@ -353,7 +365,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "expression": "$ok_packets_resampled / ($all_packets_resampled + ($all_packets_resampled == 0))",
           "hide": false,
           "refId": "Ratio",
@@ -377,7 +389,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -410,7 +422,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -549,7 +561,7 @@
           "tags": []
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "rcvd_traffic",
           "hide": true,
@@ -559,7 +571,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "TCP_rcvd_packets",
           "hide": true,
@@ -569,7 +581,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "UDP_rcvd_packets",
           "hide": true,
@@ -579,7 +591,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "expression": "$rcvd_traffic_resampled / ($TCP_rcvd_packets_resampled + $UDP_rcvd_packets_resampled + ($TCP_rcvd_packets_resampled + $UDP_rcvd_packets_resampled == 0))",
           "hide": false,
           "refId": "AVG_rcvd_packet_dimension",
@@ -643,7 +655,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -676,7 +688,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -815,7 +827,7 @@
           "tags": []
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "sent_traffic",
           "hide": true,
@@ -825,7 +837,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "TCP_sent_packets",
           "hide": true,
@@ -835,7 +847,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "UDP_sent_packets",
           "hide": true,
@@ -845,7 +857,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "expression": "$sent_traffic_resampled / ($TCP_sent_packets_resampled + $UDP_sent_packets_resampled + ($TCP_sent_packets_resampled + $UDP_sent_packets_resampled == 0))",
           "hide": false,
           "refId": "AVG_sent_packet_dimension",
@@ -907,6 +919,10 @@
     {
       "collapsed": false,
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -923,7 +939,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -957,7 +973,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1074,7 +1090,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -1108,7 +1124,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1214,6 +1230,10 @@
     {
       "collapsed": false,
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1226,7 +1246,7 @@
       "type": "row"
     },
     {
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1269,7 +1289,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "targets": [
         {
           "alias": "$tag_l4proto",
@@ -1364,7 +1384,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1469,6 +1489,10 @@
     {
       "collapsed": false,
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1522,7 +1546,7 @@
         "alertThreshold": false
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1622,7 +1646,7 @@
       }
     },
     {
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1659,7 +1683,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "targets": [
         {
           "groupBy": [
@@ -1722,7 +1746,7 @@
       "type": "gauge"
     },
     {
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -1764,7 +1788,7 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "targets": [
         {
           "groupBy": [
@@ -1814,6 +1838,10 @@
     {
       "collapsed": false,
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1830,11 +1858,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
+      "datasource": "${DS_INFLUXDB}",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -1861,7 +1885,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1959,7 +1983,7 @@
           "tags": []
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "flows_as_server",
           "hide": true,
@@ -1969,7 +1993,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "flows_as_client",
           "hide": true,
@@ -1979,7 +2003,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "expression": "$flows_as_client_resampled + $flows_as_server_resampled",
           "hide": false,
           "refId": "total_flows",
@@ -2039,7 +2063,7 @@
       }
     },
     {
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2082,7 +2106,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "targets": [
         {
           "groupBy": [
@@ -2159,7 +2183,7 @@
           "tags": []
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "flows_as_client",
           "hide": true,
@@ -2169,7 +2193,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "downsampler": "max",
           "expression": "flows_as_server",
           "hide": true,
@@ -2179,7 +2203,7 @@
           "window": "5s"
         },
         {
-          "datasource": "${DS___EXPR__}",
+          "datasource": "__expr__",
           "expression": "$flows_as_client_resampled + $flows_as_server_resampled",
           "hide": false,
           "refId": "total_flows",
@@ -2192,7 +2216,7 @@
       "type": "gauge"
     },
     {
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2233,7 +2257,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "targets": [
         {
           "groupBy": [
@@ -2278,6 +2302,10 @@
     {
       "collapsed": false,
       "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2294,11 +2322,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
+      "datasource": "${DS_INFLUXDB}",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -2325,7 +2349,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -2426,11 +2450,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
+      "datasource": "${DS_INFLUXDB}",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -2457,7 +2477,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -2558,7 +2578,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "${DS_INFLUXDB}",
       "fieldConfig": {
         "defaults": {
           "unit": "Bps"
@@ -2591,7 +2611,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.7",
+      "pluginVersion": "8.0.5",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -2701,19 +2721,41 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 27,
+  "schemaVersion": 30,
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "InfluxDB",
+          "value": "InfluxDB"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "DataSource",
+        "options": [],
+        "query": "influxdb",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "ntopng - network status",
   "uid": "u2cP1UaMz",
-  "version": 110
+  "version": 127
 }

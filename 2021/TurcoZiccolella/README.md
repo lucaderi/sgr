@@ -1,7 +1,7 @@
 # TopTalkersRanker
 Gestione Di Reti 20/21 Progetto Finale Turco-Ziccolella
 
-* Classifica dei primi X top talkers per Ip o classifica dei Protocolli di livello 7 più utilizzati 
+* Classifica dei primi X top talkers per IP o classifica dei Protocolli di livello 7 più utilizzati 
 
 ### Dipendenze Python:
 * [nfstream](https://www.nfstream.org/docs/#installation-guide)
@@ -50,7 +50,7 @@ ctrl + Z
   
   ## Esecuzione:
   Modalità di aggregazione
-  * ip
+  * IP
   ![image](https://user-images.githubusercontent.com/49340033/124630156-7087e100-de82-11eb-9152-4ce0f2a689d4.png)
   * prot7
   ![image](https://user-images.githubusercontent.com/49340033/124499407-3ce38300-ddbe-11eb-92a1-602c2f9eb23b.png)

@@ -43,9 +43,10 @@ ctrl + C
       3. Scelta modalità di aggregazione ip/prot7
       4. Scelta RRD step sec
       5. Scelta secondi entro il quale talker deve fare traffico per non essere eliminato
-      6. Scelta nel numero di cicli (RDD step sec * Numero di cicli) in cui aggiornare la classifica nella dashboard
-      7. Scelta numero di talkers da esporrè nei grafici in classifica
-      8. Scelta se avviare da programma grafana-rrd-server
+      6. Scelta del limite dei talker da tenere in memoria (se troppo basso verranno persi dei potenziali top talkers )
+      7. Scelta nel numero di cicli (RDD step sec * Numero di cicli) in cui aggiornare la classifica nella dashboard
+      8. Scelta numero di talkers da esporrè nei grafici in classifica
+      9. Scelta se avviare da programma grafana-rrd-server
   7. Avvio di grafana-rrd-server
   
   ## Esecuzione:

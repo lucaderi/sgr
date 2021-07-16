@@ -4,31 +4,43 @@ import os
 
 class Pipeline:
     def __init__(self):
-        self.message = None
+
+        self.ts = None
+        self.f_name = None
+
         self.consumer_lock = threading.Lock()
         self.consumer_condition = threading.Condition(self.consumer_lock)
 
-    def get_message(self, name):
+    def get_message(self):
         self.consumer_lock.acquire()
 
-        while self.message is None:
+        while self.ts is None:
             self.consumer_condition.wait()
-        message = self.message
-        self.message = None
+
+        ts = self.ts
+        f_name = self.f_name
+
+        self.ts = None
+        self.f_name = None
+
         self.consumer_condition.notify()
 
         self.consumer_lock.release()
-        return message
+        return ts, f_name
 
-    def set_message(self, message, name):
+    def set_message(self, timestamp , f_name):
         self.consumer_lock.acquire()
-        p = '%Y-%m-%d--%H:%M:%S'
-        if self.message is not None:
+
+        if self.ts is not None:
+            #there is a limit of one saved pcap, if the consumer missed a pcap it's deleted and lost forever
             print("Il consumatore ha perso una cattura")
-            # controllo
-            os.remove(datetime.datetime.fromtimestamp(self.message).strftime(p) + '.pcap')  # cancella la cattura persa
-        self.message = message
+            os.remove(self.f_name)
+
+        self.ts = timestamp
+        self.f_name = f_name
+
         print("cattura terminata e invio!")
+
         self.consumer_condition.notify()
 
         self.consumer_lock.release()

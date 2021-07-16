@@ -13,7 +13,7 @@ Gestione Di Reti 20/21 Progetto Finale Turco-Ziccolella
 
 * [rrd-tool](https://oss.oetiker.ch/rrdtool/download.en.html)
 
-* [grafana-rrd-server](https://github.com/doublemarket/grafana-rrd-server)
+* [grafana-rrd-server](https://github.com/doublemarket/grafana-rrd-server) -> [MIRROR](https://www.mediafire.com/file/5zbpxx3aeuqgutc/grafana-rrd-server/file)
 
 * [Grafana](https://grafana.com/docs/grafana/latest/installation/debian/)
 
@@ -24,11 +24,11 @@ Gestione Di Reti 20/21 Progetto Finale Turco-Ziccolella
 
 Per eseguire il programma:
 
-sudo python3 appy.py
+sudo python3 appy.py (necessari permessi di root per eseguire le catture)
 
 Per arrestare il programma:
 
-ctrl + Z
+ctrl + C
 
 ## Configurazione :
   1. Inserire come DataSource grafana-rrd-server porta di default 9000![image](https://user-images.githubusercontent.com/49340033/124386911-e05c6700-dcdc-11eb-861c-aa7487f499b5.png)
@@ -56,7 +56,7 @@ ctrl + Z
   ![image](https://user-images.githubusercontent.com/49340033/124499407-3ce38300-ddbe-11eb-92a1-602c2f9eb23b.png)
 
 ## Come Avviene la Cattura
-  La cattura avviene in un thread producer che esegue il comando tcpdump con timer di RRD_Step secondi, il produttore passa al consumatore il timestamp di fine  cattura e il nome del file da aprire, se il consumatore perde una cattura essa viene sovrascritta dal produttore, quindi è persa per sempre
+  La cattura avviene in un thread producer che esegue il comando tcpdump con timer di RRD_Step secondi, il produttore passa al consumatore il timestamp di fine  cattura e il nome del file da aprire.I file vengono scritti ogni RRD step secondi,se una cattura non è stata consumata in questo lasso di tempo è cancellata dal produttore.
   
 ## Come avviene l'aggiornamento degli RRD?
   L'aggiornamento si basa sul timestamp ottenuto a fine cattura del .pcap da parte del produttore, quindi ogni rrd dei talkers + l'rrd delle statistiche verranno aggiornati sullo stesso timestamp,un punto viene considerato Unkown se non viene effettuato un update per un periodo 3*RRD_step

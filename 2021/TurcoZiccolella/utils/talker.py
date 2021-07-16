@@ -13,6 +13,7 @@ class Talker:
         self.ip = ip
 
         self.filter = filter
+
         # Period bytes
         self.in_bytes = int(in_bytes)
         self.out_bytes = int(out_bytes)
@@ -32,15 +33,15 @@ class Talker:
         self.user_agent = user_agent
         self.content_type = content_type
 
-    def update(self, ts, local_bytes, talker_bytes):
+    def update(self, ts, in_bytes, out_bytes):
         # Update Bytes in / out
-        self.in_bytes += talker_bytes
-        self.out_bytes += local_bytes
-        self.inandout_bytes += local_bytes + talker_bytes
+        self.in_bytes += in_bytes
+        self.out_bytes += out_bytes
+        self.inandout_bytes += in_bytes + out_bytes
 
-        self.in_bytes_current += talker_bytes
-        self.out_bytes_current += local_bytes
-        self.inandout_bytes_current += local_bytes + talker_bytes
+        self.in_bytes_current += in_bytes
+        self.out_bytes_current += out_bytes
+        self.inandout_bytes_current += in_bytes + out_bytes
 
         # Update lastUpdate
         self.lastupdate = ts

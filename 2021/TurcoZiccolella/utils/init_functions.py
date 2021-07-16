@@ -5,11 +5,6 @@ from configparser import NoOptionError, NoSectionError
 import glob
 
 def Setup():
-
-    # Mi salvo in un file il PID , nel caso dovessi chiudere forzatamente il processo
-    pid = os.getpid()
-    with open("PID.txt", "w") as text_file:
-        text_file.write("%d" % pid)
     
     print("Removing Old Files")
 
@@ -41,8 +36,10 @@ def config():
             filter_mode = conf.get("Settings","filter_mode")
             rrd_step = conf.get("Settings","refresh")
             ttl = conf.get("Settings","ttl_flow")
-            rk_tim = conf.get("Settings","refr_ranking")
-            max_top = conf.get("Settings","max_top")
+            max_talkers = conf.get("Settings", "max_talkers")
+            rk_tim = conf.get("Settings", "refr_ranking")
+            max_top = conf.get("Settings", "max_top")
+
 
 
             print("Config file found -> \n")
@@ -52,6 +49,7 @@ def config():
             print("Aggregation Mode : " + filter_mode + " (aggregate traffic by ip or prot7)")
             print("RDD_step : " + rrd_step + " (compute flows every x sec)")
             print("Flow TTL : " + ttl + " (remove talker's after x sec of inactivity)")
+            print("Max Talkers : " + max_talkers + " (max number of talkers to keep in memory)")
             print("Ranking Refresh Time : " + rk_tim + " (refresh ranking every x steps)")
             print("Max Ranking Talker : " + max_top + " (display max x talkers)\n")
             
@@ -109,7 +107,7 @@ def create_ini():
         
         # Choosing RRD Step
         while True:
-            refresh_rate = input("Choose RDD_step [sec] (compute flows every x sec) :\n")
+            refresh_rate = input("Choose RDD_step [int -> seconds] (compute flows every x sec) :\n")
             if int(refresh_rate) > 0:
                 conf.set("Settings", "refresh", refresh_rate)
                 break
@@ -119,13 +117,23 @@ def create_ini():
             
         # Choosing timetolive
         while True:
-            ttl_flow = input("Choose the ttl of flows [sec] (remove talker's after x sec of inactivity):\n")
+            ttl_flow = input("Choose the ttl of flows [int -> seconds] (remove talker's after x sec of inactivity):\n")
             v = int(ttl_flow)
             if v > int(refresh_rate):
                 conf.set("Settings", "ttl_flow", ttl_flow)
                 break
             else:
                 print("The flow ttl must be > rrd_step")
+
+        # Choosing max_talkers
+        while True:
+            max_talkers = input("Choose the max number of talkers to keep in memory: [int] (if too low you will lose talkers) \n")
+            v = int(max_talkers)
+            if v>0 and v<=999999:
+                conf.set("Settings", "max_talkers",max_talkers)
+                break
+            else:
+                print("Max talkers must be > 0 and < 999999")
             
         # Choosing ranking timer
         while True:
@@ -138,8 +146,9 @@ def create_ini():
         
         # Choosing max top
         while True:
-            max_top = input("Choose how many talkers do you want to display in grafana ranking :\n")
-            if int(max_top)>0:
+            max_top = input("Choose how many talkers do you want to display in grafana ranking [int] :\n")
+            v = int(max_top)
+            if v>0 and v<=20:
                 conf.set("Settings", "max_top", max_top )
                 break
             else:

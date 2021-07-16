@@ -292,8 +292,7 @@ class DashBoard:
         # Upload the log
         s = ""
         for t in talkers.keys():
-            if not ipaddress.ip_address(talkers[t].ip).is_private:
-                s += str(talkers[t]) + "\n\n"
+            s += str(talkers[t]) + "\n\n"
 
         to_upload["panels"][2]["options"]["content"] = s
 
@@ -307,8 +306,7 @@ class DashBoard:
 
     def program_exit_update(self): #make on last update and allow users
         #to run from cmd grafana-rrd-server
-        print("Making dashboard compatible with grafana-rrd-server run from shell..."
-              "")
+        
         if self.last_sort_in is None or self.last_sort_out is None or self.last_sort_both is None or self.talkers is None:
             exit()
         else:

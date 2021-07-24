@@ -1,16 +1,17 @@
 import argparse
 import sflow
+from datetime import datetime
 
 BUF_MAX = 2048
 
 
 # function for writing bytes in a cleaner way
 def prettify_bytes(bytes):
-    if bytes < 1000:
+    if bytes < 10000:
         return f'{bytes // 1}'
-    elif bytes < 1000000:
+    elif bytes < 10000000:
         return f'{bytes // 1000}K'
-    elif bytes < 1000000000:
+    elif bytes < 10000000000:
         return f'{bytes // 1000000}M'
     else:
         return f'{bytes // 1000000000}G'
@@ -47,9 +48,10 @@ def parse_ips(sflow_data: sflow.sFlow, oldIPs: dict):
                     if rec.ip_destination not in oldIPs:
                         oldIPs[rec.ip_destination] = (0, 0, 0, 0)
                     
-                    oldIPs[rec.ip_source] = (oldIPs[rec.ip_source][0] + rec.ip_total_length, oldIPs[rec.ip_source][1] + 1, oldIPs[rec.ip_source][2], oldIPs[rec.ip_source][3])
+                    oldIPs[rec.ip_source] = (oldIPs[rec.ip_source][0], oldIPs[rec.ip_source][1], oldIPs[rec.ip_source][2]  + rec.ip_total_length + rec.ip_header_legth, oldIPs[rec.ip_source][3] + 1)
                     
-                    oldIPs[rec.ip_destination] = (oldIPs[rec.ip_destination][0], oldIPs[rec.ip_destination][1], oldIPs[rec.ip_source][2] + rec.ip_total_length, oldIPs[rec.ip_destination][3] + 1)
+                    oldIPs[rec.ip_destination] = (oldIPs[rec.ip_destination][0] + rec.ip_total_length + rec.ip_header_legth, oldIPs[rec.ip_destination][1] + 1, oldIPs[rec.ip_destination][2] , oldIPs[rec.ip_destination][3])
+                   
     return (oldIPs, new_values)
 
 

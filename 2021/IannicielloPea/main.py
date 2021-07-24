@@ -64,47 +64,47 @@ def print_top_talkers(stdscr: Window, IPs: Dict, max_talkers: int, sortBy: int, 
     
     samplingRatio = (samplePool[1] - samplePool[0]) / samples
     
-    curr_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    curr_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S.%f')[:-3]
     
     stdscr.clear()
     
-    safe_write(stdscr, f'Time: {curr_time}')
-    safe_write(stdscr, '+----+-----------------+------------+------------+------------+------------+')
+    safe_write(stdscr, f'Time: {curr_time}\tRatio: {round(samplingRatio)}')
+    safe_write(stdscr, '+----+-----------------+--------------+--------------+--------------+--------------+')
     safe_write(stdscr, '|Rank|        IP       |', end='')
-    safe_write(stdscr, '  inBytes   ', end='', bold=(sortBy == 0))
+    safe_write(stdscr, '   inBytes    ', end='', bold=(sortBy == 0))
     safe_write(stdscr, '|', end='')
-    safe_write(stdscr, ' inPackets  ', end='', bold=(sortBy == 1))
+    safe_write(stdscr, '  inPackets   ', end='', bold=(sortBy == 1))
     safe_write(stdscr, '|', end='')
-    safe_write(stdscr, '  outBytes  ', end='', bold=(sortBy == 2))
+    safe_write(stdscr, '   outBytes   ', end='', bold=(sortBy == 2))
     safe_write(stdscr, '|', end='')
-    safe_write(stdscr, ' outPackets ', end='', bold=(sortBy == 3))
+    safe_write(stdscr, '  outPackets  ', end='', bold=(sortBy == 3))
     safe_write(stdscr, '|')
-    safe_write(stdscr, '+----+-----------------+------------+------------+------------+------------+')
+    safe_write(stdscr, '+----+-----------------+--------------+--------------+--------------+--------------+')
 
     tmpDict = {}
     for IP in IPs:
         tmpDict[IP] = (
-            
-            int(IPs[IP][0] * samplingRatio),
-            int(utils.safe_div(IPs[IP][0], IPs[IP][1]) * samplingRatio),
-            int(IPs[IP][2] * samplingRatio),
-            int(utils.safe_div(IPs[IP][2], IPs[IP][3]) * samplingRatio),
+            (round(IPs[IP][0] * samplingRatio), round(196 * math.sqrt(utils.safe_div(1, IPs[IP][1])))),
+            (round(IPs[IP][1] * samplingRatio), round(196 * math.sqrt(utils.safe_div(1, IPs[IP][1])))),
+            (round(IPs[IP][2] * samplingRatio), round(196 * math.sqrt(utils.safe_div(1, IPs[IP][3])))),
+            (round(IPs[IP][3] * samplingRatio), round(196 * math.sqrt(utils.safe_div(1, IPs[IP][3]))))
         )
     i = 0
     for w in sorted(tmpDict, key=lambda x: tmpDict[x][sortBy], reverse=True):
         if max_talkers == 0 or max_talkers > i:
             # the Top Talkers are shown with the error percentage
             safe_write(stdscr, 
-                "|{:^4}|{:<17}|{:^12}|{:^12}|{:^12}|{:^12}|".format(i+1, w, 
-                str(utils.prettify_bytes(tmpDict[w][0]) + ('±') + (str(round(196*(math.sqrt(1/samples))))) + ('%')), 
-                str(str(tmpDict[w][1]) + ('±') + (str(round(196*(math.sqrt(1/samples))))) + ('%') ), 
-                str(utils.prettify_bytes(tmpDict[w][2]) + ('±') + (str(round(196*(math.sqrt(1/samples))))) + ('%') ), 
-                str(str(tmpDict[w][3]) + ('±') + (str(round(196*(math.sqrt(1/samples))))) + ('%') ))
+                "|{:^4}|{:<17}|{:^14}|{:^14}|{:^14}|{:^14}|".format(i+1, w, 
+                    str(utils.prettify_bytes(tmpDict[w][0][0]) + ('±') + (str(tmpDict[w][0][1])) + ('%')), 
+                    str(str(tmpDict[w][1][0]) + ('±') + (str(tmpDict[w][1][1])) + ('%') ), 
+                    str(utils.prettify_bytes(tmpDict[w][2][0]) + ('±') + (str(tmpDict[w][2][1])) + ('%')), 
+                    str(str(tmpDict[w][3][0]) + ('±') + (str(tmpDict[w][3][1])) + ('%') )
+                )
             )
             i += 1
         else:
             break
-    safe_write(stdscr, '+----+-----------------+------------+------------+------------+------------+')
+    safe_write(stdscr, '+----+-----------------+--------------+--------------+--------------+--------------+')
     stdscr.refresh()
 
 

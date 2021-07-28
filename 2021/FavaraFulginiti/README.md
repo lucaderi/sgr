@@ -32,7 +32,7 @@ Durante la fase di analisi del pcap è stato riscontrato un pattern di comandi S
 compiuti per ogni singolo file che il ransomware ha alla fine cifrato.
 Da Wireshark è stato inserito il filtro "smb2" per poter visualizzare solamente i pacchetti di SMB (versione 2).
 
-![Pattern](pattern.png)
+![Pattern](images/pattern.png)
 
 Come si può vedere dall'immagine vengono eseguite numerose aperture e chiusure del file. Il comando create non serve infatti solo per creare un file, ma anche per aprire, sovrascrivere o sostituire. Per sapere il tipo di operazione richiesta dal pacchetto create è possibile controllare il campo "CreateDisposition" che può assumere diversi valori [(consultabili a questa pagina)](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/e8fb45c1-a03d-44ca-b7ae-47385cfd7997).
 
@@ -68,7 +68,7 @@ Lo script mostra su schermo, per ogni host, i contatori delle operazioni descrit
 
 Un esempio di output del plugin, applicato al pcap indicato sopra, è il seguente:
 
-![Output](output.png)
+![Output](images/output.png)
 
 
 ## Cosa manca

@@ -20,7 +20,7 @@ struct ndpi_cusum_struct {
     u_int32_t num_values;
     
     //values calculated for the next iterations
-    double last_forecast, last_mu, square_sigma;
+    double last_forecast, last_mu, square_sigma, mean;
 
     //indicates if the algorithm has started
     bool start_cusum;
@@ -31,8 +31,6 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, 
 int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast);
 
 double max(double a, double b);
-
-double mean(double *values, int size);
 
 int main() {
     struct ndpi_cusum_struct cusum;
@@ -72,7 +70,7 @@ int main() {
 
     int ret = ndpi_cusum_init(&cusum, alpha, beta, sigma, 3);
 
-    printf("Start Alghoritm\n");
+    printf("Start Algorithm\n");
 
     for (int i = 0; i < num; ++i) {
         double prediction, threshold = 1500;
@@ -106,6 +104,7 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, 
 
     cusum->num_values = 0;
     cusum->last_forecast = 0;
+    cusum->mean = 0;
 
     cusum->values_window = (double*)malloc(cusum->params.window_size * sizeof(double));
 
@@ -144,8 +143,12 @@ int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value
     //it checks if the algorithm has started or not
     if (!cusum->start_cusum) {
         if (cusum->num_values < cusum->params.window_size) { //algorithm not yet started
+            
             //adds value to the structure
             cusum->values_window[cusum->num_values] = value;
+
+            //adds value to the counter for the mean
+            cusum->mean += value;
 
             z = 0;
             cusum->num_values++;
@@ -157,11 +160,15 @@ int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value
 
             z = 0;
 
+            //it contains the sum of values in the structure
+            cusum->mean -= cusum->values_window[cusum->num_values % cusum->params.window_size];
+
             //adds value to the structure
             cusum->values_window[cusum->num_values % cusum->params.window_size] = value;
 
-            //last_mu = mean 
-            cusum->last_mu = mean(cusum->values_window, cusum->params.window_size);
+            //last_mu = mean
+            cusum->mean = (cusum->mean + value) / cusum->params.window_size;
+            cusum->last_mu = cusum->mean;
 
             cusum->num_values++;
             *forecast = max(cusum->last_forecast + z, 0);
@@ -171,10 +178,12 @@ int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value
         }
     } 
     else { //start algorithm
+        
+        mean_window = cusum->mean + ((value - cusum->values_window[cusum->num_values % cusum->params.window_size]) / cusum->params.window_size);
+        cusum->mean = mean_window;
 
         //adds value to the structure
         cusum->values_window[cusum->num_values % cusum->params.window_size] = value;
-        mean_window = mean(cusum->values_window, cusum->params.window_size);
 
         //it calculates mu = beta*mu_1 + (1-beta)*media
         mu = (cusum->params.beta * cusum->last_mu) + ((1 - cusum->params.beta) * mean_window);
@@ -183,10 +192,10 @@ int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value
 
         //it calculates z = (alfa*mu/sigma^2) * (value-mu_1-(alfa*mu/2))
         z = (alpha_mu / cusum->square_sigma) * (value - cusum->last_mu - (alpha_mu/2));
-        //printf("z = %f\n",z);
 
         *forecast = max(cusum->last_forecast + z, 0);
     
+        cusum->num_values++;
         cusum->last_mu = mu;
         cusum->last_forecast = *forecast;
 
@@ -200,14 +209,4 @@ double max (double a, double b) {
         return a;
     else
         return b;
-}
-
-//function to calculate the mean
-double mean (double *values, int size) {
-    double sum = 0;
-    for (int i = 0; i < size; i++) {
-        sum += values[i];
-    }
-
-    return sum/size;
 }

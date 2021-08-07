@@ -1,6 +1,9 @@
 -- Packets fields we need to use for this tool
 local f_ip_dst = Field.new("ip.dst")
 local f_ip_src = Field.new("ip.src")
+local f_ipv6_src = Field.new("ipv6.src")
+local f_ipv6_dst = Field.new("ipv6.dst")
+local f_ip_version = Field.new("ip.version")
 local f_tcp_dstport = Field.new("tcp.dstport")
 local f_tcp_srcport = Field.new("tcp.srcport")
 local f_smb2 = Field.new("smb2")
@@ -210,14 +213,31 @@ local function gr_tap()
     -- Function used to analyze a packet, it's called for each packet
     function tap.packet(pinfo, tvb)
         
-        local ip_dst = f_ip_dst()
-        local ip_src = f_ip_src()
-        local ip_dst_string = getstring(ip_dst)
-        local ip_src_string = getstring(ip_src)
         local tcp_dstport = f_tcp_dstport()
         local tcp_srcport = f_tcp_srcport()
         local smb2_cmd = { f_smb2_cmd() }
         local smb2 = f_smb2()
+
+        local ip_src = nil
+        local ip_dst = nil
+        local ip_src_string = nil
+        local ip_dst_string = nil
+
+        local ip_version = f_ip_version()
+        if ip_version ~= nil and ip_version.value == 4 then
+
+            ip_src = f_ip_src()
+            ip_dst = f_ip_dst()
+            ip_dst_string = getstring(ip_dst)
+            ip_src_string = getstring(ip_src)
+
+        elseif ip_version ~= nil and ip_version.value == 6 then
+
+            ip_src = f_ipv6_src()
+            ip_dst = f_ipv6_dst()
+            ip_dst_string = getstring(ip_dst)
+            ip_src_string = getstring(ip_src)
+        end
 
         local retrasmission = f_tcp_analysis_retransmission()
         

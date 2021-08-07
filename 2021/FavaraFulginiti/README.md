@@ -4,6 +4,7 @@
 
 Il progetto consiste nello sviluppo di un plugin per Wireshark scritto utilizzando
 il linguaggio Lua. Questo script si occupa di rilevare la presenza del cryptolocker
+
 Cryptoshield, andando ad analizzare i pacchetti di un pcap in cui ci sono host che utilizzano
 il protocollo SMB per la gestione dei file.
 Scansionado pacchetto per pacchetto, si occupa di raccogliere per ogni host,

@@ -240,7 +240,6 @@ local function gr_tap()
         end
 
         local retrasmission = f_tcp_analysis_retransmission()
-        
         if retrasmission then 
             return 
         end

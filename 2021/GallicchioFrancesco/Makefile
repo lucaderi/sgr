@@ -16,3 +16,4 @@ objects = ./roaring.o ./ip_dest_hash_table.o ./ip_dest.o
 
 cleanall:
 	rm $(objects) ./ip_dest
+	

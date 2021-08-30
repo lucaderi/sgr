@@ -8,7 +8,7 @@ u_int32_t hash_djb2(const char *str)
         long hash = 5381;
         int c;
 
-        while (c = *str++)
+        while ((c = *str++))
             hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
         return hash;
@@ -100,4 +100,9 @@ void hash_function(const char* key, u_int32_t depth, u_int32_t *a, u_int32_t *b 
 
        *a = a1%depth;
        *b = b1 % depth;   
+}
+
+
+u_int32_t hash_increment(u_int32_t depth, u_int32_t *a, u_int32_t *b, int i){
+  return(((*a^i + (*b)) )% depth);
 }

@@ -54,7 +54,7 @@ void add_min_count_sketch(cmsketch_t* table, char *str){
 
     hash_function(str,table->r, &a, &b);
     for(int i=0; i<table->c; i++){
-        hash = ((a*i + b) )% table->r;
+        hash = hash_increment(table->r, &a, &b, i); 
         table->t[hash][i]++; 
     }    
 }
@@ -68,7 +68,7 @@ u_int32_t read_count_min_sketch(cmsketch_t * table, char *str){
 
     hash_function(str, table->r, &a, &b);
     for(int i=0; i<table->c; i++){
-        hash = ((a*i + b) )% table->r;
+        hash = hash_increment(table->r, &a, &b, i); 
         if(table->t[hash][i] <min ) min =table->t[hash][i];
     }
     return min;
@@ -108,7 +108,7 @@ u_int32_t * riga_count_min_sketch(cmsketch_t* table, char* str){
    u_int32_t * aux = malloc(sizeof(u_int32_t)*table->c);
     hash_function(str,table->r, &a, &b);
     for(int i=0; i<table->c; i++){
-        hash = ((a*i + b) )% table->r;
+        hash = hash_increment(table->r, &a, &b, i); //hash
         aux[i]=table->t[hash][i]; 
     }
     return aux;

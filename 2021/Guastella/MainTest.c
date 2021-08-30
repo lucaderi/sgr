@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "lib/count_min_sketch.h"
-#include "lib/fun_hash.h"
 
 #define RIGHE 101
 #define COLONNE 47
@@ -26,31 +25,32 @@
 }
 
 
-
-//include 
+u_int32_t errore;
 
 typedef struct {
     int *valore;        //c=colonne, p = profondità
     char **nome;
     int n,              //numero di stringhe target da controllare
         target;         //numero totale di stringhe lette
-
+    char * nome_test;
 } test_t;
 
 void check_value(test_t *test, cmsketch_t * table );
 void free_test(test_t *test);
-test_t* new_test_t(u_int32_t n, u_int32_t target);
+test_t* new_test_t(u_int32_t n, u_int32_t target, char* nome_test);
 void read_example_file(cmsketch_t* table, char* esempi);
 test_t* read_risultati_file(char* risultati);
 u_int32_t count_table(cmsketch_t * table );
 
 int main(int argc, char *argv[]){
+    errore = 0;
+    
     
     //***************************small_table*******************************************************************************************************
     cmsketch_t* small_table = new_count_min_sketch(SMALLR, SMALLC);
     read_example_file(small_table, SMALLES1);
-    test_t* small_test = read_risultati_file(SMALLRIS1);
-    check_value(small_test, small_table);
+    test_t* small_test = read_risultati_file(SMALLRIS1); //creazione struttura dati ausiliaria
+    check_value(small_test, small_table);                //controllo dei valori
 
     cmsketch_t* small_table2 = new_count_min_sketch(SMALLR, SMALLC);
     read_example_file(small_table2, SMALLES2);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
     read_example_file(table, ES1);
     test_t* test = read_risultati_file(RIS1);
    
-    if(argc!=1) print_table(table);
+    if(argc!=1) print_table(table); //argc viene usato come discriminante tra test1 e test2
     check_value(test, table);   
 
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
     read_example_file(table2, ES2);
     test_t* test2 = read_risultati_file(RIS2);
 
-    if(argc!=1) print_table(table2);
+    if(argc!=1) print_table(table2);//argc viene usato come discriminante tra test1 e test2
     check_value(test2, table2);
 
    //**************SUM,CLONE************************************************************************************************************************
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
 
     cmsketch_t* sum_table;
     if((sum_table = sum_count_min_sketch(table, table2))!=NULL){
-         if(argc!=1) print_table(sum_table);
+         if(argc!=1) print_table(sum_table);//argc viene usato come discriminante tra test1 e test2
     }
     cmsketch_t* table_clone = clone_count_min_sketch(sum_table);
     if(argc!=1) print_table(table_clone);
@@ -106,6 +106,10 @@ int main(int argc, char *argv[]){
     free_test(test2);
     free_test(small_test);
     
+    if(errore==0){printf("Nessun errore riscontrato \n");
+        }else{
+            printf("%d errori riscontrati \n", errore);
+        }
 
 
 }
@@ -127,7 +131,8 @@ void read_example_file(cmsketch_t* table, char* esempi){
 }
 
 
-//Legge un file di risultato, che contiene il numero di volte che è stata inserita una determinata stringa
+/*Legge un file di risultato, che contiene il numero di volte che è stata inserita una determinata stringa,
+  ritorna una struttura dati test_t che contiene i valori del file*/
 test_t* read_risultati_file( char* risultati){
     //apertura file
     test_t* test;
@@ -143,7 +148,7 @@ test_t* read_risultati_file( char* risultati){
     CHECK_EQ(fgets(s, BUF_FGETS, ifp),NULL, "fgets"); 
     n = atoi(s);
 
-    test= new_test_t(n, target);
+    test= new_test_t(n, target, risultati);
 
 
     for(i=0 ; i<test->target ; i++){
@@ -161,13 +166,15 @@ test_t* read_risultati_file( char* risultati){
 }
 
 //struttura dati di supporto per eseguire il Test
-test_t* new_test_t(u_int32_t n, u_int32_t target){
+test_t* new_test_t(u_int32_t n, u_int32_t target, char* nome_test){
     test_t* test;
     test = malloc(sizeof(test_t));
     test->valore = malloc(sizeof(int)*target);
     test->nome = malloc(sizeof(char*)*target);
+    //test->nome_test = malloc(sizeof(char)*BUF_FGETS);
     test->n =n;
     test->target = target;
+    test->nome_test = nome_test;
     return test;
 }
 void free_test(test_t *test){
@@ -176,22 +183,26 @@ void free_test(test_t *test){
     }
     free(test->valore);
     free(test->nome);
+   // free(test->nome_test);
     free(test);
 
 }
-//controlla che i valori della riga della tabella non siano minori alla stima
+
+
+//controlla che i valori della riga della tabella non siano minori del numero effettivo di inserimenti
 void check_value(test_t *test, cmsketch_t * table ){
     
     for(int i = 0 ; i< test->target; i++){        
-        int * aux =riga_count_min_sketch( table, test->nome[i]);
+        u_int32_t * aux =riga_count_min_sketch( table, test->nome[i]);
         for(int j =0 ; j<table->c; j++){
-                if(test->valore[i]>aux[j]) printf("errore  %s \n", test->nome[i]);
+                if(test->valore[i]>aux[j]){ printf("errore in %s : per stringa %s \n",test->nome_test, test->nome[i]); errore++;}
         }
         free(aux);
     }
-    if(count_table(table)/table->c != test->n) printf("errore : il numero di elementi non combacia  cardinalità : %d check : %d  \n ", test->n, count_table(table)/table->c);
+    if(count_table(table)/table->c != test->n) {printf("errore : il numero di elementi non combacia  cardinalità : %d check : %d  \n ", test->n, count_table(table)/table->c);errore++;}
 }
 
+//Esegue la somma di tutti le righe e le colonne del Count Min Sketch
 u_int32_t count_table(cmsketch_t * table ){
      u_int32_t c_tabella = 0;
         for(int i = 0 ; i< table->r; i++){        

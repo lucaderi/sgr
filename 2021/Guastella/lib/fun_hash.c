@@ -3,17 +3,6 @@
 #include <limits.h>
 #include "count_min_sketch.h"
 
-u_int32_t hash_djb2(const char *str)
-    {
-        long hash = 5381;
-        int c;
-
-        while ((c = *str++))
-            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-        return hash;
-    }
-
  unsigned long  hash_fnv_1a(const char* key) {
     
     int i, len = strlen(key);

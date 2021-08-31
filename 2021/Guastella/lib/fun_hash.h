@@ -1,3 +1,6 @@
+/*file that contain the hash function for the file count_min:sketch.c
+  */
+
 #include <stdlib.h>
 /*
     @brief : from k take the corresponding hash value (of two different hash function), applicate the modulo operation and put it in a and b

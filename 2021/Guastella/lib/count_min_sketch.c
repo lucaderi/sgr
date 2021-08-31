@@ -4,8 +4,6 @@
 #include "count_min_sketch.h"
 #include "fun_hash.h"
 
-
-
 #include <stdio.h>
 
 /*
@@ -22,13 +20,13 @@ void print_table(cmsketch_t* table){
          printf("\n");
     }
     printf("\n");
-        printf("\n");
+    printf("\n");
 }
 
 
 /*
-  @brief   : create a new data struct with r rowa and c columns
-  @param   : r  = row of the matrix of the new cmsketch_t
+  @brief   : create a new data struct with r row and c columns
+  @param   : r  = row of the matrix of new cmsketch_t
   @param   : c  = columns of the matrix
   @return  : new cmsketch_t
   */

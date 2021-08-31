@@ -7,7 +7,7 @@
 
 
 u_int32_t errore;
-
+/*struttura dati utilizzata per eseguire il test*/
 typedef struct {
     int *valore;        //c=colonne, p = profondità
     char **nome;
@@ -96,9 +96,10 @@ int main(int argc, char *argv[]){
         }else{
             printf("%d errori riscontrati \n", errore);
         }
-
-
 }
+
+
+
 //Legge un File di esempio e riempe un Count Min Sketch 
 void read_example_file(cmsketch_t* table, char* esempi){
     char *aux = malloc(sizeof(char)*BUF_FGETS);
@@ -157,7 +158,6 @@ test_t* new_test_t(u_int32_t n, u_int32_t target, char* nome_test){
     test = malloc(sizeof(test_t));
     test->valore = malloc(sizeof(int)*target);
     test->nome = malloc(sizeof(char*)*target);
-    //test->nome_test = malloc(sizeof(char)*BUF_FGETS);
     test->n =n;
     test->target = target;
     test->nome_test = nome_test;
@@ -169,7 +169,6 @@ void free_test(test_t *test){
     }
     free(test->valore);
     free(test->nome);
-   // free(test->nome_test);
     free(test);
 
 }

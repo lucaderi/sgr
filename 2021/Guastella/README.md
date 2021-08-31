@@ -32,8 +32,7 @@ atteso nella struttura dati per determinate stringhe.
  Utilizzare il comando **make** per la compilazione.
  I comandi **make cleanall**,  **make test1** e **make test2** permettono rispettivamente di eliminare tutti i file prodotti dalla compilazione e di eseguire i test. I due test sono identici, il secondo stampa sul terminale tutte le strutture dati create.
  
- ## TEST
- Il test può essere eseguito con il comando **make test**.
+## TEST
  
  I file presenti nella cartella di Test sono 7, 3 coppie di esempio/risultato e un settimo file di esempio utilizzato per controllare la funzione sum_count_min_sketch.
  

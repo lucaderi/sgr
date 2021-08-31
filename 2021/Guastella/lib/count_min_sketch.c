@@ -7,7 +7,8 @@
 
 
 #include <stdio.h>
-//stampa la matrice 
+/*prende come parametro un cmsketch_t
+  e stampa i valori di associati alla matrice del cmsketch_t passato*/
 void print_table(cmsketch_t* table){
     if(table == NULL) return ;
     printf("\n");
@@ -22,7 +23,7 @@ void print_table(cmsketch_t* table){
 }
 
 
-//Crea una nuova struttura dati
+//Crea una nuova struttura dati con r riche e c colonne
 //r = righe   c = colonne
 cmsketch_t* new_count_min_sketch(u_int32_t r, u_int32_t c){
     cmsketch_t* table;
@@ -37,7 +38,7 @@ cmsketch_t* new_count_min_sketch(u_int32_t r, u_int32_t c){
     return table;
 }
 
-//libera la memoria
+//libera la memoria puntata da table
 void free_count_min_sketch(cmsketch_t* table){
     if(table == NULL) return ;
     for(int i = 0; i<table->r; i++){
@@ -59,7 +60,7 @@ void add_min_count_sketch(cmsketch_t* table, char *str){
     }    
 }
 
-//legge la stima del valore
+//legge la stima del valore associato a *str in table
 u_int32_t read_count_min_sketch(cmsketch_t * table, char *str){
 
     if(table == NULL || str==NULL) return -1 ;
@@ -74,7 +75,7 @@ u_int32_t read_count_min_sketch(cmsketch_t * table, char *str){
     return min;
 }
 
-//Somma la seconda tabella nella Prima
+//crea un nuovo cmsketch_t che ha come valori, la somma delle matrici di table1 e table2
 cmsketch_t* sum_count_min_sketch(cmsketch_t * table1, cmsketch_t * table2){
     if(table1->c == table2->c && table1->r==table2->r){
         int i,j;
@@ -101,7 +102,7 @@ cmsketch_t* clone_count_min_sketch(cmsketch_t * table){
         return clone;
 }
 
-//i valori associati alla stringa per ogni colonna
+//restituisce i valori associati alla stringa per ogni colonna
 u_int32_t * riga_count_min_sketch(cmsketch_t* table, char* str){
     if(table == NULL || str==NULL) return NULL;
    u_int32_t a, b,hash;

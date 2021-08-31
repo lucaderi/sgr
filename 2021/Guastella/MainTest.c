@@ -3,26 +3,7 @@
 #include <stdlib.h>
 
 #include "lib/count_min_sketch.h"
-
-#define RIGHE 101
-#define COLONNE 47
-#define SMALLR 5
-#define SMALLC 3
-#define SMALLES1 "./Test/small_es_1.txt"
-#define SMALLRIS1 "./Test/small_ris_1.txt"
-#define SMALLES2 "./Test/small_es_2.txt"
-#define ES1 "./Test/es_primo.txt"
-#define RIS1 "./Test/ris_primo.txt"
-#define ES2 "./Test/es_secondo.txt"
-#define RIS2 "./Test/ris_secondo.txt"
-#define BUF_FGETS 60
-
-#define CHECK_EQ(x, val,str)\
-    if((x) == val){\
-          perror(str); \
-         fprintf(stderr,"Error at line %d of file %s\n", __LINE__, __FILE__);\
-         exit(EXIT_FAILURE);\
-}
+#include "generale.h"
 
 
 u_int32_t errore;
@@ -41,6 +22,11 @@ test_t* new_test_t(u_int32_t n, u_int32_t target, char* nome_test);
 void read_example_file(cmsketch_t* table, char* esempi);
 test_t* read_risultati_file(char* risultati);
 u_int32_t count_table(cmsketch_t * table );
+
+
+
+
+//*********************MAIN*********************************************************
 
 int main(int argc, char *argv[]){
     errore = 0;

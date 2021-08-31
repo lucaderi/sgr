@@ -1,10 +1,7 @@
-/*struttura dati */
-//
-
 
 typedef struct {
-    u_int32_t c, r;        //c=colonne, p = profondità
-    u_int32_t **t;
+    u_int32_t c, r;        //c=columns, r= row
+    u_int32_t **t;         //matrix
 } cmsketch_t;
 
 cmsketch_t* new_count_min_sketch(u_int32_t c, u_int32_t r);
@@ -16,5 +13,4 @@ cmsketch_t* clone_count_min_sketch(cmsketch_t * table);
 u_int32_t * riga_count_min_sketch(cmsketch_t* table, char* str);
 
 
-//CANCELLARE
 void print_table(cmsketch_t* table);

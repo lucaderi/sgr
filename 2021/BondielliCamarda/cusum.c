@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 
 //structure that contains parameters for the algorithm
 struct ndpi_cusum_struct {
@@ -20,7 +21,7 @@ struct ndpi_cusum_struct {
     u_int32_t num_values;
     
     //values calculated for the next iterations
-    double last_forecast, last_mu, square_sigma, mean;
+    double last_forecast, last_mu, last_deviation, square_sigma, mean;
 
     //indicates if the algorithm has started
     bool start_cusum;
@@ -28,7 +29,7 @@ struct ndpi_cusum_struct {
 
 int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, double sigma, int window_size);
 
-int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast);
+int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast, double *confidence_band);
 
 double max(double a, double b);
 
@@ -66,20 +67,20 @@ int main() {
     };
 
     int i, num = sizeof(v) / sizeof(double);
-    double alpha = 0.5, sigma = 10, beta = 0.95;
+    double alpha = 0.5, sigma = 2, beta = 0.95, gamma = 1.0;
 
     int ret = ndpi_cusum_init(&cusum, alpha, beta, sigma, 3);
 
     printf("Start Algorithm\n");
 
     for (int i = 0; i < num; ++i) {
-        double prediction, threshold = 1500;
-        int rc = ndpi_cusum_add_value(&cusum, v[i], &prediction);
+        double prediction;
+        double lower, upper, confidence_band;
+        int rc = ndpi_cusum_add_value(&cusum, v[i], &prediction, &confidence_band);
 
-        //it checks if the prediction computed goes beyond a given fixed threshold
-        if (prediction > threshold) printf("Attention: anomaly detected.\n");
+        lower = prediction - (gamma * confidence_band), upper = prediction + (gamma * confidence_band);
 
-        printf("%2u)\t%12.3f\t%.3f\n",i, v[i], prediction);
+        printf("%2u)\t%12.3f\t%.3f\t%12.3f\t%12.3f\t%.3f\n", i, v[i], prediction, lower, upper, confidence_band);
     }
 
     return 0;
@@ -105,6 +106,7 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, 
     cusum->num_values = 0;
     cusum->last_forecast = 0;
     cusum->mean = 0;
+    cusum->last_deviation = 0;
 
     cusum->values_window = (double*)malloc(cusum->params.window_size * sizeof(double));
 
@@ -127,13 +129,14 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, 
    
    Output:
     forecast         The forecasted value
+    confidence_band  The value +/- on which the value should fall is not an anomaly
    
    Return code:
     0                Too early: we don't have enough values. Output values are zero.
     1                Normal processing: forecast is meaningful
 */
 
-int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast) {
+int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast, double *confidence_band) {
     double value = (double)_value;
     double z;
     double mean_window;
@@ -199,14 +202,16 @@ int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value
         cusum->last_mu = mu;
         cusum->last_forecast = *forecast;
 
+        //it calculates deviation = sigma * abs(value-forecast) + (1-sigma) * deviation_1
+        cusum->last_deviation = (cusum->params.sigma * fabs(value - *forecast)) + ((1 - cusum->params.sigma) * cusum->last_deviation);
+        *confidence_band = cusum->last_deviation;   
+
         return 1;
     }
 }
 
 //function to calculate the maximum
 double max (double a, double b) {
-    if ( a > b)
-        return a;
-    else
-        return b;
+    if ( a > b) return a;
+    else return b;
 }

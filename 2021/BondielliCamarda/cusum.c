@@ -73,6 +73,8 @@ int main() {
 
     printf("Start Algorithm\n");
 
+    printf("%s)\t%s\t%s\t%s\t%s\t%s\n", "id", "value", "prediction", "lowee", "upper","confidence");
+	   
     for (int i = 0; i < num; ++i) {
         double prediction;
         double lower, upper, confidence_band;
@@ -80,7 +82,9 @@ int main() {
 
         lower = prediction - (gamma * confidence_band), upper = prediction + (gamma * confidence_band);
 
-        printf("%2u)\t%12.3f\t%.3f\t%12.3f\t%12.3f\t%.3f\n", i, v[i], prediction, lower, upper, confidence_band);
+        printf("%2u)\t%12.3f\t%.3f\t%12.3f\t%12.3f\t%.3f\t%s\n", i,
+	       v[i], prediction, lower, upper, confidence_band,
+	       (confidence_band && ((v[i] > upper) || (v[i] < lower))) ? "ANOMALY" : "");
     }
 
     return 0;

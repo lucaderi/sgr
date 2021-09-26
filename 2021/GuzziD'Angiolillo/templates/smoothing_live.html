@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smoothing</title>
+    <script>
+        function startTimer(duration, display) {
+            var timer = duration, minutes, seconds;
+            setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    timer = duration;
+                }
+            }, 1000);
+        }
+
+        function call() {
+            var fiveMinutes = 30;
+            display = document.querySelector('#time');
+            startTimer(fiveMinutes, display);
+            let metric = document.getElementById("metric_selected").getAttribute('data-value');
+            let alfa = document.getElementById("alfa_selected").getAttribute('data-value');
+            let correct = document.getElementById("correct").getAttribute('data-value');
+            let number_capture = document.getElementById("number_capture").getAttribute('data-value');
+            let smoothing = document.getElementById("smoothing").getAttribute('data-value');
+            if(parseInt(number_capture) < 2)alert("Numero di catture troppo basso, attendere qualche secondo.")
+            if(correct != "True")alert("Previsione non corretta")
+            if(smoothing == "Single"){
+                setTimeout(function(){ window.location.href = "http://localhost:5000/single_smoothing?alfa=" + alfa + "&metric=" + metric}, 30000);
+            }else{
+                let beta = document.getElementById("beta_selected").getAttribute('data-value');
+                setTimeout(function(){ window.location.href = "http://localhost:5000/double_smoothing?alfa=" + alfa + "&metric=" + metric + "&beta=" + beta}, 30000);
+            }
+
+
+        }
+        function call_single_smoothing(){
+            let alfa = document.getElementById("alfa_single").value;
+            alfa = parseFloat(alfa);
+            if(isNaN(alfa)){
+                alert("Single Smoothing: alfa can't be a letter");
+            } else if(alfa <= 0 || alfa >= 1){
+                alert("Single Smoothing: alfa must be between 0 and 1");
+            }else{
+                let metric = document.getElementById("metric").value;
+                window.location.href = "http://localhost:5000/single_smoothing?alfa=" + alfa + "&metric=" + metric;
+            }
+        }
+
+        function call_double_smoothing(){
+            let alfa = document.getElementById("alfa_double").value;
+            let beta = document.getElementById("beta").value;
+            alfa = parseFloat(alfa);
+            beta = parseFloat(beta);
+            if(isNaN(alfa) || isNaN(beta)){
+                alert("Double Smoothing: alfa and beta can't be a letter");
+            } else if(alfa <= 0 || alfa >= 1 || beta <= 0 || beta >= 1){
+                alert("Double Smoothing: alfa and betamust be between 0 and 1");
+            }else{
+                let metric = document.getElementById("metric").value;
+                window.location.href = "http://localhost:5000/double_smoothing?alfa=" + alfa + "&beta=" + beta + "&metric=" + metric;
+            }
+        }
+
+        function back_to_welcome(){
+            window.location.href = "http://localhost:5000/smoothing";
+        }
+    </script>
+</head>
+<body style="text-align: center" onload="call()">
+    <h1>{{ smoothing }} Smoothing</h1>
+<h3>Metric: {{ metric }} | Alfa: {{ alfa }} | Beta: {{ beta }}</h3>
+    <div>Next update in <span id="time">00:30</span> minutes!</div>
+{% if plot != None %}
+    <img src="data:image/png;base64,{{ plot }}">
+{% endif %}
+<br>
+<button onclick="back_to_welcome()">Back to previus Page</button>
+<div id="metric_selected" data-value="{{ metric }}"></div>
+<div id="alfa_selected" data-value="{{ alfa }}"></div>
+<div id="beta_selected" data-value="{{ beta }}"></div>
+<div id="correct" data-value="{{ correct }}"></div>
+<div id="number_capture" data-value="{{ number_capture }}"></div>
+<div id="smoothing" data-value="{{ smoothing }}"></div>
+
+</body>
+</html>

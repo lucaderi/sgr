@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smoothing</title>
+    <script type="text/javascript">
+        function button_send_click(){
+            let selection = document.getElementById("selection").value;
+            if(selection == "JSON"){
+                let file_name = document.getElementById("file_name").value;
+                window.location.href = "http://localhost:5000/smoothing?selection=JSON&file_name=" + file_name;
+            }else{
+                window.location.href = "http://localhost:5000/smoothing?selection=Prometheus";
+            }
+        }
+    </script>
+</head>
+<body style="text-align: center;">
+    <br><br>
+    <h1>Smoothing</h1> <br>
+    <h3>Select Input:</h3><br>
+    <select name="selection" id="selection">
+        <option value="JSON">JSON</option>
+        <option selected="true" value="Prometheus">Prometheus</option>
+    </select> <br>
+    <h3>File Name (JSON selection):</h3> <br>
+    <input id="file_name" type="text"> <br>
+    <br><button type="button" onclick="button_send_click()">Send</button>
+
+
+</body>
+</html>

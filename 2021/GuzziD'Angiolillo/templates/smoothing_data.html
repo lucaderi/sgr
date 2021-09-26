@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smoothing</title>
+    <script>
+        function call_single_smoothing(){
+            let alfa = document.getElementById("alfa_single").value;
+            alfa = parseFloat(alfa);
+            if(isNaN(alfa)){
+                alert("Single Smoothing: alfa can't be a letter");
+            } else if(alfa <= 0 || alfa >= 1){
+                alert("Single Smoothing: alfa must be between 0 and 1");
+            }else{
+                let metric = document.getElementById("metric").value;
+                window.location.href = "http://localhost:5000/single_smoothing?alfa=" + alfa + "&metric=" + metric;
+            }
+        }
+
+        function call_double_smoothing(){
+            let alfa = document.getElementById("alfa_double").value;
+            let beta = document.getElementById("beta").value;
+            alfa = parseFloat(alfa);
+            beta = parseFloat(beta);
+            if(isNaN(alfa) || isNaN(beta)){
+                alert("Double Smoothing: alfa and beta can't be a letter");
+            } else if(alfa <= 0 || alfa >= 1 || beta <= 0 || beta >= 1){
+                alert("Double Smoothing: alfa and betamust be between 0 and 1");
+            }else{
+                let metric = document.getElementById("metric").value;
+                window.location.href = "http://localhost:5000/double_smoothing?alfa=" + alfa + "&beta=" + beta + "&metric=" + metric;
+            }
+        }
+
+        function back_to_welcome(){
+            window.location.href = "http://localhost:5000/";
+        }
+    </script>
+</head>
+<body style="text-align: center">
+<h2>Smoothing</h2>
+Metric: <select id="metric" name="metric">
+    {% for metric in metrics %}
+        <option value="{{metric}}">{{metric}}</option>"
+    {% endfor %}
+</select><hr>
+<h3> Single Smoothing </h3>
+<label>alfa: </label><input id="alfa_single" type="text"> <br>
+<br><button onclick="call_single_smoothing()">Single Smoothing</button><hr>
+<h3> Double Smoothing </h3>
+<label>alfa: </label><input id="alfa_double" type="text"> <br>
+<br><label>beta: </label><input id="beta" type="text"> <br>
+<br><button onclick="call_double_smoothing()">Double Smoothing</button><hr>
+{% if plot != None %}
+    <img src="data:image/png;base64,{{ plot }}">
+    <h5>{{ SSE }}</h5>
+{% endif %}
+<button onclick="back_to_welcome()">Back to Welcome Page</button>
+</body>
+</html>

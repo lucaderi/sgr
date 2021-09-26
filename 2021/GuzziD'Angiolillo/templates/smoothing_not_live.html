@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smoothing</title>
+    <script>
+        function back_to_welcome(){
+            let file_name = document.getElementById("file_name").getAttribute('data-value');
+            window.location.href = "http://localhost:5000/smoothing?selection=JSON&file_name=" + file_name;
+        }
+    </script>
+</head>
+<body style="text-align: center">
+    <h1>{{ smoothing }} Smoothing</h1>
+<h3>Metric: {{ metric }} | Alfa: {{ alfa }} | Beta: {{ beta }}</h3>
+{% if plot != None %}
+    <img src="data:image/png;base64,{{ plot }}">
+{% endif %}
+<br>
+<button onclick="back_to_welcome()">Back to previus Page</button>
+<div id="metric_selected" data-value="{{ metric }}"></div>
+<div id="alfa_selected" data-value="{{ alfa }}"></div>
+<div id="beta_selected" data-value="{{ beta }}"></div>
+<div id="smoothing" data-value="{{ smoothing }}"></div>
+<div id="file_name" data-value="{{ file_name }}"></div>
+</body>
+</html>

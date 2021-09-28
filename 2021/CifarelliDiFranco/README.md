@@ -4,7 +4,7 @@ A short and simple software to analyze incorrect DNS responses developed by Marc
 ## Preview
 This software mainly makes use of Tshark's ring buffer capture, pyshark's (which also is Tshark but is its python wrapper) file capture and TICK stack (Telegraf, Influx, Chronograf and Kapacitor) without Telegraf. Chronograf is the general manager of the stack and can be used after its activaton at localhost on port 8888: from now on connecting Kapacitor and Influx to Chronograf will be guided by the web page. Every part of the stack can be found easily at https://docs.influxdata.com/platform/install-and-deploy/install/oss-install/.
 
-## Software functioning
+## Software operation
 As soon as the software starts, Tshark is run as a subprocess (making use of python.subprocess.Popen so that the main process doesn't have to wait its termination), with a ring buffer (Tshark's ring buffer functioning can be found at https://www.wireshark.org/docs/man-pages/tshark.html) and its pid is taken and saved for later purposes. It will continuously capture incoming traffic related to the subnet identified by the IP that's over the specified network interface and will put a .pcap file into the _livecap_ directory every 10 seconds.
 After Tshark's start, the main function will start checking _livecap_ directory's length until it is at least equal to 2 at which time it can start to extract a file in a lexicographical order every 10 seconds, analyze it with a pyshark file capture and transfer DNS relevant informations reported in the .pcap into a data structure which will be written in the influx database immediately after.  
 The data structure has this format:  

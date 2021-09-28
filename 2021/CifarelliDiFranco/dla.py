@@ -79,7 +79,6 @@ def analysis_1(influx_client, shutdown_thread): #if flag -r is set
             shutil.move(fpath, utils.PCAP_PATH+"/"+f)
             capture.clear()
             time_2 = time.monotonic()
-            #print(time_2 - time_1)
             time.sleep(10.0 - (time_2 - time_1))
 
 def analysis_2(influx_client, shutdown_thread): #if flag -r is not set
@@ -97,12 +96,10 @@ def analysis_2(influx_client, shutdown_thread): #if flag -r is not set
             os.remove(fpath)
             capture.clear()
             time_2 = time.monotonic()
-            #print(time_2 - time_1)
             time.sleep(10.0 - (time_2 - time_1))
 
 def influx_write(influx_client, threshold, alert):  #scrittura in influx
     timestamp = datetime.datetime.now()
-    #(threshold, nrec) = utils.get_threshold(influx_client, len(IP_resps.keys()))
     for key in IP_resps.keys():
         if not alert: body = utils.define_point_body(timestamp, 0, key, threshold, IP_resps[key])
         else:

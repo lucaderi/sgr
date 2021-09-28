@@ -105,7 +105,6 @@ def analysis_2(influx_client, shutdown_thread): #if flag -r is not set
 
 def influx_write(influx_client, threshold, alert):
     timestamp = datetime.datetime.now()
-    #(threshold, nrec) = utils.get_threshold(influx_client, len(IP_resps.keys()))
     for key in IP_resps.keys():
         if not alert: body = utils.define_point_body(timestamp, 0, key, threshold, IP_resps[key])
         else:
@@ -117,7 +116,7 @@ def influx_write(influx_client, threshold, alert):
 def process_packet(packet):
     IP_respskeys = IP_resps.keys()
     curr_ip = str(packet.ip.dst)
-    if int(packet.dns.flags_rcode) != 0:
+    if int(packet.dns.flags_rcode) != 0:    #le risposte DNS vengono classificate come errori se il codice di risposta è diverso da 0
         if curr_ip not in IP_respskeys: IP_resps[curr_ip] = 1
         else: IP_resps[curr_ip] = IP_resps[curr_ip] + 1
     else:

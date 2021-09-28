@@ -27,33 +27,30 @@ def shutdown(snifferpid):
         else: continue
 
 def main():
-    if not os.path.isdir(utils.PCAP_PATH): os.mkdir(utils.PCAP_PATH)
+    if not os.path.isdir(utils.PCAP_PATH): os.mkdir(utils.PCAP_PATH)    #directory utili al programma
     if not os.path.isdir(utils.LIVECAPTURE_PATH): os.mkdir(utils.LIVECAPTURE_PATH)
     if not os.path.isdir(utils.MERGED_PATH): os.mkdir(utils.MERGED_PATH)
     if not os.path.isdir(utils.OUTPUT_PATH): os.mkdir(utils.OUTPUT_PATH)
     if not os.path.isdir(utils.DEBUG_PATH): os.mkdir(utils.DEBUG_PATH)
 
-    if args.postanalysis and not args.report:
+    if args.postanalysis and not args.report:   #una post analisi si può fare solo se esiste un report
         print("it's not possible to do a post analysis without creating a report (flag -pa set but flag -r not set)")
         return
 
-    influx_client = InfluxDBClient(username="students", password="gr21", database="progettogr")
+    influx_client = InfluxDBClient(username=args.username, password=args.password, database="progettogr")
 
-    ipv4, subnet = utils.get_net_info(args.interface)
-    print("sniffing on "+args.interface+" (IPv4 = "+ipv4+", subnet = "+subnet+")")
-
-    if not args.ignore:
-        print("WARNING: -ign (--ignore) flag is not set: dns traffic addressed to this machine will be counted and may cause significant slowdowns during Tshark analysis")
-        with open(utils.DEBUG_PATH+"/dcaperr.txt", "w") as dcaperr: proc = subprocess.Popen(["tshark", "-i"+args.interface, "-fudp port 53 and dst net "+subnet, "-bduration:10", "-w"+utils.LIVECAPTURE_PATH+"/dcapout.pcapng"], stderr=dcaperr)
+    print("sniffing on "+args.interface+" (IPv4 = "+args.myip+", subnet = "+args.subnet+")")
+    if args.subnet: #se viene specificata la subnet il programma cattura solo il traffico diretto verso essa
+        with open(utils.DEBUG_PATH+"/dcaperr.txt", "w") as dcaperr: proc = subprocess.Popen(["tshark", "-i"+args.interface, "-fudp port 53 and dst net "+args.subnet, "-bduration:10", "-w"+utils.LIVECAPTURE_PATH+"/dcapout.pcapng"], stderr=dcaperr)
     else:
-        with open(utils.DEBUG_PATH+"/dcaperr.txt", "w") as dcaperr: proc = subprocess.Popen(["tshark", "-i"+args.interface, "-fudp port 53 and dst net "+subnet+" and not dst "+ipv4, "-bduration:10", "-w"+utils.LIVECAPTURE_PATH+"/dcapcallout.pcapng"], stderr=dcaperr)
+        with open(utils.DEBUG_PATH+"/dcaperr.txt", "w") as dcaperr: proc = subprocess.Popen(["tshark", "-i"+args.interface, "-fudp port 53", "-bduration:10", "-w"+utils.LIVECAPTURE_PATH+"/dcapout.pcapng"], stderr=dcaperr)
     snifferpid = proc.pid
 
-    shutdown_thread = threading.Thread(target=shutdown, args=(snifferpid, ))
+    shutdown_thread = threading.Thread(target=shutdown, args=(snifferpid, ))    #thread che come unico scopo ha la creazione di una terminazione gentile
     shutdown_thread.start()
 
     try: 
-        if args.report: analysis_1(influx_client, shutdown_thread)
+        if args.report: analysis_1(influx_client, shutdown_thread)  #se si è scelto di fare il report il codice è leggermente diverso ma non si voleva usare un costrutto IF per ogni pacchetto, quindi, è stata creata una funzione diversa
         else: analysis_2(influx_client, shutdown_thread)
     except Exception:
         traceback.print_exc()
@@ -103,8 +100,9 @@ def analysis_2(influx_client, shutdown_thread): #if flag -r is not set
             #print(time_2 - time_1)
             time.sleep(10.0 - (time_2 - time_1))
 
-def influx_write(influx_client, threshold, alert):
+def influx_write(influx_client, threshold, alert):  #scrittura in influx
     timestamp = datetime.datetime.now()
+    #(threshold, nrec) = utils.get_threshold(influx_client, len(IP_resps.keys()))
     for key in IP_resps.keys():
         if not alert: body = utils.define_point_body(timestamp, 0, key, threshold, IP_resps[key])
         else:
@@ -116,7 +114,7 @@ def influx_write(influx_client, threshold, alert):
 def process_packet(packet):
     IP_respskeys = IP_resps.keys()
     curr_ip = str(packet.ip.dst)
-    if int(packet.dns.flags_rcode) != 0:    #le risposte DNS vengono classificate come errori se il codice di risposta è diverso da 0
+    if int(packet.dns.flags_rcode) != 0:    #vengono flaggati come errati tutti i pacchetti di risposta con un rcode diverso da 0 (come specificato da DNS, quelli sono a tutti gli effetti errori)
         if curr_ip not in IP_respskeys: IP_resps[curr_ip] = 1
         else: IP_resps[curr_ip] = IP_resps[curr_ip] + 1
     else:
@@ -142,7 +140,7 @@ def clear():
     pcapdir = os.listdir(utils.PCAP_PATH)
     for f in pcapdir: os.remove(utils.PCAP_PATH+"/"+f)    
 
-def insert_values(sample):
+def insert_values(sample):  #questa funzione effettua una media pesata movente sugli ultimi sample(parametro del programma)*#IP. In pratica si contano gli ultimi #sample valori di ogni IP rilevato sul canale.
     global values
 
     for key in IP_resps.keys():
@@ -157,15 +155,16 @@ def insert_values(sample):
 def get_threshold(sample):
     global values
 
-    alert = False
+    alert = False   #alert è una variabile che specifica se inviare l'alert ha senso o no. ATTENZIONE: NON È LA VARIABILE CHE GESTISCE L'ALLARME, QUELLO VIENE GESTITO DINAMICAMENTE DA UNA MEDIA PESATA MOVENTE
     list = []
     for key in values: list = list + values[key][1:]
     print(list)
     if len(list) > 0:
         mean = numpy.round(numpy.mean(list), 3)
         stddev = numpy.round(numpy.std(list, ddof=1), 3)
-        if len(list) == sample*len(IP_resps.keys()): alert = True #alert viene settato a True se la lunghezza della lista dei valori facenti parte della media pesata è sufficientemente grande
-        return float(mean + stddev), alert                        #(e.g. se il sample vale 5 e si hanno 2 IP, la lista deve essere lunga almeno 10 prima di calcolare la media) 
+        #l'allarme viene settato a true solo nel caso in cui 
+        if len(list) == sample*len(IP_resps.keys()): alert = True  #alert viene settato a True se ha senso inviare un alert ovvero nel caso in cui la media movente pesata è stata effettuata su una cardinalità di valori pari al sample moltiplicato per quanti sono gli IP.
+        return float(mean + stddev), alert                         #esempio senza questo controllo con sample = 5 e 2 IPv4 rilevati: si necessitano almeno 10 valori nella media pesata per poter mandare un alert a seguito di calcoli sensati. Se non vi è questo controllo, l'alert può essere mandato anche senza la presenza di 10 valori ma a questo punto l'alert sarebbe fasullo per quanto specificato dall'utente nel sample.
     else: return 0.0, False
 
 if __name__ == "__main__":

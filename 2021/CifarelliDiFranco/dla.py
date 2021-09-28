@@ -165,8 +165,8 @@ def get_threshold(sample):
     if len(list) > 0:
         mean = numpy.round(numpy.mean(list), 3)
         stddev = numpy.round(numpy.std(list, ddof=1), 3)
-        if len(list) == sample*len(IP_resps.keys()): alert = True
-        return float(mean + stddev), alert
+        if len(list) == sample*len(IP_resps.keys()): alert = True #alert viene settato a True se la lunghezza della lista dei valori facenti parte della media pesata è sufficientemente grande
+        return float(mean + stddev), alert                        #(e.g. se il sample vale 5 e si hanno 2 IP, la lista deve essere lunga almeno 10 prima di calcolare la media) 
     else: return 0.0, False
 
 if __name__ == "__main__":

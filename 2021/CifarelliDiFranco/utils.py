@@ -135,19 +135,3 @@ def print_dns_rcodes():
     print(str(xrrset)+" xrrset (7) codes (a rrset that shouldn't exists instead exists):"+wrong_dns_frames[str(7)])
     print(str(notauth)+" notauth (8) codes:"+wrong_dns_frames[str(8)])
     print(str(notzone)+" notzone (9) codes:"+wrong_dns_frames[str(9)])
-
-def get_net_info(interface):
-    ip = subprocess.Popen(["ip", "address"], stdout=subprocess.PIPE)
-    grep1 = subprocess.Popen(["grep", interface], stdin=ip.stdout, stdout=subprocess.PIPE)
-    xargs1 = subprocess.Popen(["xargs"], stdin=grep1.stdout, stdout=subprocess.PIPE)
-    cut1 = subprocess.Popen(["cut", "-d ", "-f15"], stdin = xargs1.stdout, stdout=subprocess.PIPE)
-    cut2 = subprocess.check_output(["cut", "-d/", "-f1"], stdin = cut1.stdout)
-    ipv4 = cut2.decode("utf-8").replace("\n", "")
-    ipcalc = subprocess.Popen(["ipcalc", ipv4], stdout=subprocess.PIPE)
-    grep2 = subprocess.Popen(["grep", "Network"], stdin=ipcalc.stdout, stdout=subprocess.PIPE)
-    xargs2 = subprocess.Popen(["xargs"], stdin = grep2.stdout, stdout=subprocess.PIPE)
-    cut3 = subprocess.check_output(["cut", "-d ", "-f2"], stdin=xargs2.stdout)
-    subnet = cut3.decode("utf-8").replace("\n", "")
-    return ipv4, subnet
-
-#ipcalc `ip address | grep args.interface | xargs | cut -d " " -f 15 | cut -d "/" -f 1` | grep Network | xargs | cut -d " " -f 2

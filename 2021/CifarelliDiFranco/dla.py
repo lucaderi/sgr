@@ -20,7 +20,7 @@ values = {}
 
 def shutdown(snifferpid):
     while True:
-        user_input = input("type quit (only) when the capture has to arrest\n")
+        user_input = input("type quit (only) when the capture has to stop\n")
         if user_input == "quit":
             os.kill(snifferpid, signal.SIGINT)
             break

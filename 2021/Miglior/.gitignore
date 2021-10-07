@@ -3,4 +3,6 @@
 *.iml
 *.xml
 *.idea
+**/.idea
+/.idea
 /venv/

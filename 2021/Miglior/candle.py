@@ -2,6 +2,18 @@ import datetime as dt
 
 
 class Candle:
+    """
+        Class representing a candle's instance.
+        Candle type object has to be initialized with five values:
+        @:param time  -> timestamp for the considered time window
+        @:param open  -> first value of considered window
+        @:param close -> last value of considered window
+        @:param high  -> max value taken by the series inside the window
+        @:param low   -> min value taken by the series inside the window
+
+        time conversion from epoch to python datetime object is performed.
+    """
+
     def __init__(self, time, open: float, close: float, high: float, low: float):
         self.time = time
         self.open = open

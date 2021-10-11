@@ -1,0 +1,16 @@
+{
+  "step" : 3,
+  "threshold" : 2,
+  "alpha": 0.5,
+  "beta": 0.6,
+  "delta": 2.1,
+  "quantile": 0.95,
+  "use-quantile": true,
+  "rrd-ds-index" : 0,
+  "rrd-path": "./rrd/db1.rrd",
+  "method": "double",
+  "local-server": "127.0.0.1",
+  "update-interval": 30,
+  "port": 5678,
+  "depth": 20
+}

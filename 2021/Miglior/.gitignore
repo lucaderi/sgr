@@ -1,0 +1,8 @@
+./venv/
+.gitignore
+*.iml
+*.xml
+*.idea
+**/.idea
+/.idea
+/venv/

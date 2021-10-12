@@ -19,17 +19,22 @@ struct ndpi_cusum_struct {
     //the upper/lower limit on which the value should fall is not an anomaly
     double upper;
     double lower;
+
+    //number of values read
+    int value_read;
+
+    //number of values used by algorithm
+    int dim_window;
+
+    //array for read values
+    double *values_window;
 };
 
-int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size);
+int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size, double deviation);
 
-int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, double _value, double *forecast, double *confidence_band);
+int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, double _value, double *c_plus, double *c_minus);
 
 double max(double a, double b);
-
-double mean(double v[], int size);
-
-double standard_deviation(double mean, double v[], int size);
 
 int main() {
     struct ndpi_cusum_struct cusum;
@@ -47,13 +52,14 @@ int main() {
         26.9,
         27.5,
         26.2,
-        26.8,
+        36.8,
         26.6
     };
 
     int i, num = sizeof(v) / sizeof(double);
-
-    int ret = ndpi_cusum_init(&cusum, v, num);
+    int size = 3;
+    double dev_std = 0.8;
+    int ret = ndpi_cusum_init(&cusum, v, size, dev_std);
 
     printf("Start Algorithm\n");
 
@@ -76,12 +82,15 @@ int main() {
 */
 
 //it initializes the parameters passed to the algorithm
-int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size) {
+int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size, double deviation) {
     
     memset(cusum, 0, sizeof(struct ndpi_cusum_struct));
+    
+    cusum->mean = 0;
+    cusum->value_read = 0;
+    cusum->dim_window = size;
 
-    cusum->mean = mean(v, size);
-    cusum->dev_std = standard_deviation(cusum->mean, v, size);
+    cusum->dev_std = deviation;
 
     cusum->k = cusum->dev_std / 2;
 
@@ -91,7 +100,9 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size) {
     cusum->cusum_plus = 0;
     cusum->cusum_minus = 0;
 
-    return(0);
+    cusum->values_window = (double*)malloc(size * sizeof(double));
+
+    return 0;
 }
 
 /*
@@ -111,11 +122,31 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size) {
     c_minus          The value of lower control limit
    
    Return code:
-    0                Normal processing: forecast is meaningful
+    0                Too early: we don't have enough values. Output values are zero.
+    1                Normal processing: forecast is meaningful
 
 */
 
 int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, double _value, double *c_plus, double *c_minus) {
+
+    if (cusum->value_read < cusum->dim_window) {
+        cusum->mean = cusum->mean + _value;
+
+        //adds value to the structure
+        cusum->values_window[cusum->value_read] = _value;
+        cusum->value_read++;
+
+        if (cusum->value_read == cusum->dim_window) cusum->mean = cusum->mean / cusum->dim_window;
+        
+        return 0;
+    }
+
+    //it calculates the mean
+    cusum->mean = cusum->mean + ((_value - cusum->values_window[cusum->value_read % cusum->dim_window]) / cusum->dim_window);
+
+    //adds value to the structure
+    cusum->values_window[cusum->value_read % cusum->dim_window] = _value;
+    cusum->value_read++;
 
     *c_plus = max(0, cusum->cusum_plus + (_value - cusum->mean) - cusum->k);
     *c_minus = max(0, cusum->cusum_minus - (_value - cusum->mean) - cusum->k);
@@ -125,7 +156,7 @@ int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, double _value, double 
 
     *c_minus = *c_minus * -1.0;
 
-    return 0;
+    return 1;
 }
 
 //function to calculate the maximum
@@ -134,28 +165,4 @@ double max (double a, double b) {
         return a;
     else
         return b;
-}
-
-//function to calculate the mean
-double mean(double v[], int size){
-
-    double s = 0;
-    for (int i = 0; i < size; i++)
-    {
-        s = s + v[i];
-    }
-
-    return s/size;
-}
-
-//function to calculate the deviation standard
-double standard_deviation(double mean, double v[], int size){
-
-    double s = 0;
-    for (int i = 0; i < size; i++)
-    {
-        s = s + pow((v[i] - mean),2);
-    }
-
-    return sqrt(s/size);
 }

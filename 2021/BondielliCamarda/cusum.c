@@ -6,85 +6,72 @@
 
 //structure that contains parameters for the algorithm
 struct ndpi_cusum_struct {
-    
+
     //fixed parameters
-    struct {
-        double alpha, beta, sigma;
-        //maximum number of elements inside window
-        int window_size;
-    } params;
+    double dev_std;
+    double mean;
+    double k;
+
+    //values calculated for the next iterations
+    double cusum_plus;
+    double cusum_minus;
+
+    //the upper/lower limit on which the value should fall is not an anomaly
+    double upper;
+    double lower;
+
+    //number of values read
+    int value_read;
+
+    //number of values used by algorithm
+    int dim_window;
 
     //array for read values
     double *values_window;
-
-    //number of read values by the algorithm
-    u_int32_t num_values;
-    
-    //values calculated for the next iterations
-    double last_forecast, last_mu, last_deviation, square_sigma, mean;
-
-    //indicates if the algorithm has started
-    bool start_cusum;
 };
 
-int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, double sigma, int window_size);
+int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size, double deviation);
 
-int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast, double *confidence_band);
+int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, double _value, double *c_plus, double *c_minus);
 
 double max(double a, double b);
 
 int main() {
     struct ndpi_cusum_struct cusum;
     double v[] = {
-        31.908466339111,
-        87.339714050293,
-        173.47660827637,
-        213.92568969727,
-        223.32124328613,
-        230.60134887695,
-        238.09457397461,
-        245.8137512207,
-        251.09228515625,
-        251.09228515625,
-        259.21997070312,
-        261.98754882812,
-        264.78540039062,
-        264.78540039062,
-        270.47451782227,
-        173.3671875,
-        288.34222412109,
-        288.34222412109,
-        304.24795532227,
-        304.24795532227,
-        350.92227172852,
-        384.54431152344,
-        423.25942993164,
-        439.43322753906,
-        445.05981445312,
-        445.05981445312,
-        445.05981445312,
-        445.05981445312
+        25.5,
+        26,
+        26.6,
+        26.8,
+        27.5,
+        25.9,
+        27,
+        25.4,
+        26.4,
+        26.3,
+        26.9,
+        27.5,
+        26.2,
+        36.8,
+        26.6
     };
 
     int i, num = sizeof(v) / sizeof(double);
-    double alpha = 0.5, sigma = 2, beta = 0.95, gamma = 1.0;
-
-    int ret = ndpi_cusum_init(&cusum, alpha, beta, sigma, 3);
+    int size = 3;
+    double dev_std = 0.8;
+    int ret = ndpi_cusum_init(&cusum, v, size, dev_std);
 
     printf("Start Algorithm\n");
 
-    printf("%s)\t%s\t%s\t%s\t%s\t%s\n", "id", "value", "prediction", "lowee", "upper","confidence");
-	   
     for (int i = 0; i < num; ++i) {
-        double prediction;
-        double lower, upper, confidence_band;
-        int rc = ndpi_cusum_add_value(&cusum, v[i], &prediction, &confidence_band);
+        double c_plus, c_minus;
 
-        lower = prediction - (gamma * confidence_band), upper = prediction + (gamma * confidence_band);
+        int rc = ndpi_cusum_add_value(&cusum, v[i], &c_plus, &c_minus);
 
-        printf("%2u)\t%12.3f\t%.3f\t%12.3f\t%12.3f\t%.3f\t%s\n", i,
-	       v[i], prediction, lower, upper, confidence_band,
-	       (confidence_band && ((v[i] > upper) || (v[i] < lower))) ? "ANOMALY" : "");
+        printf("%2u)\t%12.3f\t%.3f\t%12.3f\t%12.3f\t%.3f\n", i, v[i], c_plus, c_minus, cusum.lower, cusum.upper);
+
+        //it checks if the prediction computed goes beyond a given fixed threshold
+        if (c_plus > cusum.upper || c_minus < cusum.lower) printf("Attention: anomaly detected.\n");
     }
 
     return 0;
@@ -95,28 +82,27 @@ int main() {
 */
 
 //it initializes the parameters passed to the algorithm
-int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, double sigma, int window_size) {
+int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double v[], int size, double deviation) {
     
     memset(cusum, 0, sizeof(struct ndpi_cusum_struct));
-
-    cusum->params.alpha = alpha;
-    cusum->params.beta = beta;
-
-    cusum->params.sigma = sigma;
-    cusum->square_sigma = sigma * sigma;
-
-    cusum->params.window_size = window_size;
-
-    cusum->num_values = 0;
-    cusum->last_forecast = 0;
+    
     cusum->mean = 0;
-    cusum->last_deviation = 0;
+    cusum->value_read = 0;
+    cusum->dim_window = size;
 
-    cusum->values_window = (double*)malloc(cusum->params.window_size * sizeof(double));
+    cusum->dev_std = deviation;
 
-    cusum->start_cusum = false;
+    cusum->k = cusum->dev_std / 2;
 
-    return(0);
+    cusum->upper = cusum->dev_std * 5;
+    cusum->lower = (cusum->dev_std * -5);
+
+    cusum->cusum_plus = 0;
+    cusum->cusum_minus = 0;
+
+    cusum->values_window = (double*)malloc(size * sizeof(double));
+
+    return 0;
 }
 
 /*
@@ -124,98 +110,59 @@ int ndpi_cusum_init(struct ndpi_cusum_struct *cusum, double alpha, double beta, 
    on hypothesis testing; it involves a cumulative sum of a statistical data records added to some
    weights and when the sum exceeds a certain threshold an anomaly is detected.
    
-   z_{n} = max( (z_{n-1} + (alpha*mu_{n-1} / sigma^{2}) * (x_{n} - mu_{n-1} - alpha*mu_{n-1}/2) , 0)
-   mu_{n} = beta*mu_{n-1} + (1- beta)*x_{n}
+   ci+ = max(0,ci+_1 + (Xi - Mu0) -k)
+   ci- = max(0,ci-_1 - (Xi - Mu0) -k)
    
    Input:
     cusum            Datastructure previously initialized
     value            The value to add to the measurement
    
    Output:
-    forecast         The forecasted value
-    confidence_band  The value +/- on which the value should fall is not an anomaly
+    c_plus           The value of upper control limit
+    c_minus          The value of lower control limit
    
    Return code:
     0                Too early: we don't have enough values. Output values are zero.
     1                Normal processing: forecast is meaningful
+
 */
 
-int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, const u_int64_t _value, double *forecast, double *confidence_band) {
-    double value = (double)_value;
-    double z;
-    double mean_window;
-    double mu;
-    double alpha_mu;
+int ndpi_cusum_add_value(struct ndpi_cusum_struct *cusum, double _value, double *c_plus, double *c_minus) {
 
-    //it checks if the algorithm has started or not
-    if (!cusum->start_cusum) {
-        if (cusum->num_values < cusum->params.window_size) { //algorithm not yet started
-            
-            //adds value to the structure
-            cusum->values_window[cusum->num_values] = value;
-
-            //adds value to the counter for the mean
-            cusum->mean += value;
-
-            z = 0;
-            cusum->num_values++;
-            *forecast = max(cusum->last_forecast + z, 0);
-
-            return 0;
-        } 
-        else { //cusum->num_values = cusum->params.window_size
-
-            z = 0;
-
-            //it contains the sum of values in the structure
-            cusum->mean -= cusum->values_window[cusum->num_values % cusum->params.window_size];
-
-            //adds value to the structure
-            cusum->values_window[cusum->num_values % cusum->params.window_size] = value;
-
-            //last_mu = mean
-            cusum->mean = (cusum->mean + value) / cusum->params.window_size;
-            cusum->last_mu = cusum->mean;
-
-            cusum->num_values++;
-            *forecast = max(cusum->last_forecast + z, 0);
-            cusum->start_cusum = true;
-
-            return 0;
-        }
-    } 
-    else { //start algorithm
-        
-        mean_window = cusum->mean + ((value - cusum->values_window[cusum->num_values % cusum->params.window_size]) / cusum->params.window_size);
-        cusum->mean = mean_window;
+    if (cusum->value_read < cusum->dim_window) {
+        cusum->mean = cusum->mean + _value;
 
         //adds value to the structure
-        cusum->values_window[cusum->num_values % cusum->params.window_size] = value;
+        cusum->values_window[cusum->value_read] = _value;
+        cusum->value_read++;
 
-        //it calculates mu = beta*mu_1 + (1-beta)*media
-        mu = (cusum->params.beta * cusum->last_mu) + ((1 - cusum->params.beta) * mean_window);
-
-        alpha_mu = cusum->params.alpha * cusum->last_mu;
-
-        //it calculates z = (alfa*mu/sigma^2) * (value-mu_1-(alfa*mu/2))
-        z = (alpha_mu / cusum->square_sigma) * (value - cusum->last_mu - (alpha_mu/2));
-
-        *forecast = max(cusum->last_forecast + z, 0);
-    
-        cusum->num_values++;
-        cusum->last_mu = mu;
-        cusum->last_forecast = *forecast;
-
-        //it calculates deviation = sigma * abs(value-forecast) + (1-sigma) * deviation_1
-        cusum->last_deviation = (cusum->params.sigma * fabs(value - *forecast)) + ((1 - cusum->params.sigma) * cusum->last_deviation);
-        *confidence_band = cusum->last_deviation;   
-
-        return 1;
+        if (cusum->value_read == cusum->dim_window) cusum->mean = cusum->mean / cusum->dim_window;
+        
+        return 0;
     }
+
+    //it calculates the mean
+    cusum->mean = cusum->mean + ((_value - cusum->values_window[cusum->value_read % cusum->dim_window]) / cusum->dim_window);
+
+    //adds value to the structure
+    cusum->values_window[cusum->value_read % cusum->dim_window] = _value;
+    cusum->value_read++;
+
+    *c_plus = max(0, cusum->cusum_plus + (_value - cusum->mean) - cusum->k);
+    *c_minus = max(0, cusum->cusum_minus - (_value - cusum->mean) - cusum->k);
+
+    cusum->cusum_plus = *c_plus;
+    cusum->cusum_minus = *c_minus;
+
+    *c_minus = *c_minus * -1.0;
+
+    return 1;
 }
 
 //function to calculate the maximum
 double max (double a, double b) {
-    if ( a > b) return a;
-    else return b;
+    if ( a > b)
+        return a;
+    else
+        return b;
 }

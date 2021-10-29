@@ -15,6 +15,8 @@ Beacon_Pkt_Info = """
 ---------------[ Beacon Packet Captured ]-----------------------
  Access Point MAC : {}  
  Access Point Name [SSID]  : {}
+ Access Point Received Signal Strength [RSSI] : {} dBm
+ Access Point Crypto : {}
 """
 
 # Extracted Packet Format 
@@ -69,14 +71,15 @@ def GetClientsAndAP(scan_type, verbose, *args,  **kwargs):
     if scan_type == "a" or scan_type == "b":
       if pkt.haslayer(scapy.Dot11Beacon):
         ssid = pkt.sprintf("{Dot11Beacon:%Dot11Beacon.info%}")  # AP Network Name     # Needed pkt.info isn't Stringable
+        crypto = pkt[scapy.Dot11Beacon].network_stats().get('crypto')
         if pkt.addr2 not in ap:
-          ap[pkt.addr2] = AP(pkt.addr2, ssid)
+          ap[pkt.addr2] = AP(pkt.addr2, ssid, pkt.dBm_AntSignal, crypto)
           packets.append(pkt)
 
           if verbose:
-            print(Beacon_Pkt_Info.format(pkt.addr2, pkt.info))
+            print(Beacon_Pkt_Info.format(pkt.addr2, pkt.info, pkt.dBm_AntSignal, crypto))
 
-  print("Gathering informartion...")
+  print("Gathering information...")
 
   # Sniffing packets
   scapy.sniff(prn=PacketFilter, *args, **kwargs)
@@ -151,9 +154,9 @@ if __name__=="__main__":
   
   # Printing Access Points informations
   if scan_type == 'a' or scan_type == 'b':
-    print("\n================ ACCESS POINTS ================")
+    print("\n====================================== ACCESS POINTS ======================================")
     print("Number of seen AP:  %d" % len (ap))
-    print("\nAP MAC [BSSID]       AP NETWORK NAME [SSID]")
+    print("\nAP MAC [BSSID]       AP NETWORK NAME [SSID]           [RSSI]                Crypto")
     for x in ap:
       ap[x].printAP()
 

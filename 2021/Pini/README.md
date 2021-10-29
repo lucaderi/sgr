@@ -50,121 +50,88 @@ Non avendo specificato l'interfaccia, utilizzerà quella di default.
 
     Using default interface: wlp3s0
     `airmon-ng  start wlp3s0` ran with exit code 0
-    Gathering informartion...
-    
+    Gathering information...
+
     ---------------[ Beacon Packet Captured ]-----------------------
-     Access Point MAC : d4:35:1d:5d:2c:b8  
-     Access Point Name [SSID]  : b'TIM-24210104'
-    
-    
+    Access Point MAC : 14:14:59:ac:59:71  
+    Access Point Name [SSID]  : b'Vodafone-A45452810'
+    Access Point Received Signal Strength [RSSI] : -74 dBm
+    Access Point Crypto : {'WEP'}
+
+
     ---------------[ Beacon Packet Captured ]-----------------------
-     Access Point MAC : 14:14:59:ac:59:71  
-     Access Point Name [SSID]  : b'Vodafone-A45452810'
-    
-    
+    Access Point MAC : 6a:14:59:ac:59:72  
+    Access Point Name [SSID]  : b'Vodafone-WiFi'
+    Access Point Received Signal Strength [RSSI] : -74 dBm
+    Access Point Crypto : {'OPN'}
+
+    ----NEW CLIENT---
+
+    ---------------[ Probe Packet Captured ]-----------------------
+    Client MAC           : 86:13:f7:19:4c:79   
+    Access Point Name [SSID] : b''
+
+
     ---------------[ Beacon Packet Captured ]-----------------------
-     Access Point MAC : 6a:14:59:ac:59:72  
-     Access Point Name [SSID]  : b'Vodafone-WiFi'
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : a8:54:b2:5d:9e:ee   
-     Access Point Name [SSID] : b''
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : ee:97:c2:93:28:70   
-     Access Point Name [SSID] : b''
-    
-    
-    ---------------[ Beacon Packet Captured ]-----------------------
-     Access Point MAC : fc:15:b4:65:d1:63  
-     Access Point Name [SSID]  : b'HP-Print-63-Officejet 4630'
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : 94:3a:91:2c:7f:3f   
-     Access Point Name [SSID] : b''
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : d2:d0:22:5c:af:eb   
-     Access Point Name [SSID] : b''
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : 12:b1:3f:bf:41:a1   
-     Access Point Name [SSID] : b''
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : b4:ce:40:5e:d6:8a   
-     Access Point Name [SSID] : b''
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : 86:13:f7:19:4c:79   
-     Access Point Name [SSID] : b'Vodafone-A45452810'
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : da:a1:19:34:e0:c6   
-     Access Point Name [SSID] : b''
-    
-    ----NEW CLIENT---
-    
-    ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : ea:58:f7:3d:e2:f6   
-     Access Point Name [SSID] : b''
-    
+    Access Point MAC : d4:35:1d:5d:2c:b8  
+    Access Point Name [SSID]  : b'TIM-24210104'
+    Access Point Received Signal Strength [RSSI] : -89 dBm
+    Access Point Crypto : {'WPA2/PSK'}
+
     ----NOT NEW CLIENT, BUT WITH UNSEEN ACCESS POINT [SSID]
-    
+
     ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : ea:58:f7:3d:e2:f6   
-     Access Point Name [SSID] : b'marika84-442_Canon0A'
-    
+    Client MAC           : 86:13:f7:19:4c:79   
+    Access Point Name [SSID] : b'Vodafone-A45452810'
+
+
+    ---------------[ Beacon Packet Captured ]-----------------------
+    Access Point MAC : fc:15:b4:65:d1:63  
+    Access Point Name [SSID]  : b'HP-Print-63-Officejet 4630'
+    Access Point Received Signal Strength [RSSI] : -91 dBm
+    Access Point Crypto : {'WPA2/PSK'}
+
     ----NEW CLIENT---
-    
+
     ---------------[ Probe Packet Captured ]-----------------------
-     Client MAC           : 22:cf:99:f3:ca:32   
-     Access Point Name [SSID] : b''
-    
+    Client MAC           : 94:3a:91:2c:7f:3f   
+    Access Point Name [SSID] : b''
+
+    ----NEW CLIENT---
+
+    ---------------[ Probe Packet Captured ]-----------------------
+    Client MAC           : 3a:2e:db:92:a5:16   
+    Access Point Name [SSID] : b''
+
+    ----NEW CLIENT---
+
+    ---------------[ Probe Packet Captured ]-----------------------
+    Client MAC           : b8:e8:56:24:62:ea   
+    Access Point Name [SSID] : b'Vodafone-A45452810'
+
     `airmon-ng  stop wlp3s0mon` ran with exit code 0
-    
-    ================ ACCESS POINTS ================
+
+    ====================================== ACCESS POINTS ======================================
     Number of seen AP:  4
-    
-    AP MAC [BSSID]       AP NETWORK NAME [SSID]
-    d4:35:1d:5d:2c:b8    b'TIM-24210104'
-    14:14:59:ac:59:71    b'Vodafone-A45452810'
-    6a:14:59:ac:59:72    b'Vodafone-WiFi'
-    fc:15:b4:65:d1:63    b'HP-Print-63-Officejet 4630'
-    
-    
+
+    AP MAC [BSSID]       AP NETWORK NAME [SSID]           [RSSI]                Crypto
+    14:14:59:ac:59:71    b'Vodafone-A45452810'            -74 dBm -> Low        {'WEP'}
+    6a:14:59:ac:59:72    b'Vodafone-WiFi'                 -74 dBm -> Low        {'OPN'}
+    d4:35:1d:5d:2c:b8    b'TIM-24210104'                  -89 dBm -> Low        {'WPA2/PSK'}
+    fc:15:b4:65:d1:63    b'HP-Print-63-Officejet 4630'    -91 dBm -> Low        {'WPA2/PSK'}
+
+
     =================== CLIENTS ===================
-    Number of seen clients:  10
-    
+    Number of seen clients:  4
+
     CLIENT MAC           AP NETWORK NAME [SSID]
-    a8:54:b2:5d:9e:ee
-    ee:97:c2:93:28:70
-    94:3a:91:2c:7f:3f
-    d2:d0:22:5c:af:eb
-    12:b1:3f:bf:41:a1
-    b4:ce:40:5e:d6:8a
     86:13:f7:19:4c:79    b'Vodafone-A45452810'
-    da:a1:19:34:e0:c6
-    ea:58:f7:3d:e2:f6    b'marika84-442_Canon0A'
-    22:cf:99:f3:ca:32
+    94:3a:91:2c:7f:3f
+    3a:2e:db:92:a5:16
+    b8:e8:56:24:62:ea    b'Vodafone-A45452810'
+
 \
 Dalla scansione risultano 
 - 4 access points
-- 10 clients di cui due hanno specificato anche un SSID
+- 4 clients di cui due hanno specificato anche un SSID
 

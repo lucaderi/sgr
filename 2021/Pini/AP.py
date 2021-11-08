@@ -17,8 +17,8 @@ class AP:
         print(self.bssid + "    " + self.ssid + " "*padding + str(self.rssi) + " dBm -> " + self.__evalRssi() + str(self.crypto))
     
     def __evalRssi(self):
-        if self.rssi >= 50:
+        if self.rssi >= -50:
             return "Excellent  "
-        if self.rssi >= 70:
+        if self.rssi >= -70:
             return "Good       "
         return "Low        "

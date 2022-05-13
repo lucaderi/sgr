@@ -9,7 +9,7 @@ Then through the use of double exponential smoothing predicts the expected value
 If these values happen to be outside of these bounds an alert shall be sent through telegram.\
 The alerts also trigger if the percentage usage of RAM/disk/CPU exceeds 90%.
 All relevant data (usage, %usage, bands, predictions) will be saved to InfluxDB where the user may check the data in the form of graphs or tables.\
-InfluxDB tasks are used to handle the alert functionalities of the application.
+InfluxDB tasks are used to handle the alert functionalities of the application. \
 The application has been developed and tested in ubuntu using python 3.8.
 
 # Requirements

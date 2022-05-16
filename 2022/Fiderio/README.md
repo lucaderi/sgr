@@ -55,4 +55,22 @@ Execute "SystemMonitorMain.py":
 python3.8 SystemMonitorMain.py
 ```
 The application is now monitoring, open your browser and navigate to localhost:8086 to check on the data that is being saved to the DB.
-Whenever you're done press CTRL+c to stop the application.
+Whenever you're done press CTRL+c to stop the application. 
+
+# Usage Screenshots
+Console: \
+![image](https://user-images.githubusercontent.com/84874362/168683084-363c582e-a306-4c94-ad22-b3ccb500bf7b.png) \
+Ram usage graph: \
+![image](https://user-images.githubusercontent.com/84874362/168684123-d507847b-24dd-475f-9a19-5589b6c5a8b6.png) \
+Telegram alerts: \
+![image](https://user-images.githubusercontent.com/84874362/168684500-6237a101-3766-4a74-8400-eb15c2404f75.png) \
+InfluxDB tasks: \
+![image](https://user-images.githubusercontent.com/84874362/168684625-f31a906e-0ba0-4a2b-82d4-eae13d97b850.png) \
+![image](https://user-images.githubusercontent.com/84874362/168684953-3b7f67b9-79b9-40a9-b241-01cb1e6b38ff.png)
+
+
+ 
+
+
+
+

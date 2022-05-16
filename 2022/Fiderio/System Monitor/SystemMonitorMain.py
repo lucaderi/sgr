@@ -90,6 +90,13 @@ diskPrediction = [diskValues[0]]
 cpuPrediction = [cpuValues[0]]
 
 n = 1
+frequencyValue = 'a'
+while isinstance(frequencyValue, int) == False:
+  try:
+    frequencyValue = int(input('How often (in seconds) should the program run snmp commands?(Input an integer, default:2) '))
+  except ValueError:
+    print("Input needs to be a number")
+
 print('Currently monitoring, press ctrl+c to stop...')
 while True:
   try:
@@ -208,16 +215,20 @@ while True:
         write_api.write(bucket, org, point)
 
         #endif
-    time.sleep(2)
+    time.sleep(frequencyValue)
   except KeyboardInterrupt:
-        print('\nClosing...')
 
-        #InfluxDB cleanup
-        start = "1970-01-01T00:00:00Z"
-        stop = datetime.utcnow()
-        delete_api.delete(start, stop, '_measurement="ramMonitor"', bucket=bucket, org=org)
-        delete_api.delete(start, stop, '_measurement="diskMonitor"', bucket=bucket, org=org)
-        delete_api.delete(start, stop, '_measurement="cpuMonitor"', bucket=bucket, org=org)
-        time.sleep(1)
+        #InfluxDB optional cleanup
+
+        deleteChoice = input('\nWould you like to clear the database?(y/n) ')
+        if deleteChoice == 'y':
+          start = "1970-01-01T00:00:00Z"
+          stop = datetime.utcnow()
+          delete_api.delete(start, stop, '_measurement="ramMonitor"', bucket=bucket, org=org)
+          delete_api.delete(start, stop, '_measurement="diskMonitor"', bucket=bucket, org=org)
+          delete_api.delete(start, stop, '_measurement="cpuMonitor"', bucket=bucket, org=org)
+          time.sleep(1)
+          pass
+        print('Closing...')
         client.close()
         break

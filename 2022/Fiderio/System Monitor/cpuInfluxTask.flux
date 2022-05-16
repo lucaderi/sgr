@@ -1,6 +1,5 @@
 import "contrib/sranka/telegram"
 
-option task = {name: "cpuAlerts", every: 60s}
 option t = {timeRangeStart: -1h, timeRangeStop: now(), windowPeriod: 10000ms}
 
 bucketName = "Insert bucket name here"

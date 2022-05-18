@@ -10,7 +10,9 @@ If these values happen to be outside of these bounds an alert shall be sent thro
 The alerts also trigger if the percentage usage of RAM/disk/CPU exceeds 90%.
 All relevant data (usage, %usage, bands, predictions) will be saved to InfluxDB where the user may check the data in the form of graphs or tables.\
 InfluxDB tasks are used to handle the alert functionalities of the application. \
-The application has been developed and tested in ubuntu using python 3.8.
+The application has been developed in ubuntu using python 3.8.
+The application has been tested by running it in the background both normally and during a stress test, both times correct reads were made and alerts worked as intended. \
+I tried to run the program in Windows but couldn't get easysnmp to install properly, eventually I decided that it was more trouble than it was worth and gave up.
 
 # Requirements
 - InfluxDB 2.X 
@@ -55,7 +57,7 @@ Execute "SystemMonitorMain.py":
 python3.8 SystemMonitorMain.py
 ```
 The application is now monitoring, open your browser and navigate to localhost:8086 to check on the data that is being saved to the DB.
-Whenever you're done press CTRL+c to stop the application. 
+Whenever you're done press CTRL+c to stop the application.
 
 # Usage Screenshots
 Console: \

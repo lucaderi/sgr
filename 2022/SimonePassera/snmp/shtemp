@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Return temperature of sensor DS18B20
+
+temp=$(cat /sys/bus/w1/devices/28-3c01f0952215/temperature)
+temp_value=$(echo $tmp / 1000 | bc -l | cut -c -4)
+
+echo $tmp_value

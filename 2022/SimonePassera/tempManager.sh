@@ -49,10 +49,10 @@ while true; do
 		rrdupdate $FILE -t tmp:low:pre:upp N:$temp_value:${output_values[0]}:${output_values[1]}:${output_values[2]}
 
 		if [ $(echo "$temp_value > ${output_values[2]}" | bc -l) -eq 1 ]; then
-			curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>Alert</strong> - Temperatura: <b>$temp_value</b>°C > ${output_values[2]}°C" > /dev/null
+			curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>Alert</strong> - Temperature: <b>$temp_value</b>°C > ${output_values[2]}°C" > /dev/null
 		else
 			if [ $(echo "$temp_value < ${output_values[0]}" | bc -l) -eq 1 ]; then 
-				curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>Alert</strong> - Temperatura: <b>$temp_value</b>°C < ${output_values[0]}°C" > /dev/null
+				curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>Alert</strong> - Temperature: <b>$temp_value</b>°C < ${output_values[0]}°C" > /dev/null
 			fi
 		fi	
 	else
@@ -60,7 +60,7 @@ while true; do
 	fi
 
 	if [ $(echo "$temp_value > $MAX_LIMIT" | bc -l) -eq 1 ]; then
-		curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>DANGER</strong> : Temperatura: <b>$temp_value</b>°C > LIMIT = <b>$MAX_LIMIT</b>°C" > /dev/null
+		curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>DANGER</strong> : Temperature: <b>$temp_value</b>°C > LIMIT = <b>$MAX_LIMIT</b>°C" > /dev/null
 	fi
 	
 	rrdtool graph $GRAPH \
@@ -68,7 +68,7 @@ while true; do
 	DEF:pre=temp_db.rrd:pre:AVERAGE \
 	DEF:low=temp_db.rrd:low:AVERAGE \
 	DEF:upp=temp_db.rrd:upp:AVERAGE \
-	LINE1:tmp#1dd1a1:Temperature \
+	LINE1:tmp#55e6c1:Temperature \
 	LINE1:pre#54a0ff:Prediction \
 	LINE1:upp#ee5253:Upper_bound \
 	LINE1:low#576574:Lower_bound \

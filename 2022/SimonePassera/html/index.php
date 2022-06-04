@@ -4,6 +4,8 @@
 
 <head>
 	<title>Temperature</title>
+
+	<link type="image/png" sizes="96x96" rel="icon" href="http://raspberrypi-simone.ddns.net/favicon.png">
 	
 	<meta charset="utf-8">
     <meta name="author" content="Simone Passera">

@@ -73,7 +73,7 @@ while true; do
 	LINE1:upp#ee5253:Upper_bound \
 	LINE1:low#576574:Lower_bound \
 	HRULE:$MAX_LIMIT#a29bfe:Max_limit \
-	-s -1h -e +5min --vertical-label "temperature (°C)" --title "1 hour" > /dev/null
+	-s -1h -e +5min --vertical-label "temperature (°C)" --title "1 hour" -w 500 -h 200 > /dev/null
 
 	rrdtool graph $GRAPH_PATH/temp_graph_7d.png \
 		DEF:tmp=temp_db.rrd:tmp:AVERAGE \
@@ -85,7 +85,7 @@ while true; do
 		LINE1:upp#ee5253:Upper_bound \
 		LINE1:low#576574:Lower_bound \
 		HRULE:$MAX_LIMIT#a29bfe:Max_limit \
-		-s -7d --vertical-label "temperature (°C)" --title "7 days"> /dev/null
+		-s -7d --vertical-label "temperature (°C)" --title "7 days" -w 500 -h 200 > /dev/null
 	
 	sleep 300
 done

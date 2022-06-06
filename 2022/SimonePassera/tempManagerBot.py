@@ -18,7 +18,7 @@ async def start(update: Update, context: CallbackContext.DEFAULT_TYPE):
 
 async def temp(update: Update, context: CallbackContext.DEFAULT_TYPE):
     process_shtemp = subprocess.run("./shtemp", capture_output=True, text=True)
-    temp_value = "Temperature: <b>" + process_shtemp.stdout.rstrip() + "</b> °C" 
+    temp_value = "Temperature: <b>" + process_shtemp.stdout.rstrip() + "</b>°C" 
     await context.bot.send_message(chat_id=update.effective_chat.id, text=temp_value, parse_mode=ParseMode.HTML)
 
 if __name__ == '__main__':

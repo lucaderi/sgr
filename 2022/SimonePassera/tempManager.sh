@@ -2,7 +2,7 @@
 
 # rrd
 FILE=/home/pi/temp/temp_db.rrd
-GRAPH=/var/www/html/temp_graph.png
+GRAPH_PATH=/var/www/html/
 # snmp
 COMMUNITY=public
 HOSTNAME=localhost
@@ -49,10 +49,10 @@ while true; do
 		rrdupdate $FILE -t tmp:low:pre:upp N:$temp_value:${output_values[0]}:${output_values[1]}:${output_values[2]}
 
 		if [ $(echo "$temp_value > ${output_values[2]}" | bc -l) -eq 1 ]; then
-			curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>Alert</strong> - Temperature: <b>$temp_value</b>°C > ${output_values[2]}°C" > /dev/null
+			curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=HTML -d text="<b>Alert</b> - Temperature: <b>$temp_value</b>°C %26gt; upper_bound = ${output_values[2]}°C" > /dev/null
 		else
-			if [ $(echo "$temp_value < ${output_values[0]}" | bc -l) -eq 1 ]; then 
-				curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>Alert</strong> - Temperature: <b>$temp_value</b>°C < ${output_values[0]}°C" > /dev/null
+			if [ $(echo "$temp_value < ${output_values[0]}" | bc -l) -eq 1 ]; then
+				curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=HTML -d text="<b>Alert</b> - Temperature: <b>$temp_value</b>°C %26lt; lower_bound = ${output_values[0]}°C" > /dev/null
 			fi
 		fi	
 	else
@@ -60,10 +60,10 @@ while true; do
 	fi
 
 	if [ $(echo "$temp_value > $MAX_LIMIT" | bc -l) -eq 1 ]; then
-		curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=html -d text="<strong>DANGER</strong> : Temperature: <b>$temp_value</b>°C > LIMIT = <b>$MAX_LIMIT</b>°C" > /dev/null
+		curl -s -X POST https://api.telegram.org/bot$TOKEN/sendMessage -d chat_id=$CHAT_ID -d parse_mode=HTML -d text="<b>DANGER</b> : Temperature: <b>$temp_value</b>°C %26gt; LIMIT = <b>$MAX_LIMIT</b>°C" > /dev/null
 	fi
 	
-	rrdtool graph $GRAPH \
+	rrdtool graph $GRAPH_PATH/temp_graph_1h.png \
 	DEF:tmp=temp_db.rrd:tmp:AVERAGE \
 	DEF:pre=temp_db.rrd:pre:AVERAGE \
 	DEF:low=temp_db.rrd:low:AVERAGE \
@@ -73,7 +73,19 @@ while true; do
 	LINE1:upp#ee5253:Upper_bound \
 	LINE1:low#576574:Lower_bound \
 	HRULE:$MAX_LIMIT#a29bfe:Max_limit \
-	-s -1h -e +5min --vertical-label "temperature (°C)" > /dev/null
+	-s -1h -e +5min --vertical-label "temperature (°C)" --title "1 hour" > /dev/null
+
+	rrdtool graph $GRAPH_PATH/temp_graph_7d.png \
+		DEF:tmp=temp_db.rrd:tmp:AVERAGE \
+		DEF:pre=temp_db.rrd:pre:AVERAGE \
+		DEF:low=temp_db.rrd:low:AVERAGE \
+		DEF:upp=temp_db.rrd:upp:AVERAGE \
+		LINE1:tmp#55e6c1:Temperature \
+		LINE1:pre#54a0ff:Prediction \
+		LINE1:upp#ee5253:Upper_bound \
+		LINE1:low#576574:Lower_bound \
+		HRULE:$MAX_LIMIT#a29bfe:Max_limit \
+		-s -7d --vertical-label "temperature (°C)" --title "7 days"> /dev/null
 	
 	sleep 300
 done

@@ -4,10 +4,14 @@ import sys
 import statistics as stat
 import math
 
+# Smoothing factor
 alpha = 0.9
+# Trend factor
 beta = 0.9
+# Factor that determines the probability of the confidence interval, es: z=3.291 => Conf. Interval=99.9% 
 z = 3.291
 
+# Return the forecast of the next temperature value
 def double_exponential_smoothing(series, alpha, beta):
     result = [series[0]]
     
@@ -25,6 +29,7 @@ def double_exponential_smoothing(series, alpha, beta):
 
     return round(result[-1], 1)
 
+# Contains the temperature values in argv multiplied by 10 and rounded to the first decimal place
 series = []
 
 for i in range(1, len(sys.argv)):
@@ -33,9 +38,7 @@ for i in range(1, len(sys.argv)):
 prediction = double_exponential_smoothing(series, alpha, beta)
 
 confidence = z * (stat.stdev(series) / math.sqrt(len(series)))
-
 upper_bound = round(prediction + confidence, 1)
-
 lower_bound = round(prediction - confidence, 1)
 
 print(str(lower_bound) + " " + str(prediction) + " " + str(upper_bound))

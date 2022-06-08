@@ -24,6 +24,16 @@ Sul raspberry pi è installato un agent snmp opportunamente  [configurato](snmp/
   ```sh
   snmpget -v1 -c public raspberrypi-simone.ddns.net nsExtendOutputFull.\"temp\"
   ```
+  
+## RRD :file_folder:
+Lo script [tempManager](tempManager.sh) utilizza un database di tipo Round-Robin, è possibile installarlo tramite il seguente comando:
+
+```sh
+apt install rrdtool
+```
+
+All'interno dello script è possibile configurare il path relativo al file-database con estensione ```.rrd```, modificando la variabile ```RRD_DB```. Il database generato contene i valori della temperatura e la previsione attesa (in totale 4 valori), aggiornati ogni 5 minuti. Contiene dati raw, per le ultime 12 ore, la media di 1 ora per 1 giorno e la media di 1 giorno, per i 7 giorni precedenti.
+
 ## Previsione :crystal_ball:
 In questo [file](double_exponential_smoothing.py) è presente l'algoritmo Double Exponential Smoothing eseguito dallo [script](tempManager.sh) principale ogni 5 minuti. Prende in input i valori della temperatura nelle 2 ore precedenti e restituisce una stima del valore successivo ed un intervallo di confidenza, ossia un range di valori in cui siamo abbastanza sicuri che si trovi il vero valore. L'algoritmo è configurabile atrraverso tre fattori:
 

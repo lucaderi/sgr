@@ -7,8 +7,8 @@ Il progetto consiste nel monitoraggio del sensore di temperatura (DS18B20) colle
 Sul raspberry pi è installato un agent snmp opportunamente  [configurato](snmp/snmpd.conf) per restituire, quando interrogato, il valore della temperatura corrente presente nella stanza.
 
   ### Installazione
-  ```bash
-  sudo apt install snmp snmp-mibs-downloader
+  ```sh
+  apt install snmp snmp-mibs-downloader
   ```
   Ora, modifica il file ```/etc/snmp/snmp.conf```
   Commenta la riga:
@@ -21,7 +21,7 @@ Sul raspberry pi è installato un agent snmp opportunamente  [configurato](snmp/
   ```
 
   ### Utilizzo
-  ```bash
+  ```sh
   snmpget -v1 -c public raspberrypi-simone.ddns.net nsExtendOutputFull.\"temp\"
   ```
 ## Previsione :crystal_ball:
@@ -47,11 +47,11 @@ Valore ```z```, determina l'intervallo di confidenza in base alla probabilità c
 Lo script [tempManager](tempManager.sh) ogni 5 minuti salva la temperatura corrente e la relativa previsione cioè i tre valori restituiti dall'algoritmo Double Exponential Smoothing, nel database rrd. Se il valore della temperatura corrente non è all'interno dell'intervallo di confidenza, allora viene inviato un alert nel canale telegram [Temperature](https://t.me/Temperature_DS18B20). Inoltre se la tempertura supera il limite massimo consentito, configurabile dalla variabile ```MAX_LIMIT```, anche questo evento è opportunamente segnalato nel canale.
 
 ## Temp Manager bot :zap:
-Il bot Telegram [Temp Manager](https://t.me/tempManagerBot) è utilizzato all'interno del canale di avvisi per inviare i messaggi.
-Ho utilizzato la libreria python [python-telegram-bot](https://python-telegram-bot.org/) all'interno dello script [tempManagerBot](tempManagerBot.py) per far sì che il bot risponda al comando ```/temp``` restituendo la tnte ed i grafici generati dal database rrd.emperatura corrente nella stanza.
+Il bot Telegram [Temp Manager](https://t.me/tempManagerBot) è utilizzato all'interno del canale per inviare gli avvisi.
+Ho utilizzato la libreria python [python-telegram-bot](https://python-telegram-bot.org/) all'interno dello script [tempManagerBot](tempManagerBot.py) per aggiungere al bot il comando ```/temp``` che restituisce la temperatura corrente nella stanza.
 
 ### Installazione
-```bash
+```sh
 pip install python-telegram-bot --pre
 ```
 

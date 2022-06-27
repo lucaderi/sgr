@@ -1,0 +1,75 @@
+# Autore
+
+Alessio Matricardi (a.matricardi@studenti.unipi.it)
+
+# Obiettivo
+
+L'obiettivo del progetto è l'implementazione di un sistema di individuazione di nervosismo (skewness) all'interno di serie temporali.
+
+Il sistema deve essere calibrato dall'utente con i primi N valori all'interno della serie temporale, ragion per cui è opportuno che la serie presenti, almeno inizialmente, un comportamento che riteniamo standard. Il processo di calibrazione calcola la deviazione standard degli N valori.
+Da questo momento in poi, il programma cerca il nervosismo all'interno della serie procedendo con la tecnica della finestra mobile: il sistema procede calcolando la deviazione standard sui W valori presenti all'interno della finestra mobile.
+Un nervosismo all'interno della finestra viene individuato se la deviazione standard calcolata è 3 volte maggiore di quella di calibrazione.
+La finestra si sposta ad ogni iterazione di 1/10 della sua grandezza (e.g. se W = 20 -> finestra mobile di 2 elementi per iterazione)
+
+![plot](./graph.png)
+
+# Dipendenze
+
+Le dipendenze sono all'interno del file `requirements.txt`.
+
+Per installarle, se non presenti sulla propria macchina, eseguire da linea di comando:
+```
+pip3 install requirements.txt
+```
+Per evitare l'installazione di dipendenze non volute, è possibile installare ed eseguire il programma all'interno di un ambiente virtuale.
+
+# Come eseguire
+
+Parametri obbligatori:
+
+- `-n` numero di elementi con cui calibrare il sistema
+- `-w` numero di elementi presenti nella finestra mobile
+
+- `--rrd <rrd file>` oppure `--json <json file>` per indicare il file con il segnale da analizzare
+
+Parametri opzionali:
+
+- `-v` verbose mode (mostra log di debug come ad esempio quando non viene rilevata un anomalia)
+- `-p` plotta in nero il segnale ed in rosso dove il segnale è stato riconosciuto come nervoso
+
+# Come testare
+
+Un esempio tipico di esecuzione è
+```
+python3 skewness.py -n 50 -w 40 -p --rrd test/signal.rrd
+```
+
+Il programma è stato testato con tutti i file di test forniti.
+
+Esempio di output:
+
+```
+python3 skewness.py -w 40 -n 50 -p --rrd test/signal.rrd
+2022-06-27 10:53:39,266 - INFO : Anomaly detected inside window between 2022-06-27 00:17:59 and 2022-06-27 00:18:39
+2022-06-27 10:53:39,267 - INFO : Anomaly detected inside window between 2022-06-27 00:18:03 and 2022-06-27 00:18:43
+2022-06-27 10:53:39,267 - INFO : Anomaly detected inside window between 2022-06-27 00:18:07 and 2022-06-27 00:18:47
+2022-06-27 10:53:39,268 - INFO : Anomaly detected inside window between 2022-06-27 00:18:11 and 2022-06-27 00:18:51
+2022-06-27 10:53:39,269 - INFO : Anomaly detected inside window between 2022-06-27 00:18:15 and 2022-06-27 00:18:55
+2022-06-27 10:53:39,270 - INFO : Anomaly detected inside window between 2022-06-27 00:18:19 and 2022-06-27 00:18:59
+2022-06-27 10:53:39,271 - INFO : Anomaly detected inside window between 2022-06-27 00:18:23 and 2022-06-27 00:19:03
+2022-06-27 10:53:39,272 - INFO : Anomaly detected inside window between 2022-06-27 00:18:27 and 2022-06-27 00:19:07
+2022-06-27 10:53:39,272 - INFO : Anomaly detected inside window between 2022-06-27 00:18:31 and 2022-06-27 00:19:11
+[...]
+2022-06-27 10:53:39,910 - INFO : Anomaly detected inside window between 2022-06-27 00:54:47 and 2022-06-27 00:55:27
+2022-06-27 10:53:39,911 - INFO : Anomaly detected inside window between 2022-06-27 00:54:51 and 2022-06-27 00:55:31
+2022-06-27 10:53:39,913 - INFO : Anomaly detected inside window between 2022-06-27 00:54:55 and 2022-06-27 00:55:35
+2022-06-27 10:53:39,914 - INFO : Anomaly detected inside window between 2022-06-27 00:54:59 and 2022-06-27 00:55:39
+2022-06-27 10:53:39,915 - INFO : Anomaly detected inside window between 2022-06-27 00:55:03 and 2022-06-27 00:55:43
+2022-06-27 10:53:39,917 - INFO : Anomaly detected inside window between 2022-06-27 00:55:07 and 2022-06-27 00:55:47
+2022-06-27 10:53:39,921 - INFO : Anomaly detected inside window between 2022-06-27 00:55:11 and 2022-06-27 00:55:51
+2022-06-27 10:53:39,923 - INFO : Anomaly detected inside window between 2022-06-27 00:55:15 and 2022-06-27 00:55:55
+2022-06-27 10:53:39,925 - INFO : Anomaly detected inside window between 2022-06-27 00:55:19 and 2022-06-27 00:55:59
+2022-06-27 10:53:39,930 - INFO : Anomaly detected inside window between 2022-06-27 00:55:23 and 2022-06-27 00:56:03
+2022-06-27 10:53:39,933 - INFO : Anomaly detected inside window between 2022-06-27 00:55:27 and 2022-06-27 00:56:07
+2022-06-27 10:53:39,935 - INFO : Anomaly detected inside window between 2022-06-27 00:55:31 and 2022-06-27 00:56:11
+```

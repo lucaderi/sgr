@@ -137,9 +137,10 @@ def get_rrd_data(rrd_file, metric : str):
 
 
 def detect_anomaly(data, sample_std_dev) -> bool:
-    std_dev = numpy.std(data)
+    # get data standard deviation
+    std_dev = float(numpy.std(data))
 
-    return (std_dev > (3 * sample_std_dev)).bool()
+    return std_dev > (3 * sample_std_dev)
 
 
 def skewness():
@@ -168,6 +169,9 @@ def skewness():
     # load json into pandas dataframe
     if args.json_filename:
         
+        # print what file we're analyzing
+        logger.info(f"Analyzing {args.json_filename}...")
+        
         # check file existance
         if not os.path.exists(args.json_filename) or not os.path.isfile(args.json_filename):
             logger.error("JSON provided not exists or is not a file")
@@ -184,6 +188,10 @@ def skewness():
             #plt.show()
 
     elif args.rrd_filename:
+
+        # print what file we're analyzing
+        logger.info(f"Analyzing {args.rrd_filename}...")
+
         # load rrd into pandas dataframe
         
         # check file existance
@@ -193,7 +201,6 @@ def skewness():
         
         # get data
         start_time, end_time, step_size, ds, data = get_rrd_data(args.rrd_filename, args.rrd_metric)
-        print(args.rrd_metric)
 
         # get the selected RRA
         if len(ds) <= args.rrd_ds_index:
@@ -203,20 +210,23 @@ def skewness():
 
         timestamp = start_time
 
-        filtered_data = []
+        data_to_analyze = []
 
         for value in data:
             y = value[index]
 
             # don't write None elements
-            if y:
-                filtered_data.append((datetime.fromtimestamp(timestamp), y))
+            data_to_analyze.append((datetime.fromtimestamp(timestamp), y))
             
             timestamp += step_size
 
         # pandas dataframe
-        columns=['time', 'Signal']
-        dataframe = pd.DataFrame(filtered_data, columns=columns)
+        
+        # get legend filename
+        label = str(args.rrd_filename).split(".")[0]
+        columns=['time', label]
+        
+        dataframe = pd.DataFrame(data_to_analyze, columns=columns)
         dataframe.set_index('time', drop=True, inplace=True)
         #print(dataframe)
     
@@ -233,7 +243,8 @@ def skewness():
         return
     
     # get first SAMPLE_ELEMENTS data
-    sample_data = dataframe.head(args.sample_elements)['Signal']
+    y_column = dataframe.columns[0]
+    sample_data = dataframe.head(args.sample_elements)[y_column]
 
     # calculate standard deviation of these data
     sample_std_dev = numpy.std(sample_data)
@@ -251,6 +262,9 @@ def skewness():
         window_end = window_start + args.window_size
         if window_end >= len(dataframe):
             window_end = len(dataframe) - 1
+        
+        if window_end == window_start:
+            break
 
         # get data from dataframe
         batch_data = dataframe.iloc[window_start:window_end,]

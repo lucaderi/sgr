@@ -1,0 +1,19 @@
+[contacts]
+webhook = ""
+    
+[timings]
+# Seconds to wait before sending webhook
+webhook_pause = 3600
+# Seconds between snmpfetch executions
+interval = 1
+
+[thresholds]
+# Percentage of used memory
+used_mem = 80
+# Load 1 minute value
+load_1m = 500
+
+[database]
+influxdb_url = "http://localhost:8086"
+influxdb_name = "test"
+grafana_url = "http://localhost:3000"

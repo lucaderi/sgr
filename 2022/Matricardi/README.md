@@ -30,7 +30,9 @@ Parametri obbligatori:
 - `-n` numero di elementi con cui calibrare il sistema
 - `-w` numero di elementi presenti nella finestra mobile
 
-- `--rrd <rrd file>` oppure `--json <json file>` per indicare il file con il segnale da analizzare
+Parametri obbligatori e alternativi tra loro:
+- `--rrd <rrd file>` analizza file rrd
+- `--json <json file>` analizza file json
 
 Parametri opzionali:
 
@@ -40,6 +42,21 @@ Parametri opzionali:
 - `--rrd-ds-index` DS index da prendere (default è 0)
 
 # Come testare
+
+## NTOPNG
+
+È possibile testare le metriche offerte da ntopng lanciando da linea di comando:
+```
+sh test.sh
+```
+È un semplice script bash che prende tutti i file RRD presenti in `/var/lib/ntopng/0` e li analizza in successione.
+
+È possibile lanciare lo script con un parametro indicante la cartella dove è presente una lista di file RRD:
+```
+sh test.sh /path/containing/rrds
+```
+
+## Test di singoli file RRD
 
 Un esempio tipico di esecuzione è
 ```

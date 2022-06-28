@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import rrdtool
 from datetime import datetime
 
+# define possible RRA metrics
+RRD_METRICS = ["AVERAGE", "MAX", "MIN", "LAST"]
+
 def init_logger():
     """Init logger with error level"""
 
@@ -97,20 +100,40 @@ def get_parser() -> argparse.ArgumentParser:
         dest="rrd_filename",
     )
 
+    # chosen metric
+    parser.add_argument(
+        "--rrd-metric",
+        type=str,
+        help="metric to take from a RRD time serie (default is AVERAGE)",
+        choices=RRD_METRICS,
+        default="AVERAGE",
+        dest="rrd_metric",
+    )
+
+    parser.add_argument(
+        "--rrd-ds-index",
+        type=int,
+        help="DS index of the RRD time serie (default is 0)",
+        default=0,
+        dest="rrd_ds_index",
+    )
+
     return parser
 
 
-def get_rrd_data(rrd_file):
+def get_rrd_data(rrd_file, metric : str):
     """Get data from RRD database"""
 
     start_idx = str(rrdtool.first(rrd_file))
     end_idx = str(rrdtool.last(rrd_file))
 
-    rrd_data = rrdtool.fetch(rrd_file, "AVERAGE", "-e", end_idx, '-s', start_idx)
+    rrd_data = rrdtool.fetch(rrd_file, metric, "-e", end_idx, '-s', start_idx)
+
     start_time, end_time, step = rrd_data[0]
+    ds = rrd_data[1]
     data = rrd_data[2]
 
-    return start_time, end_time, step, data
+    return start_time, end_time, step, ds, data
 
 
 def detect_anomaly(data, sample_std_dev) -> bool:
@@ -169,10 +192,14 @@ def skewness():
             return
         
         # get data
-        start_time, end_time, step_size, data = get_rrd_data(args.rrd_filename)
+        start_time, end_time, step_size, ds, data = get_rrd_data(args.rrd_filename, args.rrd_metric)
+        print(args.rrd_metric)
 
-        # get the first RRA
-        index = 0
+        # get the selected RRA
+        if len(ds) <= args.rrd_ds_index:
+            logger.error(f"RRD ds index {args.rrd_ds_index} is out of range")
+            exit()
+        index = args.rrd_ds_index
 
         timestamp = start_time
 

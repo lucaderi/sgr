@@ -36,6 +36,8 @@ Parametri opzionali:
 
 - `-v` verbose mode (mostra log di debug come ad esempio quando non viene rilevata un anomalia)
 - `-p` plotta in nero il segnale ed in rosso dove il segnale è stato riconosciuto come nervoso
+- `--rrd-metric` metrica RRD da prendere a scelta tra AVERAGE, MAX, MIN, LAST (default è AVERAGE)
+- `--rrd-ds-index` DS index da prendere (default è 0)
 
 # Come testare
 

@@ -5,6 +5,7 @@ Alessio Matricardi (a.matricardi@studenti.unipi.it)
 # Obiettivo
 
 L'obiettivo del progetto è l'implementazione di un sistema di individuazione di nervosismo (skewness) all'interno di serie temporali.
+Viene analizzato un arco che comprende gli ultimi S secondi della serie temporale.
 
 Il sistema deve essere calibrato dall'utente con i primi N valori all'interno della serie temporale, ragion per cui è opportuno che la serie presenti, almeno inizialmente, un comportamento che riteniamo standard. Il processo di calibrazione calcola la deviazione standard degli N valori.
 Da questo momento in poi, il programma cerca il nervosismo all'interno della serie procedendo con la tecnica della finestra mobile: il sistema procede calcolando la deviazione standard sui W valori presenti all'interno della finestra mobile.
@@ -36,6 +37,7 @@ Parametri obbligatori e alternativi tra loro:
 
 Parametri opzionali:
 
+- `-s` arco temporale da prendere in considerazione, espresso in secondi (default è 86400 = 1 giorno)
 - `-v` verbose mode (mostra log di debug come ad esempio quando non viene rilevata un anomalia)
 - `-p` plotta in nero il segnale ed in rosso dove il segnale è stato riconosciuto come nervoso
 - `--rrd-metric` metrica RRD da prendere a scelta tra AVERAGE, MAX, MIN, LAST (default è AVERAGE)

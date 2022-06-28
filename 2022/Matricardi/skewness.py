@@ -83,6 +83,14 @@ def get_parser() -> argparse.ArgumentParser:
         dest="window_size",
     )
 
+    parser.add_argument(
+        "-s",
+        type=check_positive_integer,
+        help="time span (in seconds) (default is 8600 = 1 day)",
+        default=86400,
+        dest="time_span",
+    )
+
     # JSON and rrd files are mutually exclusive
     action = parser.add_mutually_exclusive_group()
 
@@ -121,13 +129,13 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_rrd_data(rrd_file, metric : str):
-    """Get data from RRD database"""
+def get_rrd_data(rrd_file, metric : str, time_span : int):
+    """Get data from RRD database of the last day"""
 
-    start_idx = str(rrdtool.first(rrd_file))
-    end_idx = str(rrdtool.last(rrd_file))
+    end_idx = int(rrdtool.last(rrd_file))
+    start_idx = end_idx - time_span
 
-    rrd_data = rrdtool.fetch(rrd_file, metric, "-e", end_idx, '-s', start_idx)
+    rrd_data = rrdtool.fetch(rrd_file, metric, "-e", str(end_idx), '-s', str(start_idx))
 
     start_time, end_time, step = rrd_data[0]
     ds = rrd_data[1]
@@ -200,7 +208,11 @@ def skewness():
             return
         
         # get data
-        start_time, end_time, step_size, ds, data = get_rrd_data(args.rrd_filename, args.rrd_metric)
+        start_time, end_time, step_size, ds, data = get_rrd_data(
+            args.rrd_filename,
+            args.rrd_metric,
+            args.time_span
+        )
 
         # get the selected RRA
         if len(ds) <= args.rrd_ds_index:

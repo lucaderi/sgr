@@ -16,9 +16,8 @@ Le approssimazioni vengono calcolate sfruttando l' algoritmo HyperLogLog e i ris
   
   ```
   git clone https://github.com/LorenaModica/wiresharkListener.git
-  
   ```
 * Avviare Wireshark come root
 
-Maggiori informazioni sono reperibili nella relazione
+Maggiori informazioni sono reperibili nella relazione.
 

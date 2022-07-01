@@ -44,14 +44,15 @@ local function host_info ()
 					local src = tostring(pinfo.src)
 					local dst = tostring(pinfo.dst)	
 					local host = nil
-					
+						
+								
 					if dst == ipv4_address then
 						
 						--hll conta numero di volte in cui ipv4_address e' stato
 						--contattato
 						hll_add(hll_hosts,src)
 						estimate_one=hll_count(hll_hosts)
-						
+										
 						host=src
 						
 					elseif src == ipv4_address then  
@@ -103,8 +104,8 @@ local function host_info ()
 					window:clear()
 					host_packets={}
 					hll_packets={}
-					init_one = hll_init (hll_hosts , 19)
-					init_two = hll_init (hll_to_host , 19)
+					init_one = hll_reset (hll_hosts)
+					init_two = hll_reset (hll_to_host)
 					estimate_one=0
 					estimate_two=0	
 				end

@@ -1,0 +1,19 @@
+[package]
+name = "snmpfetch"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+snmp = "0.2.2"
+clap = { version = "3.1.18", features = ["derive"] }
+toml = "0.5.9"
+serde = "1.0.137"
+serde_derive = "1.0.137"
+reqwest = { version = "0.11.11", features = ["blocking","json"] }
+crossterm = "0.23.2"
+
+chrono = "0.4.19"
+influxdb = { version = "0.5.2", features = ["derive"] }
+tokio = { version = "1.19.2", features = ["macros"] }

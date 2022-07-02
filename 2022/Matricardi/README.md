@@ -4,12 +4,12 @@ Alessio Matricardi (a.matricardi@studenti.unipi.it)
 
 # Obiettivo
 
-L'obiettivo del progetto è l'implementazione di un sistema di individuazione di nervosismo (skewness) all'interno di serie temporali.
+L'obiettivo del progetto è l'implementazione di un sistema di individuazione di picchi all'interno di serie temporali.
 Viene analizzato un arco che comprende gli ultimi S secondi della serie temporale.
 
-Il sistema deve essere calibrato dall'utente con i primi N valori all'interno della serie temporale, ragion per cui è opportuno che la serie presenti, almeno inizialmente, un comportamento che riteniamo standard. Il processo di calibrazione calcola la deviazione standard degli N valori.
-Da questo momento in poi, il programma cerca il nervosismo all'interno della serie procedendo con la tecnica della finestra mobile: il sistema procede calcolando la deviazione standard sui W valori presenti all'interno della finestra mobile.
-Un nervosismo all'interno della finestra viene individuato se la deviazione standard calcolata è 3 volte maggiore di quella di calibrazione.
+Il sistema deve essere calibrato dall'utente con i primi N valori non nulli all'interno della serie temporale, ragion per cui è opportuno che la serie presenti, almeno inizialmente, un comportamento che riteniamo standard. Il processo di calibrazione calcola la deviazione standard degli N valori.
+Da questo momento in poi, il programma cerca i picchi all'interno della serie procedendo con la tecnica della finestra mobile: il sistema procede calcolando la deviazione standard sui W valori presenti all'interno della finestra mobile.
+Un picco viene individuato se la deviazione standard calcolata è 3 volte maggiore di quella di calibrazione.
 La finestra si sposta ad ogni iterazione di 1/10 della sua grandezza (e.g. se W = 20 -> finestra mobile di 2 elementi per iterazione)
 
 ![plot](./graph.png)
@@ -62,7 +62,7 @@ sh test.sh /path/containing/rrds
 
 Un esempio tipico di esecuzione è
 ```
-python3 skewness.py -n 50 -w 40 -p --rrd test/signal.rrd
+python3 peaks.py -n 50 -w 40 -p --rrd test/signal.rrd
 ```
 
 Il programma è stato testato con tutti i file di test forniti.
@@ -70,7 +70,7 @@ Il programma è stato testato con tutti i file di test forniti.
 Esempio di output:
 
 ```
-python3 skewness.py -w 40 -n 50 -p --rrd test/signal.rrd
+python3 peaks.py -w 40 -n 50 -p --rrd test/signal.rrd
 2022-06-27 10:53:39,266 - INFO : Anomaly detected inside window between 2022-06-27 00:17:59 and 2022-06-27 00:18:39
 2022-06-27 10:53:39,267 - INFO : Anomaly detected inside window between 2022-06-27 00:18:03 and 2022-06-27 00:18:43
 2022-06-27 10:53:39,267 - INFO : Anomaly detected inside window between 2022-06-27 00:18:07 and 2022-06-27 00:18:47

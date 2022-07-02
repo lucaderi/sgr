@@ -49,7 +49,7 @@ def get_parser() -> argparse.ArgumentParser:
             raise argparse.ArgumentTypeError("%s is not >= 10" % value)
         return int_value
 
-    parser = argparse.ArgumentParser(description="Detect signal skewness")
+    parser = argparse.ArgumentParser(description="Detect signal peaks")
 
     parser.add_argument(
         "-v",
@@ -151,7 +151,7 @@ def detect_anomaly(data, sample_std_dev) -> bool:
     return std_dev > (3 * sample_std_dev)
 
 
-def skewness():
+def peaks():
     """Find nervousness inside a time serie"""
     
     # init logger
@@ -224,10 +224,15 @@ def skewness():
 
         data_to_analyze = []
 
+        sample_data = []
+
         for value in data:
             y = value[index]
 
-            # don't write None elements
+            # don't write None elements to calculate sample std_dev
+            if y and len(sample_data) < args.sample_elements:
+                sample_data.append(y)
+
             data_to_analyze.append((datetime.fromtimestamp(timestamp), y))
             
             timestamp += step_size
@@ -254,9 +259,9 @@ def skewness():
         logger.error("Window size is greater than number of total rows")
         return
     
-    # get first SAMPLE_ELEMENTS data
-    y_column = dataframe.columns[0]
-    sample_data = dataframe.head(args.sample_elements)[y_column]
+    if not sample_data:
+        logger.error("Sample data is empty")
+        return
 
     # calculate standard deviation of these data
     sample_std_dev = numpy.std(sample_data)
@@ -308,4 +313,4 @@ def skewness():
     
 
 if __name__ == '__main__':
-    skewness()
+    peaks()

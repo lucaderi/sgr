@@ -8,4 +8,4 @@ if [ -z "$1" ]
         path_of_rrds=$1
 fi
 
-sudo find $path_of_rrds -type file -name "*.rrd" -exec python3 ~/Desktop/sgr/2022/Matricardi/skewness.py -n 30 -w 20 -p --rrd {} \;
+sudo find $path_of_rrds -type file -name "*.rrd" -exec python3 ~/Desktop/sgr/2022/Matricardi/peaks.py -n 30 -w 20 -p --rrd {} \;

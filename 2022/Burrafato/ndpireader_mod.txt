@@ -1,0 +1,139 @@
+// struct to add more statitcs in function printFlowStats
+149  typedef struct hash_stats{
+150  char* domain_name;  
+151  int occurency;       /* how many time domain name occury in the flow */
+152  UT_hash_handle hh;   /* hashtable to collect the stats */
+153  }hash_stats;
+
+
+487  -v <1|2|3|4> | Verbose 'unknown protocol' packet print.\n"
+
+
+491  " | 4 = hash stats\n"
+
+     
+2732  /*function to use in HASH_SORT function in verbose == 4 to order in creasing order to delete host with the leatest occurency*/
+2733  static int hash_stats_sort_to_order(void *_a, void *_b){
+2734	  struct hash_stats *a = (struct hash_stats*)_a;
+2735
+2736	  struct hash_stats *b = (struct hash_stats*)_b;
+2737	  return (a->occurency - b->occurency);
+2738  }
+
+2740  /* *********************************************** */
+
+2742  /*function to use in HASH_SORT function in verbose == 4 to print in decreasing order*/
+2743  static int hash_stats_sort_to_print(void *_a, void *_b){
+2744	  struct hash_stats *a = (struct hash_stats*)_a;
+2745	  struct hash_stats *b = (struct hash_stats*)_b;
+2746
+2747	  return (b->occurency - a->occurency);
+2748  }
+
+2750  /* *********************************************** */
+
+3106	if (verbose == 4){
+3107		//how long the table could be
+3108		unsigned int len_table_max = 1000;
+3109	      //number of element to delete when the table is full
+3110		int toDelete = 10;
+3111	      struct hash_stats *hostsHashT = NULL;
+3112		struct hash_stats *host_iter = NULL;
+3113		struct hash_stats *tmp = NULL;
+3114		int len_max = 0;    
+3115
+3116	  for (i = 0; i<num_flows; i++){
+3117
+3118		if(all_flows[i].flow->host_server_name[0] != '\0'){
+3119
+3120			int len = strlen(all_flows[i].flow->host_server_name);
+3121			len_max = ndpi_max(len,len_max);
+3122
+3123			struct hash_stats *hostFound;
+3124			HASH_FIND_STR(hostsHashT, all_flows[i].flow->host_server_name, hostFound);
+3125
+3126			if(hostFound == NULL){
+3127				struct hash_stats *newHost = (struct hash_stats*)ndpi_malloc(sizeof(hash_stats));
+3128			      newHost->domain_name = all_flows[i].flow->host_server_name;
+3129				newHost->occurency = 1;
+3130				if (HASH_COUNT(hostsHashT) == len_table_max) {
+3131				  int i=0;
+3132				  while (i<=toDelete){
+3133
+3134				    HASH_ITER(hh, hostsHashT, host_iter, tmp){
+3135				      HASH_DEL(hostsHashT,host_iter);
+3136						free(host_iter);
+3137				      i++;		
+3138				    }	
+3139				  }
+3140
+3141				}			
+3142				HASH_ADD_KEYPTR(hh, hostsHashT, newHost->domain_name, strlen(newHost->domain_name), newHost);
+3143			}	
+3144			else
+3145			  hostFound->occurency++;
+3146
+3147
+3148		}
+3149
+3150		if(all_flows[i].flow->ssh_tls.server_info[0] != '\0'){
+3151
+3152			int len = strlen(all_flows[i].flow->host_server_name);
+3153			len_max = ndpi_max(len,len_max);
+3154
+3155			struct hash_stats *hostFound;
+3156		  	HASH_FIND_STR(hostsHashT, all_flows[i].flow->ssh_tls.server_info, hostFound);
+3157
+3158		  	if(hostFound == NULL){
+3159		    		struct hash_stats *newHost = (struct hash_stats*)ndpi_malloc(sizeof(hash_stats));
+3160	      	    		newHost->domain_name = all_flows[i].flow->ssh_tls.server_info;
+3161		    		newHost->occurency = 1;
+3162
+3163	    			if ((HASH_COUNT(hostsHashT)) == len_table_max) {
+3164				  int i=0;
+3165				  while (i<toDelete){
+3166
+3167				    HASH_ITER(hh, hostsHashT, host_iter, tmp){
+3168			 	     HASH_DEL(hostsHashT,host_iter);
+3169			  	    ndpi_free(host_iter);
+3170			   	   i++;		
+3171			 	   }
+3172				  }	
+3173
+3174
+3175	    			}
+3176				HASH_ADD_KEYPTR(hh, hostsHashT, newHost->domain_name, strlen(newHost->domain_name), newHost);
+3177			}
+3178			else
+3179			  hostFound->occurency++;
+3180
+3181
+3182		}	
+3183
+3184		//sort the table by the least occurency
+3185		HASH_SORT(hostsHashT, hash_stats_sort_to_order);
+3186	}
+3187
+3188	//sort the table in decreasing order to print
+3189  HASH_SORT(hostsHashT, hash_stats_sort_to_print);
+3190
+3191	//print the element of the hash table
+3192  int j;
+3193	HASH_ITER(hh, hostsHashT, host_iter, tmp){
+3194
+3195		printf("\t%s", host_iter->domain_name);
+3196		//to print the occurency in aligned column	    	
+3197		int diff = len_max-strlen(host_iter->domain_name);
+3198	    	for (j = 0; j <= diff+5;j++)
+3199	    		printf (" ");
+3200	    	printf("%d\n",host_iter->occurency);
+3201	}
+3202	printf("%s", "\n\n");
+3203
+3204	//freeing the hash table
+3205	HASH_ITER(hh, hostsHashT, host_iter, tmp){
+3206	   HASH_DEL(hostsHashT, host_iter);
+3207	   ndpi_free(host_iter);
+3208	}
+3209
+3210}

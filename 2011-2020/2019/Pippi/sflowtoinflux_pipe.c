@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 {
     FILE *fdcount, *fdconf;
     int i;
-    char *line, *value, *query, *query_t, *temp, *timestamp, *toolcmd;
+    char *line, *value, *query, *query_t, *temp, *timestamp, *toolcmd, *address, *org, *bucket, *token;
     char *tags[20] = {"Agent=", ",ifIndex=", " ifType=", " ifSpeed=", " ifDirection=", " ifStatus=", " ifInOctets=", " ifInUcastPkts=", " ifInMulticastPkts=", " ifInBroadcastPkts=", " ifInDiscards=", " ifInErrors=", " ifInUnknownProtos=", " ifOutOctets=", " ifOutUcastPkts=", " ifOutMulticastPkts=", " ifOutBroadcastPkts=", " ifOutDiscards=", " ifOutErrors=", " ifPromiscuousMode="};
 
     toolcmd = malloc(sizeof(char) * MAXLINE);
@@ -24,6 +24,10 @@ int main(int argc, char *argv[])
     temp = malloc(sizeof(char) * MAXLINE);
     line = malloc(sizeof(char) * MAXLINE);
     timestamp = malloc(sizeof(char) * MAXTAG);
+    address = malloc(sizeof(char) * MAXLINE);
+    org = malloc(sizeof(char) * MAXLINE);
+    bucket = malloc(sizeof(char) * MAXLINE);
+    token = malloc(sizeof(char) * MAXLINE);
     fflush(NULL);
 
     //<CONF PARSING>
@@ -39,32 +43,59 @@ int main(int argc, char *argv[])
                     value = strtok(line, "=");
                     if (strcmp(value, "DATABASE") == 0)
                     {
-                        value = strtok(NULL, "\n");
-                        sprintf(query_t, "curl -i -XPOST \'%s\' --data-binary \'Flow,", value);
+                        value = strtok(NULL, "\r\n");
+                        strcat(address, value);
+                        // sprintf(query_t, "curl --request POST \'%s\' --header \'Authorization: Token j66isSIJjLe1lMjxzhFz0_Ov1n2QQLwa4BXPtNlKs83qgSExp2bHaxJslLv-ZN6H5Xn00F6C88TPKAzfk9nOkQ==\' --data-binary \'sflow,", value);
                     }
                     else
                     {
                         if (strcmp(value, "PATH") == 0)
                         {
-                            value = strtok(NULL, "\n");
+                            value = strtok(NULL, "\r\n");
                             sprintf(toolcmd, "%s -p ", value);
                         }
                         else
                         {
                             if (strcmp(value, "PORT") == 0)
                             {
-                                value = strtok(NULL, "\n");
+                                value = strtok(NULL, "\r\n");
                                 strcat(toolcmd, value);
                                 strcat(toolcmd, TAGS_CSAMPLE);
+                            }
+                            else
+                            {
+                                if (strcmp(value, "ORG") == 0)
+                                {
+                                    value = strtok(NULL, "\r\n");
+                                    strcat(org, value);
+                                }
+                                else
+                                {
+                                    if (strcmp(value, "BUCKET") == 0)
+                                    {
+                                        value = strtok(NULL, "\r\n");
+                                        strcat(bucket, value);
+                                    }
+                                    else
+                                    {
+                                        if (strcmp(value, "TOKEN") == 0)
+                                        {
+                                            value = strtok(NULL, "\r\n");
+                                            strcat(token, value);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        sprintf(query_t, "curl --request POST \'%sapi/v2/write?org=%s&bucket=%s&precision=ns\' --header \'Authorization: Token %s\' --data-binary \'sflow,", address, org, bucket, token);
+        printf("DEBUG: Query: %s\n", query_t);
+        fflush(NULL);
     }
     //</CONF PARSING>
-
     fdcount = popen(toolcmd, "r");
     while (1)
     {
@@ -86,6 +117,11 @@ int main(int argc, char *argv[])
                             strcat(query, tags[i]);
                             strcat(query, value);
                             strcpy(temp, query);
+                            if (i == 0)
+                            {
+                                printf("DEBUG: Agent: %s\n", value);
+                                fflush(NULL);
+                            }
                         }
                         else
                         {

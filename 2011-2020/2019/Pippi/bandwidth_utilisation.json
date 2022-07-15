@@ -1,0 +1,1343 @@
+{
+ "meta": {
+  "version": "1",
+  "type": "dashboard",
+  "name": "Bandwidth utilisation-Template",
+  "description": "template created from dashboard: Bandwidth utilisation"
+ },
+ "content": {
+  "data": {
+   "type": "dashboard",
+   "attributes": {
+    "name": "Bandwidth utilisation",
+    "description": ""
+   },
+   "relationships": {
+    "label": {
+     "data": [
+      {
+       "type": "label",
+       "id": "0973c436b7477000"
+      },
+      {
+       "type": "label",
+       "id": "0973c436b9477000"
+      }
+     ]
+    },
+    "cell": {
+     "data": [
+      {
+       "type": "cell",
+       "id": "097b72a0eb442000"
+      },
+      {
+       "type": "cell",
+       "id": "097b870b21442000"
+      },
+      {
+       "type": "cell",
+       "id": "097b878a98042000"
+      },
+      {
+       "type": "cell",
+       "id": "097b8bff9b842000"
+      },
+      {
+       "type": "cell",
+       "id": "097b8c828d842000"
+      },
+      {
+       "type": "cell",
+       "id": "097b8f788f842000"
+      },
+      {
+       "type": "cell",
+       "id": "097b90efd3442000"
+      },
+      {
+       "type": "cell",
+       "id": "09ac9d37b0fbe000"
+      },
+      {
+       "type": "cell",
+       "id": "09ac9f39a8fbe000"
+      },
+      {
+       "type": "cell",
+       "id": "09ac9fb2c1fbe000"
+      }
+     ]
+    },
+    "variable": {
+     "data": [
+      {
+       "type": "variable",
+       "id": "0973c436ba517000"
+      }
+     ]
+    }
+   }
+  },
+  "included": [
+   {
+    "type": "label",
+    "id": "0973c436b7477000",
+    "attributes": {
+     "name": "sFlow",
+     "properties": {
+      "color": "#326BBA",
+      "description": ""
+     }
+    }
+   },
+   {
+    "type": "label",
+    "id": "0973c436b9477000",
+    "attributes": {
+     "name": "Network Monitoring",
+     "properties": {
+      "color": "#326BBA",
+      "description": ""
+     }
+    }
+   },
+   {
+    "id": "097b72a0eb442000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 0,
+     "w": 12,
+     "h": 5
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b72a0eb442000"
+      }
+     }
+    }
+   },
+   {
+    "id": "097b870b21442000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 5,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b870b21442000"
+      }
+     }
+    }
+   },
+   {
+    "id": "097b878a98042000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 5,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b878a98042000"
+      }
+     }
+    }
+   },
+   {
+    "id": "097b8bff9b842000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 13,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b8bff9b842000"
+      }
+     }
+    }
+   },
+   {
+    "id": "097b8c828d842000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 9,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b8c828d842000"
+      }
+     }
+    }
+   },
+   {
+    "id": "097b8f788f842000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 9,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b8f788f842000"
+      }
+     }
+    }
+   },
+   {
+    "id": "097b90efd3442000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 13,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "097b90efd3442000"
+      }
+     }
+    }
+   },
+   {
+    "id": "09ac9d37b0fbe000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 21,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "09ac9d37b0fbe000"
+      }
+     }
+    }
+   },
+   {
+    "id": "09ac9f39a8fbe000",
+    "type": "cell",
+    "attributes": {
+     "x": 0,
+     "y": 17,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "09ac9f39a8fbe000"
+      }
+     }
+    }
+   },
+   {
+    "id": "09ac9fb2c1fbe000",
+    "type": "cell",
+    "attributes": {
+     "x": 6,
+     "y": 17,
+     "w": 6,
+     "h": 4
+    },
+    "relationships": {
+     "view": {
+      "data": {
+       "type": "view",
+       "id": "09ac9fb2c1fbe000"
+      }
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b72a0eb442000",
+    "attributes": {
+     "name": "Bandwidth",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "usage = from(bucket: \"root\")\r\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n    |> filter(fn: (r) => r.Agent == v.agent_host)\r\n    |> filter(fn: (r) => r[\"_field\"] == \"ifInOctets\" or r[\"_field\"] == \"ifOutOctets\")\r\n    |> difference(nonNegative: true, columns: [\"_value\"])\r\n    |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n    |> elapsed(unit: 1s)\r\n    |> map(fn: (r) => ({r with _value: (r.ifInOctets + r.ifOutOctets) * 8.0 / (float(v: r.elapsed)) * 100.0}))\r\n\r\nspeed = from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)  \r\n  |> filter(fn: (r) => r[\"Agent\"] == v.agent_host)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifSpeed\")\r\n  |> fill(column: \"_value\", usePrevious: true)  \r\n  |> toFloat()\r\n\r\nresult = join(tables: {usage:usage, speed:speed}, on:[\"_time\"])\r\n    |> map(fn: (r) => ({r with _value: r._value_usage / r._value_speed }))\r\n    |> filter(fn: (r) => r.ifIndex_speed == r.ifIndex_usage)\r\n    |> yield(name: \"bandwith\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": null,
+        "label": "Bandwith %",
+        "prefix": "",
+        "suffix": "%",
+        "base": "2",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "monotoneX",
+      "colors": [
+       {
+        "id": "7a324088-3146-4a29-9726-87a0077d90c0",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "e25e4b4c-8824-40ef-985f-f90b5b1e5472",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "16f0944f-bfee-4efc-8fdc-652da7e7934c",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": true,
+      "position": "stacked",
+      "timeFormat": "HH:mm",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b870b21442000",
+    "attributes": {
+     "name": "Input utilisation",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "usage = from(bucket: \"root\")\r\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n    |> filter(fn: (r) => r.Agent == v.agent_host)\r\n    |> filter(fn: (r) => r[\"_field\"] == \"ifInOctets\")\r\n    |> difference(nonNegative: true, columns: [\"_value\"])\r\n    |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n    |> elapsed(unit: 1s)\r\n    |> map(fn: (r) => ({r with _value: (r.ifInOctets) * 8.0 / (float(v: r.elapsed)) * 100.0}))\r\n\r\nspeed = from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)  \r\n  |> filter(fn: (r) => r[\"Agent\"] == v.agent_host)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifSpeed\")\r\n  |> fill(column: \"_value\", usePrevious: true)  \r\n  |> toFloat()\r\n\r\nresult = join(tables: {usage:usage, speed:speed}, on:[\"_time\"])\r\n    |> map(fn: (r) => ({r with _value: r._value_usage / r._value_speed }))\r\n    |> filter(fn: (r) => r.ifIndex_speed == r.ifIndex_usage)\r\n    |> yield(name: \"input\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": [
+         "0",
+         "100"
+        ],
+        "label": "Input Utilisation",
+        "prefix": "",
+        "suffix": "%",
+        "base": "2",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "monotoneX",
+      "colors": [
+       {
+        "id": "79ab3fc6-0d3c-489d-bb44-1e24895e5a5f",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "019952ef-a1e9-49c2-8058-b0e83b551cea",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "021327ab-9134-46f2-b2e5-071a8a40c723",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": true,
+      "position": "overlaid",
+      "timeFormat": "HH:mm",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b878a98042000",
+    "attributes": {
+     "name": "Output utilisation",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "usage = from(bucket: \"root\")\r\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n    |> filter(fn: (r) => r.Agent == v.agent_host)\r\n    |> filter(fn: (r) => r[\"_field\"] == \"ifOutOctets\")\r\n    |> difference(nonNegative: true, columns: [\"_value\"])\r\n    |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\r\n    |> elapsed(unit: 1s)\r\n    |> map(fn: (r) => ({r with _value: (r.ifOutOctets) * 8.0 / (float(v: r.elapsed)) * 100.0}))\r\n\r\nspeed = from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)  \r\n  |> filter(fn: (r) => r[\"Agent\"] == v.agent_host)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifSpeed\")\r\n  |> fill(column: \"_value\", usePrevious: true)  \r\n  |> toFloat()\r\n\r\nresult = join(tables: {usage:usage, speed:speed}, on:[\"_time\"])\r\n    |> map(fn: (r) => ({r with _value: r._value_usage / r._value_speed }))\r\n    |> filter(fn: (r) => r.ifIndex_speed == r.ifIndex_usage)\r\n    |> yield(name: \"output\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": [
+         "0",
+         "100"
+        ],
+        "label": "Output utilisation",
+        "prefix": "",
+        "suffix": "%",
+        "base": "2",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "monotoneX",
+      "colors": [
+       {
+        "id": "79ab3fc6-0d3c-489d-bb44-1e24895e5a5f",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "019952ef-a1e9-49c2-8058-b0e83b551cea",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "021327ab-9134-46f2-b2e5-071a8a40c723",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": true,
+      "position": "overlaid",
+      "timeFormat": "HH:mm",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b8bff9b842000",
+    "attributes": {
+     "name": "Input packets",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifInUcastPkts\" or r[\"_field\"] == \"ifInMulticastPkts\" or r[\"_field\"] == \"ifInBroadcastPkts\" or r[\"_field\"] == \"ifInDiscards\" or r[\"_field\"] == \"ifInUnknownProtos\" or r[\"_field\"] == \"ifInErrors\")\r\n  |> filter(fn: (r) => r.Agent == v.agent_host)\r\n  |> difference(nonNegative: true, columns: [\"_value\"])\r\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") \r\n  |> elapsed(unit: 1s)\r\n  |> map(fn: (r) => ({ r with _value: (r.ifInErrors + r.ifInDiscards + r.ifInMulticastPkts + r.ifInBroadcastPkts + r.ifInUcastPkts + r.ifInUnknownProtos)}))    \r\n  |> yield(name: \"inPackets\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": null,
+        "label": "Packets",
+        "prefix": "",
+        "suffix": "",
+        "base": "",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "line",
+      "colors": [
+       {
+        "id": "79ab3fc6-0d3c-489d-bb44-1e24895e5a5f",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "019952ef-a1e9-49c2-8058-b0e83b551cea",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "021327ab-9134-46f2-b2e5-071a8a40c723",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 1,
+      "shadeBelow": true,
+      "position": "overlaid",
+      "timeFormat": "HH:mm",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b8c828d842000",
+    "attributes": {
+     "name": "Transmitted packets",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifOutUcastPkts\" or r[\"_field\"] == \"ifOutMulticastPkts\" or r[\"_field\"] == \"ifOutBroadcastPkts\" or r[\"_field\"] == \"ifOutErrors\" or r[\"_field\"] == \"ifOutDiscards\")\r\n  |> filter(fn: (r) => r.Agent == v.agent_host)\r\n  |> difference(nonNegative: true, columns: [\"_value\"])\r\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") \r\n  |> elapsed(unit: 1s)\r\n  |> map(fn: (r) => ({ r with _value: (r.ifOutUcastPkts + r.ifOutBroadcastPkts + r.ifOutMulticastPkts - r.ifOutErrors - r.ifOutDiscards)}))    \r\n  |> yield(name: \"outPackets\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": null,
+        "label": "Trasmitted packets",
+        "prefix": "",
+        "suffix": "",
+        "base": "",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "line",
+      "colors": [
+       {
+        "id": "79ab3fc6-0d3c-489d-bb44-1e24895e5a5f",
+        "type": "scale",
+        "hex": "#31C0F6",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "019952ef-a1e9-49c2-8058-b0e83b551cea",
+        "type": "scale",
+        "hex": "#A500A5",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       },
+       {
+        "id": "021327ab-9134-46f2-b2e5-071a8a40c723",
+        "type": "scale",
+        "hex": "#FF7E27",
+        "name": "Nineteen Eighty Four",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 1,
+      "shadeBelow": true,
+      "position": "overlaid",
+      "timeFormat": "HH:mm",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b8f788f842000",
+    "attributes": {
+     "name": "Transmitted Packets",
+     "properties": {
+      "shape": "chronograf-v2",
+      "type": "heatmap",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifOutUcastPkts\" or r[\"_field\"] == \"ifOutMulticastPkts\" or r[\"_field\"] == \"ifOutBroadcastPkts\" or r[\"_field\"] == \"ifOutErrors\" or r[\"_field\"] == \"ifOutDiscards\")\r\n  |> filter(fn: (r) => r.Agent == v.agent_host)\r\n  |> difference(nonNegative: true, columns: [\"_value\"])\r\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") \r\n  |> elapsed(unit: 1s)\r\n  |> map(fn: (r) => ({ r with _value: (r.ifOutUcastPkts + r.ifOutBroadcastPkts + r.ifOutMulticastPkts - r.ifOutErrors - r.ifOutDiscards)}))    \r\n  |> yield(name: \"outPackets\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "colors": [
+       "#000004",
+       "#110a30",
+       "#320a5e",
+       "#57106e",
+       "#781c6d",
+       "#9a2865",
+       "#bc3754",
+       "#d84c3e",
+       "#ed6925",
+       "#f98e09",
+       "#fbb61a",
+       "#f4df53"
+      ],
+      "binSize": 15,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 1,
+      "xAxisLabel": "",
+      "yAxisLabel": "Transmitted Packets",
+      "xPrefix": "",
+      "xSuffix": "",
+      "yPrefix": "",
+      "ySuffix": "",
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "timeFormat": "HH:mm",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "097b90efd3442000",
+    "attributes": {
+     "name": "Input packets",
+     "properties": {
+      "shape": "chronograf-v2",
+      "type": "heatmap",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_field\"] == \"ifInUcastPkts\" or r[\"_field\"] == \"ifInMulticastPkts\" or r[\"_field\"] == \"ifInBroadcastPkts\" or r[\"_field\"] == \"ifInDiscards\" or r[\"_field\"] == \"ifInUnknownProtos\" or r[\"_field\"] == \"ifInErrors\")\r\n  |> filter(fn: (r) => r.Agent == v.agent_host)\r\n  |> difference(nonNegative: true, columns: [\"_value\"])\r\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") \r\n  |> elapsed(unit: 1s)\r\n  |> map(fn: (r) => ({ r with _value: (r.ifInErrors + r.ifInDiscards + r.ifInMulticastPkts + r.ifInBroadcastPkts + r.ifInUcastPkts + r.ifInUnknownProtos)}))    \r\n  |> yield(name: \"inPackets\")",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "colors": [
+       "#000004",
+       "#110a30",
+       "#320a5e",
+       "#57106e",
+       "#781c6d",
+       "#9a2865",
+       "#bc3754",
+       "#d84c3e",
+       "#ed6925",
+       "#f98e09",
+       "#fbb61a",
+       "#f4df53"
+      ],
+      "binSize": 15,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 1,
+      "xAxisLabel": "",
+      "yAxisLabel": "",
+      "xPrefix": "",
+      "xSuffix": "",
+      "yPrefix": "",
+      "ySuffix": "",
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "timeFormat": "HH:mm",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "09ac9d37b0fbe000",
+    "attributes": {
+     "name": "Average internet speed",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n    |> filter(fn: (r) => r.Agent == v.agent_host)\r\n    |> filter(fn: (r) => r[\"_field\"] == \"ifInOctets\")\r\n    |> difference(nonNegative: true, columns: [\"_value\"])\r\n    |> elapsed(unit: 1s)\r\n    |> map(fn: (r) => ({ r with _value: ( r._value * 8.0 )  / (float(v: r.elapsed)) }))\r\n",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": null,
+        "label": "Average bits per seconds",
+        "prefix": "",
+        "suffix": "bits/s",
+        "base": "10",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "heightRatio": 0.18636363636363637,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "line",
+      "colors": [
+       {
+        "id": "e1ccc97a-25eb-4bff-94cd-54944bf0eccb",
+        "type": "scale",
+        "hex": "#F6F6F8",
+        "name": "T-Max 400 Film",
+        "value": 0
+       },
+       {
+        "id": "9cd443fb-40ba-4824-b597-e2b9f3603113",
+        "type": "scale",
+        "hex": "#A4A8B6",
+        "name": "T-Max 400 Film",
+        "value": 0
+       },
+       {
+        "id": "dd135854-023f-4cc0-a1cd-a008b3637ee8",
+        "type": "scale",
+        "hex": "#545667",
+        "name": "T-Max 400 Film",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": true,
+      "position": "stacked",
+      "timeFormat": "",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "09ac9f39a8fbe000",
+    "attributes": {
+     "name": "Input traffic volume",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n    |> filter(fn: (r) => r.Agent == v.agent_host)\r\n    |> filter(fn: (r) => r[\"_field\"] == \"ifInOctets\")\r\n    |> difference(nonNegative: true, columns: [\"_value\"])",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": null,
+        "label": "Traffic volume",
+        "prefix": "",
+        "suffix": "B",
+        "base": "10",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "step",
+      "colors": [
+       {
+        "id": "4fc1e604-4c6a-40f4-beb8-994ff6d5c6e9",
+        "type": "scale",
+        "hex": "#8F8AF4",
+        "name": "Do Androids Dream of Electric Sheep?",
+        "value": 0
+       },
+       {
+        "id": "b1cd9ece-32b6-4e44-ab0f-6a67a92e93e5",
+        "type": "scale",
+        "hex": "#A51414",
+        "name": "Do Androids Dream of Electric Sheep?",
+        "value": 0
+       },
+       {
+        "id": "657b8c87-578d-49a7-97ab-62c1e5a21e4b",
+        "type": "scale",
+        "hex": "#F4CF31",
+        "name": "Do Androids Dream of Electric Sheep?",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": true,
+      "position": "stacked",
+      "timeFormat": "",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "type": "view",
+    "id": "09ac9fb2c1fbe000",
+    "attributes": {
+     "name": "Output traffic volume",
+     "properties": {
+      "shape": "chronograf-v2",
+      "queries": [
+       {
+        "text": "from(bucket: \"root\")\r\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n    |> filter(fn: (r) => r.Agent == v.agent_host)\r\n    |> filter(fn: (r) => r[\"_field\"] == \"ifOutOctets\")\r\n    |> difference(nonNegative: true, columns: [\"_value\"])",
+        "editMode": "advanced",
+        "name": "",
+        "builderConfig": {
+         "buckets": [],
+         "tags": [
+          {
+           "key": "_measurement",
+           "values": [],
+           "aggregateFunctionType": "filter"
+          }
+         ],
+         "functions": [
+          {
+           "name": "mean"
+          }
+         ],
+         "aggregateWindow": {
+          "period": "auto",
+          "fillValues": false
+         }
+        }
+       }
+      ],
+      "axes": {
+       "x": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "",
+        "prefix": "",
+        "suffix": "",
+        "base": "10",
+        "scale": "linear"
+       },
+       "y": {
+        "bounds": [
+         "",
+         ""
+        ],
+        "label": "Bytes",
+        "prefix": "",
+        "suffix": "B",
+        "base": "10",
+        "scale": "linear"
+       }
+      },
+      "type": "xy",
+      "staticLegend": {
+       "colorizeRows": true,
+       "opacity": 1,
+       "orientationThreshold": 100000000,
+       "widthRatio": 1
+      },
+      "geom": "step",
+      "colors": [
+       {
+        "id": "4fc1e604-4c6a-40f4-beb8-994ff6d5c6e9",
+        "type": "scale",
+        "hex": "#8F8AF4",
+        "name": "Do Androids Dream of Electric Sheep?",
+        "value": 0
+       },
+       {
+        "id": "b1cd9ece-32b6-4e44-ab0f-6a67a92e93e5",
+        "type": "scale",
+        "hex": "#A51414",
+        "name": "Do Androids Dream of Electric Sheep?",
+        "value": 0
+       },
+       {
+        "id": "657b8c87-578d-49a7-97ab-62c1e5a21e4b",
+        "type": "scale",
+        "hex": "#F4CF31",
+        "name": "Do Androids Dream of Electric Sheep?",
+        "value": 0
+       }
+      ],
+      "note": "",
+      "showNoteWhenEmpty": false,
+      "xColumn": "_time",
+      "generateXAxisTicks": [],
+      "xTotalTicks": 0,
+      "xTickStart": 0,
+      "xTickStep": 0,
+      "yColumn": "_value",
+      "generateYAxisTicks": [],
+      "yTotalTicks": 0,
+      "yTickStart": 0,
+      "yTickStep": 0,
+      "shadeBelow": true,
+      "position": "stacked",
+      "timeFormat": "",
+      "hoverDimension": "auto",
+      "legendColorizeRows": true,
+      "legendHide": false,
+      "legendOpacity": 1,
+      "legendOrientationThreshold": 100000000
+     }
+    }
+   },
+   {
+    "id": "0973c436ba517000",
+    "type": "variable",
+    "attributes": {
+     "name": "agent_host",
+     "arguments": {
+      "type": "query",
+      "values": {
+       "query": "import \"influxdata/influxdb/schema\"\n\nschema.measurementTagValues(\n    bucket: \"root\",\n    measurement: \"sflow\",\n    tag: \"Agent\",\n)",
+       "language": "flux"
+      }
+     },
+     "selected": [
+      "sflow"
+     ]
+    },
+    "relationships": {
+     "label": {
+      "data": [
+       {
+        "type": "label",
+        "id": "0973c436b7477000"
+       },
+       {
+        "type": "label",
+        "id": "0973c436b9477000"
+       }
+      ]
+     }
+    }
+   }
+  ]
+ },
+ "labels": []
+}

@@ -11,8 +11,11 @@ Istruzioni
 Il file di configurazione conf.ini ha valori di default, se occorre modificarlo
 è necessario mantenere lo stesso ordine dei tag:
 1) DATABASE
-2) PATH
-3) PORT
+2) ORG
+3) BUCKET
+4) TOKEN
+5) PATH
+6) PORT
 
-GrafanaCounters.json è un modello di dashboard per la visualizzazione dei dati
-da importare su Grafana.
+bandwidth_utilisation.json è un modello di dashboard per la visualizzazione dei dati
+da importare su InfluxDB.

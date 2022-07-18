@@ -2,11 +2,11 @@
 
 ## Introduzione
 
-![skewness example graph](/images/example.png)
+![skewness example graph](./images/example.png)
 
 Il progetto consiste, dato un file rrd, nel determinare i punti in cui la serie temporale assume dei valori che ne aumentano la skewness. Come definizione di _skewness_ ho considerato quella riportata alla pagina [Skewness](https://en.wikipedia.org/wiki/Skewness). La formula usata è quella proposta al seguente [link](https://en.wikipedia.org/wiki/Skewness#Sample_skewness), cioè:
 
-![formula](/images/formula.png)
+![formula](./images/formula.png)
 
 La formula viene applicata ad un intervallo di valori di ampiezza `size` punti e l'intervallo viene traslato di `transl` punti dopo ogni computazione del valore di skewness.
 

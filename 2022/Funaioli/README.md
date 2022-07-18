@@ -6,7 +6,7 @@
 
 Il progetto consiste, dato un file rrd, nel determinare i punti in cui la serie temporale assume dei valori che ne aumentano la skewness. Come definizione di _skewness_ ho considerato quella riportata alla pagina [Skewness](https://en.wikipedia.org/wiki/Skewness). La formula usata è quella proposta al seguente [link](https://en.wikipedia.org/wiki/Skewness#Sample_skewness), cioè:
 
-![formula](./images/formula.png)
+![formula](https://wikimedia.org/api/rest_v1/media/math/render/svg/b632e0d32061f78e178eb9a1c6e22da4324e817c)
 
 La formula viene applicata ad un intervallo di valori di ampiezza `size` punti e l'intervallo viene traslato di `transl` punti dopo ogni computazione del valore di skewness.
 

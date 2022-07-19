@@ -16,12 +16,25 @@ rrdtool create $db --step=1 --start=now-1800s\
 
 high=1
 value=0
-now=$(expr $(date "+%s") - 1800)
+now=$(expr $(date "+%s") - 1800 )
 
-if [[ $1 -eq 0 ]]; then
+if [[ $# -eq 0 ]]; then
+	echo No pattern specified
+	echo Defaulting to pattern 0
+	echo
+	pattern=0
+elif [[ $1 -eq 0 ]]; then
+	pattern=0
+elif [[ $1 -eq 1 ]]; then
+	pattern=1
+fi
+
+if [[ $pattern -eq 0 ]]; then
 
 	for i in {0..1800}; do
+
 		high=$((RANDOM % 2))
+
 		if [ $i -ge 1500 ]; then
 			increment=$((1 + RANDOM % 10 + 20))
 		elif [ $i -ge 1200 ]; then
@@ -51,39 +64,41 @@ if [[ $1 -eq 0 ]]; then
 		now=$(expr ${now} + 1)
 	done
 
-elif [[ $1 -eq 1 ]]; then
+elif [[ $pattern -eq 1 ]]; then
 
 	for i in {0..1800}; do
-		high=$((RANDOM % 2))
+
+		#high=$((RANDOM % 2))
+
 		if [ $i -ge 1500 ]; then
 			increment=$((1 + RANDOM % 5 + 20))
 		elif [ $i -ge 1320 ]; then
 			if [ $high -eq 1 ]; then
-				increment=$((1 + RANDOM % 3 + 30))
-				#high=0
+				increment=$((1 + RANDOM % 5 + 30))
+				high=0
 			else
-				increment=$((1 + RANDOM % 3 + 12))
-				#high=1
+				increment=$((1 + RANDOM % 5 + 12))
+				high=1
 			fi
 		elif [ $i -ge 1020 ]; then
 			increment=$((1 + RANDOM % 5 + 20))
 		elif [ $i -ge 840 ]; then
 			if [ $high -eq 1 ]; then
-				increment=$((1 + RANDOM % 3 + 40))
-				#high=0
+				increment=$((1 + RANDOM % 5 + 40))
+				high=0
 			else
-				increment=$((1 + RANDOM % 3 + 25))
-				#high=1
+				increment=$((1 + RANDOM % 5 + 25))
+				high=1
 			fi
 		elif [ $i -ge 540 ]; then
 			increment=$((1 + RANDOM % 5 + 20))
 		elif [ $i -ge 360 ]; then
 			if [ $high -eq 1 ]; then
-				increment=$((1 + RANDOM % 3 + 17))
-				#high=0
+				increment=$((1 + RANDOM % 5 + 17))
+				high=0
 			else
-				increment=$((1 + RANDOM % 3 + 2))
-				#high=1
+				increment=$((1 + RANDOM % 5 + 2))
+				high=1
 			fi
 		else increment=$((1 + RANDOM % 5 + 20))
 		fi
@@ -101,7 +116,7 @@ img=skeweddata.png
 if [ $graph -eq 1 ]; then
 
 	rrdtool graph $img -s -2000s \
-	-t "Skewed data $1" -z \
+	-t "Skewed data $pattern" -z \
 	-c "BACK#FFFFFF" -c "SHADEA#FFFFFF" -c "SHADEB#FFFFFF" \
 	-c "MGRID#AAAAAA" -c "GRID#CCCCCC" -c "ARROW#333333" \
 	-c "FONT#333333" -c "AXIS#333333" -c "FRAME#333333" \

@@ -152,8 +152,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	//mean = (double)sum/(double)size;
-
 	int index = 0;
 	s = 0;
 	for(int t=start+j+1; t<end; t+=step) {

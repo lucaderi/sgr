@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 	time_t start, end;
 	long step = 0, ds_cnt = 0;
 	float threshold;
-	int size, transl, quiet;
+	int size, transl;
 
 	start_s = DEFAULT_START;
 	end_s = DEFAULT_END;
@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
 	threshold = DEFAULT_THRESHOLD;
 	size = DEFAULT_SIZE;
 	transl = DEFAULT_TRANSLATION;
-	quiet = 0;
 
 	int opt;
 	while((opt = getopt(argc, argv, "s:e:t:n:T:f:h")) != -1) {

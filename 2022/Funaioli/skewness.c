@@ -24,6 +24,7 @@ void help() {
 }
 
 
+// compute skewness of given interval, long 'size' points, given interval mean 'mean'
 double intervalSkewness(rrd_value_t interval[], int size, double mean) {
 
 	double firstSum = 0.0, secondSum = 0.0;
@@ -50,7 +51,7 @@ int main(int argc, char *argv[]) {
 	time_t start, end;
 	long step = 0, ds_cnt = 0;
 	float threshold;
-	int size, transl;
+	int size, transl, quiet;
 
 	start_s = DEFAULT_START;
 	end_s = DEFAULT_END;
@@ -58,6 +59,7 @@ int main(int argc, char *argv[]) {
 	threshold = DEFAULT_THRESHOLD;
 	size = DEFAULT_SIZE;
 	transl = DEFAULT_TRANSLATION;
+	quiet = 0;
 
 	int opt;
 	while((opt = getopt(argc, argv, "s:e:t:n:T:f:h")) != -1) {
@@ -115,6 +117,7 @@ int main(int argc, char *argv[]) {
 
 	double mean = 0;
 	int i = 0, j = 0, s = 0;
+	int already_skew = 0, t1old;
 
 	// fill 'interval' with values
 	while(i < size) {
@@ -133,28 +136,41 @@ int main(int argc, char *argv[]) {
 				// print if its skewer than threshold
 				if(skewness >= threshold || skewness <= -threshold) {
 
+					if(already_skew) {
+						printf("%.5f\t", skewness);
+					}
+					else {
+						t1old = j*step+start;
+						printf("%.5f\t", skewness);
+						already_skew = 1;
+					}
+				}
+				else if(already_skew) {
+
+					already_skew = 0;
+
 					// print human readable time
 					char buf1[32], buf2[32];
 
-					const time_t _t2 = j + start;
+					const time_t _t2 = j+start+transl;
 					struct tm *t_info = localtime((const time_t*)&_t2);
 					strftime(buf2, sizeof(buf2), "%d/%b/%Y %H:%M:%S", t_info);
 
-					const time_t _t1 = j + start -(transl*step);
+					const time_t _t1 = t1old;
 					t_info = localtime((const time_t*)&_t1);
 					strftime(buf1, sizeof(buf1), "%d/%b/%Y %H:%M:%S", t_info);
 
-					printf("%.10f\tat time [%d, %d], (%s - %s)\n",
-							skewness, j+start-(size*step), j+start, buf1, buf2);
+					printf("at time (%s - %s)\n", buf1, buf2);
 				}
 			}
 			s++;
 		}
 	}
 
-	int index = 0;
 	s = 0;
-	for(int t=start+j+1; t<end; t+=step) {
+	int index = 0, last_skew;
+
+	for(int t=start+j*step+1; t<end; t+=step) {
 		rrd_value_t value = *p++;
 
 		if(!isnan(value)) {
@@ -169,6 +185,20 @@ int main(int argc, char *argv[]) {
 				// print if its skewer than threshold
 				if(skewness >= threshold || skewness <= -threshold) {
 
+					if(already_skew) {
+						printf("%.5f\t", skewness);
+					}
+					else {
+						t1old = t-transl;
+						printf("%.5f\t", skewness);
+						already_skew = 1;
+					}
+					last_skew = t;
+				}
+				else if(already_skew) {
+
+					already_skew = 0;
+
 					// print human readable time
 					char buf1[32], buf2[32];
 
@@ -176,16 +206,30 @@ int main(int argc, char *argv[]) {
 					struct tm *t_info = localtime((const time_t*)&_t2);
 					strftime(buf2, sizeof(buf2), "%d/%b/%Y %H:%M:%S", t_info);
 
-					const time_t _t1 = t-(transl*step);
+					const time_t _t1 = t1old;
 					t_info = localtime((const time_t*)&_t1);
 					strftime(buf1, sizeof(buf1), "%d/%b/%Y %H:%M:%S", t_info);
 
-					printf("%.10f\tat time [%d, %d], (%s - %s)\n",
-							skewness, t-(size*step), t, buf1, buf2);
+					printf("at time (%s - %s)\n", buf1, buf2);
 				}
+
 			}
 			s++;
 		}
+	}
+
+	if(already_skew) {
+		char buf1[32], buf2[32];
+
+		const time_t _t2 = last_skew;
+		struct tm *t_info = localtime((const time_t*)&_t2);
+		strftime(buf2, sizeof(buf2), "%d/%b/%Y %H:%M:%S", t_info);
+
+		const time_t _t1 = t1old;
+		t_info = localtime((const time_t*)&_t1);
+		strftime(buf1, sizeof(buf1), "%d/%b/%Y %H:%M:%S", t_info);
+
+		printf("at time (%s - %s)\n", buf1, buf2);
 	}
 
 	rrd_freemem(data);

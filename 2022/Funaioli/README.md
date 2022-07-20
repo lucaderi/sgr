@@ -19,11 +19,7 @@ Il progetto si compone di uno script bash e di un programma in C. Lo script si o
 
 ## Compilazione ed esecuzione
 
-L'unica dipendenza è la libreria [librrd](https://github.com/oetiker/rrdtool-1.x), usata per accedere ai file rrd. Per la compilazione:
-```
-gcc -L /usr/lib/ -lrrd -lm skewness.c -o skewness
-```
-Per l'esecuzione è sufficiente:
+L'unica dipendenza è la libreria [librrd](https://github.com/oetiker/rrdtool-1.x), usata per accedere ai file rrd. Per la compilazione basta eseguire il comando `make`. Per l'esecuzione è sufficiente:
 ```
 ./skewness -f <path-to-rrd>
 ```

@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 	// max and min skewness values outside the given threshold
 	double maxskew, minskew;
 
-	printf("MIN\t\t\tMAX\t\t\ttime interval\n");
+	printf("MIN/MAX\t\t\t\t\ttime interval\n\n");
 
 	// fill 'interval' with values
 	while(i < size) {

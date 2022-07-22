@@ -118,6 +118,13 @@ int main(int argc, char *argv[]) {
 	int i = 0, j = 0, s = 0;
 	int already_skew = 0, t1old;
 
+	// max and min skewness values within the given threshold
+	double max, min;
+	// max and min skewness values outside the given threshold
+	double maxskew, minskew;
+
+	printf("MIN\t\t\tMAX\t\t\ttime interval\n");
+
 	// fill 'interval' with values
 	while(i < size) {
 		rrd_value_t value = *p++;
@@ -132,16 +139,28 @@ int main(int argc, char *argv[]) {
 			if((s % transl) == 0) {
 				double skewness = intervalSkewness(interval, i, mean);
 
+				if(i == 0) {
+					min = skewness;
+					max = skewness;
+				}
+
 				// print if its skewer than threshold
-				if(skewness >= threshold || skewness <= -threshold) {
+				if((skewness >= threshold || skewness <= -threshold) &&
+						(skewness < 2*min || skewness > 2*max)) {
 
 					if(already_skew) {
-						printf("%.5f\t", skewness);
+						//printf("%.5f\t", skewness);
+
+						if(maxskew < skewness) maxskew = skewness;
+						if(minskew > skewness) minskew = skewness;
 					}
 					else {
 						t1old = j*step+start;
-						printf("%.5f\t", skewness);
+						//printf("%.5f\t", skewness);
 						already_skew = 1;
+
+						maxskew = skewness;
+						minskew = skewness;
 					}
 				}
 				else if(already_skew) {
@@ -159,7 +178,14 @@ int main(int argc, char *argv[]) {
 					t_info = localtime((const time_t*)&_t1);
 					strftime(buf1, sizeof(buf1), "%d/%b/%Y %H:%M:%S", t_info);
 
-					printf("at time (%s - %s)\n", buf1, buf2);
+					printf("%5.f\t%5.f \t", minskew, maxskew);
+					printf("%s - %s\n", buf1, buf2);
+
+					if(max < skewness) max = skewness;
+					if(min > skewness) min = skewness;
+				} else {
+					if(max < skewness) max = skewness;
+					if(min > skewness) min = skewness;
 				}
 			}
 			s++;
@@ -182,15 +208,22 @@ int main(int argc, char *argv[]) {
 				double skewness = intervalSkewness(interval, size, mean);
 
 				// print if its skewer than threshold
-				if(skewness >= threshold || skewness <= -threshold) {
+				if((skewness >= threshold || skewness <= -threshold) &&
+						(skewness < 2*min || skewness > 2*max)) {
 
 					if(already_skew) {
-						printf("%.5f\t", skewness);
+						//printf("%.5f\t", skewness);
+
+						if(maxskew < skewness) maxskew = skewness;
+						if(minskew > skewness) minskew = skewness;
 					}
 					else {
 						t1old = t-transl;
-						printf("%.5f\t", skewness);
+						//printf("%.5f\t", skewness);
 						already_skew = 1;
+
+						maxskew = skewness;
+						minskew = skewness;
 					}
 					last_skew = t;
 				}
@@ -209,7 +242,14 @@ int main(int argc, char *argv[]) {
 					t_info = localtime((const time_t*)&_t1);
 					strftime(buf1, sizeof(buf1), "%d/%b/%Y %H:%M:%S", t_info);
 
-					printf("at time (%s - %s)\n", buf1, buf2);
+					printf("%5.f\t%5.f \t", minskew, maxskew);
+					printf("%s - %s\n", buf1, buf2);
+
+					if(max < skewness) max = skewness;
+					if(min > skewness) min = skewness;
+				} else {
+					if(max < skewness) max = skewness;
+					if(min > skewness) min = skewness;
 				}
 
 			}
@@ -228,7 +268,8 @@ int main(int argc, char *argv[]) {
 		t_info = localtime((const time_t*)&_t1);
 		strftime(buf1, sizeof(buf1), "%d/%b/%Y %H:%M:%S", t_info);
 
-		printf("at time (%s - %s)\n", buf1, buf2);
+		printf("%5.f\t%5.f \t", minskew, maxskew);
+		printf("%s - %s\n", buf1, buf2);
 	}
 
 	rrd_freemem(data);

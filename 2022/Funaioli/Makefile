@@ -10,3 +10,5 @@ skewness: skewness.c
 clean:
 	rm -f skewness
 	rm -f skeweddata.rrd skeweddata.png
+	rm -f skeweddata.rrd skeweddata.png
+	rm -f networkdata.rrd networkdata.png

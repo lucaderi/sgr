@@ -1,7 +1,7 @@
 import sys
 
 def menu():
-    print("Select the attack typology to analyze analysis (enter quit to exit)")
+    print("Select the attack typology to analyze (enter quit to exit)")
     print("\n\t1) Network attacks\n\t2) Recon attacks\n\t3) All methods")
 
     choice = []

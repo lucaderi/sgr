@@ -1,8 +1,10 @@
-#tool macros
+# tool macros
 CC := gcc
-CCFLAGS := -O2
+LIBNDPI := /usr/local# path to libndpi
+INCLUDE := -I${LIBNDPI}/include/ndpi  
+CCFLAGS := -O2 $(INCLUDE) -Wno-implicit-function-declaration
 CCOBJFLAGS := $(CCFLAGS) -c
-LIBS := -lrrd
+LIBS := -L${LIBNDPI}/lib -lndpi -lrrd -lm
 
 # path macros
 BIN_PATH := bin

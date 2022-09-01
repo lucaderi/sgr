@@ -1,7 +1,7 @@
 # tool macros
 CC := gcc
-LIBNDPI := /usr/local# path to libndpi
-INCLUDE := -I${LIBNDPI}/include/ndpi  
+LIBNDPI := /usr# path to libndpi
+INCLUDE := -I${LIBNDPI}/include/ndpi
 CCFLAGS := -O2 $(INCLUDE) -Wno-implicit-function-declaration
 CCOBJFLAGS := $(CCFLAGS) -c
 LIBS := -L${LIBNDPI}/lib -lndpi -lrrd -lm
@@ -12,7 +12,7 @@ OBJ_PATH := obj
 SRC_PATH := src
 
 # compile macros
-TARGET_NAME := pcount
+TARGET_NAME := weather_anomaly
 TARGET := $(BIN_PATH)/$(TARGET_NAME)
 
 # src files & obj files
@@ -38,6 +38,6 @@ $(OBJ_PATH):
 all: $(TARGET)
 
 clean:
-	rm -f monitor.rrd graph.png
+	rm -f weather.rrd graph.png
 cleanall:
-	rm -rf $(TARGET) $(BIN_PATH) $(OBJ_PATH) monitor.rrd graph.png
+	rm -rf $(TARGET) $(BIN_PATH) $(OBJ_PATH) weather.rrd graph.png

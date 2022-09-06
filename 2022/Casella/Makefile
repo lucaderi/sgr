@@ -4,7 +4,7 @@ LIBNDPI := /usr# path to libndpi
 INCLUDE := -I${LIBNDPI}/include/ndpi
 CCFLAGS := -O2 $(INCLUDE) -Wno-implicit-function-declaration
 CCOBJFLAGS := $(CCFLAGS) -c
-LIBS := -L${LIBNDPI}/lib -lndpi -lrrd -lm
+LIBS := -L${LIBNDPI}/lib -lndpi -lrrd -lm -lmaxminddb
 
 # path macros
 BIN_PATH := bin

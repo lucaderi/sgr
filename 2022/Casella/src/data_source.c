@@ -47,14 +47,14 @@ static void parse_line(char *line, char **date, char **value)
     *value = strtok_r(NULL, ",", &savePtr); // Third token is average temperature of the day.
 }
 
-static int get_date_and_temp(char *line, time_t *timestamp, float *temp)
+static int get_date_and_temp(char *line, time_t *timestamp, double *temp)
 {
     char *date_string = NULL,
          *value_string = NULL;
 
     struct tm tm;
 
-    float value;
+    double value;
 
     if (!line || strlen(line) == 0)
         return -1;
@@ -66,14 +66,14 @@ static int get_date_and_temp(char *line, time_t *timestamp, float *temp)
 
     memset(&tm, 0, sizeof(struct tm));
     strptime(date_string, "\"%F\"", &tm);
-    tm.tm_sec = 0, tm.tm_min = 0, tm.tm_hour = 12, tm.tm_isdst = 1;
+    tm.tm_sec = 0, tm.tm_min = 0, tm.tm_hour = 0;
     *timestamp = timegm(&tm);
 
     if (value_string[0] == '"')
         value_string = value_string + 1; // Remove the parenthesis at the start of the string if any
 
     errno = 0;
-    value = strtof(value_string, NULL);
+    value = strtod(value_string, NULL);
 
     if (errno == ERANGE)
         return -1;
@@ -83,7 +83,7 @@ static int get_date_and_temp(char *line, time_t *timestamp, float *temp)
     return 0;
 }
 
-static void detect_anomaly(struct ndpi_hw_struct *hw, float value, time_t timestamp, unsigned int verbose)
+static void detect_anomaly(struct ndpi_hw_struct *hw, double value, time_t timestamp, unsigned int verbose)
 {
     int rc,
         is_anomaly;
@@ -102,7 +102,7 @@ static void detect_anomaly(struct ndpi_hw_struct *hw, float value, time_t timest
 
     is_anomaly = ((rc == 0) || (confidence_band == 0) || ((value >= lower) && (value <= upper))) ? 0 : 1;
 
-    if (is_anomaly || verbose)
+    if ((is_anomaly || verbose))
     {
         if (print)
         {
@@ -113,8 +113,7 @@ static void detect_anomaly(struct ndpi_hw_struct *hw, float value, time_t timest
 
         char buf[32];
         const time_t _t = timestamp;
-
-        struct tm *t_info = localtime((const time_t *)&_t);
+        struct tm *t_info = gmtime((const time_t *)&_t);
 
         strftime(buf, sizeof(buf), "%d/%b/%Y %H:%M:%S", t_info);
 
@@ -130,13 +129,13 @@ int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *ima
 
     time_t time, start_time;
 
-    float temp;
+    double temp;
 
     int rc;
 
     unsigned int rows;
 
-    char buf[1024];
+    char buf[BUF_SIZE];
 
     fp = fopen(csv_path, "r");
 
@@ -154,7 +153,7 @@ int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *ima
 
     rewind(fp);
 
-    if (fgets(buf, BUF_SIZE, fp) == NULL)
+    if (fgets(buf, BUF_SIZE, fp) == NULL) // Get rid of the first line
     {
         fprintf(stderr, "Error reading parameters line\n");
         rc = -1;
@@ -172,10 +171,11 @@ int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *ima
             goto done;
         }
 
-        if (!archive)
+        if (i == 0)
         {
             start_time = time - SECONDS_IN_A_DAY;
-            if (create_RRD(&archive, start_time, (*hw).params.alpha, (*hw).params.beta, (*hw).params.gamma, (*hw).params.ro, ((*hw).params.num_season_periods + 1) / 2, rows) == -1)
+
+            if (create_RRD(archive, start_time, (*hw).params.alpha, (*hw).params.beta, (*hw).params.gamma, (*hw).params.ro, ((*hw).params.num_season_periods + 1) / 2, rows) == -1)
             {
                 fprintf(stderr, "Error creating rrd archive");
                 rc = -1;

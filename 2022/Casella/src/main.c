@@ -6,9 +6,11 @@
 #include "../include/data_source.h"
 
 #define DEFAULT_ALPHA 0.1
-#define DEFAULT_BETA 0.05
+#define DEFAULT_BETA 0.0032
 #define DEFAULT_GAMMA 0.1
 #define DEFAULT_RO 0.05
+#define DEFAULT_ARCHIVE_NAME "weather.rrd"
+#define DEFAULT_IMAGE_NAME "graph.png"
 
 void help()
 {
@@ -30,8 +32,8 @@ int main(int argc, char *argv[])
     char opt;
 
     char *filename = NULL,
-         *archive = NULL,
-         *image = NULL;
+         *archive,
+         *image;
 
     struct ndpi_hw_struct hw;
 
@@ -45,6 +47,9 @@ int main(int argc, char *argv[])
     ro = DEFAULT_RO;
     seasonal_period = 0;
 
+    archive = DEFAULT_ARCHIVE_NAME;
+    image = DEFAULT_IMAGE_NAME;
+    
     while ((opt = getopt(argc, argv, "f:d:i:a:b:g:s:p:r:h")) != -1)
     {
         switch (opt)

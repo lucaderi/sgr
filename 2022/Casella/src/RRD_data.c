@@ -43,7 +43,7 @@ static char *make_string(const char *fmt, ...)
     return buf;
 }
 
-int create_RRD(char **archive_name, time_t start_time, double alpha, double beta, double gamma, double ro, unsigned short season_period, unsigned short period)
+int create_RRD(char *archive_name, time_t start_time, double alpha, double beta, double gamma, double ro, unsigned short season_period, unsigned short period)
 {
     char *rra_hw,
         *rra_avg,
@@ -52,24 +52,26 @@ int create_RRD(char **archive_name, time_t start_time, double alpha, double beta
 
     int rc;
 
-    if (!*archive_name)
-        *archive_name = DFL_ARCHIVE_NAME;
+    if (!archive_name)
+        return -1;
+
+    unlink(archive_name);
 
     if ((rra_avg = make_string("RRA:AVERAGE:0.5:1:%d", period)) == NULL)
         return -1;
 
-    if ((rra_hw = make_string("RRA:HWPREDICT:%d:%f:%f:%d", period, alpha, beta, season_period)) == NULL)
+    if ((rra_hw = make_string("RRA:HWPREDICT:%d:%f:%f:%d", season_period, alpha, beta, season_period)) == NULL)
     {
         rc = -1;
         goto done;
     }
 
     const char *dataSource_rrArchive[] = {
-        "DS:data:GAUGE:2d:-273.15:5000",
+        "DS:data:GAUGE:2d:-273:5000",
         rra_avg,
         rra_hw};
 
-    if (rrd_create_r(*archive_name, SECONDS_IN_A_DAY, start_time, ARRAY_SIZE(dataSource_rrArchive), dataSource_rrArchive) != 0)
+    if (rrd_create_r(archive_name, SECONDS_IN_A_DAY, start_time, ARRAY_SIZE(dataSource_rrArchive), dataSource_rrArchive) != 0)
     {
         fprintf(stderr, "rrd_create_r: %s\n", rrd_get_error());
         rc = -1;
@@ -90,7 +92,7 @@ int create_RRD(char **archive_name, time_t start_time, double alpha, double beta
 
     char *tune_argv[] = {
         "tune",
-        *archive_name,
+        archive_name,
         "-p", ro_string,
         "-n", ro_string,
         "-z", gamma_string,
@@ -118,7 +120,7 @@ done:
     return rc;
 }
 
-int update_RRD(char *archive, time_t timestamp, float data)
+int update_RRD(char *archive, time_t timestamp, double data)
 {
     int rc;
 
@@ -159,10 +161,10 @@ int make_graph(char *archive, char *image, time_t end_time, float ro, unsigned s
 
     int rc = 0;
 
-    if (!archive || end_time < 0)
+    if (!archive || !image || end_time < 0)
         return -1;
 
-    if (((start_time_string = make_string("end - %ld", (season_period + 2) * SECONDS_IN_A_DAY))) == NULL)
+    if (((start_time_string = make_string("end - %ld", season_period * SECONDS_IN_A_DAY))) == NULL)
         return -1;
 
     if ((end_time_string = make_string("%ld", end_time - SECONDS_IN_A_DAY)) == NULL)
@@ -207,10 +209,6 @@ int make_graph(char *archive, char *image, time_t end_time, float ro, unsigned s
         goto done;
     }
 
-    if (!image)
-        image = DFL_IMAGE_NAME;
-
-#if 1
     char *graph_argv[] = {
         "graph",
         image,
@@ -229,18 +227,7 @@ int make_graph(char *archive, char *image, time_t end_time, float ro, unsigned s
         "LINE0.5:temp#0000ff:Average temp per day",
         "LINE1:upper#ff0000:Upper Confidence Bound",
         "LINE1:lower#ff0000:Lower Confidence Bound"};
-#else
-    char *graph_argv[] = {
-        "graph",
-        image,
-        "--start", start_time_string,
-        "--end", end_time_string,
-        "-w", "800",
-        "-h", "300",
-        "-m", "1.5",
-        def_buf_avg,
-        "LINE0.5:temp#0000ff:Average temp per day"};
-#endif
+
     if (rrd_graph_v(ARRAY_SIZE(graph_argv), graph_argv) == NULL)
     {
         fprintf(stderr, "rrd_graph_v: %s\n", rrd_get_error());

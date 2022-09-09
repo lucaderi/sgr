@@ -50,19 +50,26 @@ static void parse_line(char *line, char **date, char **value)
 static int get_date_and_temp(char *line, time_t *timestamp, double *temp)
 {
     char *date_string = NULL,
-         *value_string = NULL;
+         *value_string = NULL,
+         *endPtr;
 
     struct tm tm;
 
     double value;
 
     if (!line || strlen(line) == 0)
+    {
+        fprintf(stderr, "Line to parse is empty\n");
         return -1;
+    }
 
     parse_line(line, &date_string, &value_string);
 
     if (!date_string || strlen(date_string) == 0 || !value_string || strlen(value_string) == 0)
+    {
+        fprintf(stderr, "Parsed tokens are empty\n");
         return -1;
+    }
 
     memset(&tm, 0, sizeof(struct tm));
     strptime(date_string, "\"%F\"", &tm);
@@ -73,10 +80,13 @@ static int get_date_and_temp(char *line, time_t *timestamp, double *temp)
         value_string = value_string + 1; // Remove the parenthesis at the start of the string if any
 
     errno = 0;
-    value = strtod(value_string, NULL);
+    value = strtod(value_string, &endPtr);
 
-    if (errno == ERANGE)
+    if (errno == ERANGE || endPtr == value_string)
+    {
+        fprintf(stderr, "Error converting value %s at time: %s\n", value_string, date_string);
         return -1;
+    }
 
     *temp = value;
 
@@ -92,7 +102,8 @@ static void detect_anomaly(struct ndpi_hw_struct *hw, double value, time_t times
         confidence_band,
         lower,
         upper;
-    static int print = 1;
+    static int print = 1,
+               create = 1;
     value = C_TO_K(value);
     value *= 100;
 
@@ -123,7 +134,7 @@ static void detect_anomaly(struct ndpi_hw_struct *hw, double value, time_t times
     }
 }
 
-int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *image)
+int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *image, unsigned short verbose)
 {
     FILE *fp;
 
@@ -175,7 +186,7 @@ int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *ima
         {
             start_time = time - SECONDS_IN_A_DAY;
 
-            if (create_RRD(archive, start_time, (*hw).params.alpha, (*hw).params.beta, (*hw).params.gamma, (*hw).params.ro, ((*hw).params.num_season_periods + 1) / 2, rows) == -1)
+            if (create_RRD(archive, start_time, (*hw).params.alpha, (*hw).params.beta, (*hw).params.gamma, (*hw).params.ro, (*hw).params.num_season_periods, rows) == -1)
             {
                 fprintf(stderr, "Error creating rrd archive");
                 rc = -1;
@@ -183,14 +194,14 @@ int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *ima
             }
         }
 
-        if (update_RRD(archive, time, temp) != 0)
+        if (update_RRD(archive, "%ld:%.1lf", time, temp) != 0)
         {
             fprintf(stderr, "Error updating rrd archive %s\n", archive);
             rc = -1;
             goto done;
         }
 
-        detect_anomaly(hw, temp, time, 0);
+        detect_anomaly(hw, temp, time, verbose);
         i++;
     }
 
@@ -201,7 +212,7 @@ int read_csv(char *csv_path, struct ndpi_hw_struct *hw, char *archive, char *ima
         goto done;
     }
 
-    if (make_graph(archive, image, time, (*hw).params.ro, ((*hw).params.num_season_periods + 1) / 2) == -1)
+    if (make_graph(archive, image, start_time, time, (*hw).params.ro) == -1)
     {
         rc = -1;
         fprintf(stderr, "Unable to create graph\n");

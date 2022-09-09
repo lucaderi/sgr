@@ -7,18 +7,15 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-/**
- * Copied from printf(3) man page exemples
- */
-static char *make_string(const char *fmt, ...)
+static char *string_from_va_list(const char *fmt, va_list ap)
 {
     char *buf;
     int buf_len;
-    va_list ap;
+    va_list ap_cpy;
 
-    va_start(ap, fmt);
-    buf_len = vsnprintf(NULL, 0, fmt, ap);
-    va_end(ap);
+    va_copy(ap_cpy, ap);
+    buf_len = vsnprintf(NULL, 0, fmt, ap_cpy);
+    va_end(ap_cpy);
 
     if (buf_len < 0)
         return NULL;
@@ -30,9 +27,9 @@ static char *make_string(const char *fmt, ...)
     if (!buf)
         return NULL;
 
-    va_start(ap, fmt);
-    buf_len = vsnprintf(buf, buf_len + 1, fmt, ap);
-    va_end(ap);
+    va_copy(ap_cpy, ap);
+    buf_len = vsnprintf(buf, buf_len + 1, fmt, ap_cpy);
+    va_end(ap_cpy);
 
     if (buf_len < 0)
     {
@@ -43,12 +40,29 @@ static char *make_string(const char *fmt, ...)
     return buf;
 }
 
+/**
+ * Copied from printf(3) man page exemples
+ */
+static char *make_string(const char *fmt, ...)
+{
+    char *buf;
+    int buf_len;
+    va_list ap;
+
+    va_start(ap, fmt);
+    buf = string_from_va_list(fmt, ap);
+    va_end(ap);
+
+    return buf;
+}
+
 int create_RRD(char *archive_name, time_t start_time, double alpha, double beta, double gamma, double ro, unsigned short season_period, unsigned short period)
 {
     char *rra_hw,
         *rra_avg,
         *ro_string,
-        *gamma_string;
+        *gamma_string,
+        *rra_fail;
 
     int rc;
 
@@ -60,7 +74,7 @@ int create_RRD(char *archive_name, time_t start_time, double alpha, double beta,
     if ((rra_avg = make_string("RRA:AVERAGE:0.5:1:%d", period)) == NULL)
         return -1;
 
-    if ((rra_hw = make_string("RRA:HWPREDICT:%d:%f:%f:%d", season_period, alpha, beta, season_period)) == NULL)
+    if ((rra_hw = make_string("RRA:HWPREDICT:%d:%lf:%lf:%d", period - 2 * season_period, alpha, beta, season_period)) == NULL)
     {
         rc = -1;
         goto done;
@@ -73,7 +87,7 @@ int create_RRD(char *archive_name, time_t start_time, double alpha, double beta,
 
     if (rrd_create_r(archive_name, SECONDS_IN_A_DAY, start_time, ARRAY_SIZE(dataSource_rrArchive), dataSource_rrArchive) != 0)
     {
-        fprintf(stderr, "rrd_create_r: %s\n", rrd_get_error());
+        fprintf(stderr, "create_RRD rrd_create_r: %s\n", rrd_get_error());
         rc = -1;
         goto done;
     }
@@ -90,17 +104,22 @@ int create_RRD(char *archive_name, time_t start_time, double alpha, double beta,
         goto done;
     }
 
+    if ((rra_fail = make_string("RRA#5:=%d", period - 2 * season_period)) == NULL)
+    {
+        rc = -1;
+        goto done;
+    }
+
     char *tune_argv[] = {
         "tune",
         archive_name,
+        rra_fail,
         "-p", ro_string,
         "-n", ro_string,
         "-z", gamma_string,
         "-v", gamma_string,
         "-f", "1",
-        "-w", "1",
-        "-s", "0",
-        "-S", "0"};
+        "-w", "1"};
 
     if (rrd_tune(ARRAY_SIZE(tune_argv), tune_argv) != 0)
     {
@@ -116,24 +135,37 @@ done:
         free(rra_avg);
     if (rra_hw)
         free(rra_hw);
+    if (ro_string)
+        free(ro_string);
+    if (gamma_string)
+        free(gamma_string);
+    if (rra_fail)
+        free(rra_fail);
 
     return rc;
 }
 
-int update_RRD(char *archive, time_t timestamp, double data)
+int update_RRD(char *archive, const char *update_fmt, ...)
 {
     int rc;
 
     char *update_string;
 
-    if (!archive || timestamp < 0)
+    va_list ap;
+
+    if (!archive)
     {
         fprintf(stderr, "Error, invalid values for updating");
         return -1;
     }
 
-    if ((update_string = make_string("%ld:%.1f", timestamp, data)) == NULL)
+    va_start(ap, update_fmt);
+    if ((update_string = string_from_va_list(update_fmt, ap)) == NULL)
+    {
+        va_end(ap);
         return -1;
+    }
+    va_end(ap);
 
     rc = rrd_update_r(archive, NULL, 1, (const char **)&update_string);
 
@@ -146,10 +178,8 @@ int update_RRD(char *archive, time_t timestamp, double data)
     return rc;
 }
 
-int make_graph(char *archive, char *image, time_t end_time, float ro, unsigned short season_period)
+int make_graph(char *archive, char *image, time_t start_time, time_t end_time, float ro)
 {
-    FILE *fp;
-
     char *start_time_string,
         *end_time_string,
         *def_buf_avg,
@@ -164,10 +194,10 @@ int make_graph(char *archive, char *image, time_t end_time, float ro, unsigned s
     if (!archive || !image || end_time < 0)
         return -1;
 
-    if (((start_time_string = make_string("end - %ld", season_period * SECONDS_IN_A_DAY))) == NULL)
+    if (((start_time_string = make_string("%ld", start_time + SECONDS_IN_A_DAY))) == NULL)
         return -1;
 
-    if ((end_time_string = make_string("%ld", end_time - SECONDS_IN_A_DAY)) == NULL)
+    if ((end_time_string = make_string("%ld", end_time)) == NULL)
     {
         rc = -1;
         goto done;
@@ -225,6 +255,7 @@ int make_graph(char *archive, char *image, time_t end_time, float ro, unsigned s
         cdef_buf_low,
         "TICK:fail#ffffa0:1.0: Anomaly",
         "LINE0.5:temp#0000ff:Average temp per day",
+        "LINE0.5:pred#009907:Prediction",
         "LINE1:upper#ff0000:Upper Confidence Bound",
         "LINE1:lower#ff0000:Lower Confidence Bound"};
 

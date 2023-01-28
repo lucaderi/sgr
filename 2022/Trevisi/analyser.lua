@@ -77,7 +77,7 @@ local function main_analyser()
 			end
 			
 			
-			if (incomplete or outgoing or ingoing) then --se devo aggiornare la struttura data
+			if (incomplete > -1 or outgoing or ingoing) then --se devo aggiornare la struttura data
 				if (data[key]) then --se ho già dati per questi ip
 					if (not data[key]["tcp"][tcpkey]) then --ma non per questa conversazione tcp
 						local tcpvet;

@@ -1,0 +1,78 @@
+route:
+    # Send all notifications to me.
+    receiver: cpuusage
+    routes:
+      - match:
+          severity: cpuusage
+        group_interval: 5s
+        repeat_interval: 5s
+        receiver: cpuusage
+        continue: true
+      - match:
+          severity: cpulow
+        group_interval: 5s
+        repeat_interval: 5s
+        receiver: 'cpulowerb'
+        continue: true
+      - match:
+          severity: cpuup
+        group_interval: 5s
+        repeat_interval: 5s
+        receiver: 'cpuupperb'
+        continue: true
+      - match:
+          severity: ram
+        group_interval: 5s
+        repeat_interval: 5s
+        receiver: 'ramusage'
+        continue: true
+      - match:
+          severity: ramlow
+        group_interval: 5s
+        repeat_interval: 5s
+        receiver: 'ramlowerb'
+        continue: true
+      - match:
+          severity: ramup
+        group_interval: 5s
+        repeat_interval: 5s
+        receiver: 'ramupperb'
+        continue: true
+receivers:
+- name: cpuusage
+  telegram_configs:
+  - bot_token:
+    api_url: https://api.telegram.org
+    chat_id:
+    message: "cpu usage elevato!"
+- name: cpulowerb
+  telegram_configs:
+  - bot_token: 
+    api_url: https://api.telegram.org
+    chat_id: 
+    message: "cpu sotto il lower bound"
+- name: cpuupperb
+  telegram_configs:
+  - bot_token: 
+    api_url: https://api.telegram.org
+    chat_id: 
+    message: "cpu sopra l'upper bound"
+- name: ramusage
+  telegram_configs:
+  - bot_token: 
+    api_url: https://api.telegram.org
+    chat_id: 
+    message: "ram usage elevato!"
+- name: ramlowerb
+  telegram_configs:
+  - bot_token: 
+    api_url: https://api.telegram.org
+    chat_id: 
+    message: "ram sotto il lower bound"
+- name: ramupperb
+  telegram_configs:
+  - bot_token: 
+    api_url: https://api.telegram.org
+    chat_id:
+    message: "ram sopra l'upper bound"
+

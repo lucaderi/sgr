@@ -1,0 +1,48 @@
+groups:
+  - name: alert_rules
+    rules:
+      - alert: CpuUsage
+        expr: cpu > 70
+        for: 1s
+        labels:
+          severity: cpuusage
+        annotations:
+          summary: "Cpu usage elevato"
+          description: "L'utilizzo della cpu ha superato il 70%"
+      - alert: CpuLow
+        expr: cpu < cpulow
+        labels:
+          severity: cpulow
+        annotations:
+          summary: "Cpu usage sotto il lowerbound"
+          description: "L'utilizzo della cpu e' diminuito drasticamente"
+      - alert: CpuUp
+        expr: cpu > cpuup
+        labels:
+          severity: cpuup
+        annotations:
+          summary: "Cpu usage sopra l'upperbound"
+          description: "L'utilizzo della cpu e' aumentato drasticamente"
+      - alert: RamUsage
+        expr: ram > 70
+        for: 1s
+        labels:
+          severity: ramusage
+        annotations:
+          summary: "Ram usage elevato"
+          description: "L'utilizzo della ram ha superato il 70%"
+      - alert: RamLow
+        expr: ram < ramlow
+        labels:
+          severity: ramlow
+        annotations:
+          summary: "Ram usage sotto il lowerbound"
+          description: "L'utilizzo della ram e' diminuito drasticamente"
+      - alert: RamUp
+        expr: ram > ramup
+        labels:
+          severity: ramup
+        annotations:
+          summary: "ram usage sopra l'upperbound"
+          description: "L'utilizzo della ram e' aumentato drasticamente"
+

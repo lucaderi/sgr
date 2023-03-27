@@ -114,3 +114,11 @@ Esempio di notifica su telegram:
 
 ![d](https://i.imgur.com/Bi8VorV.png)
 
+## Scelte implementative 
+
+È stato scelto di utilizzare SES per generare gli allarmi senza dipendere da una seasonality e basandoci solo sugli ultimi dati letti. Questo permette di avere un forecast più generico per una serie stazionaria come il monitoring di cpu usage di un utente durante un utilizzo normale del computer.
+
+Utilizzare il SES ci limita a poter rilevare anomalie quali utilizzo improvviso della cpu/ram oppure semplicemente un utilizzo eccessivo di queste risorse. 
+Il Progetto è stato testato durante un utilizzo normale del pc e poi durante una fase di stress. Durante l’utilizzo normale i valori monitorati rientravano nei bound generati grazie all’utilizzo di SES e quindi non sono stati generati allarmi. Durante la fase di stress invece, all’inizio di questa, dato l’improvviso aumento dei valori monitorati questi hanno superato i bound stimati e sono stati generati gli apposite allarmi. Gli allarmi vengono generati correttamente anche dopo aver superato il threshold di utilizzo indicato nei files di configurazione.
+
+Per quanto riguarda i valori scelti per l’utilizzo del SES (alpha e ro) è stato scelto un valore di smoothing alpha di 0.5 perché testando il codice con valori più piccoli il fitting dei dati era meno preciso. Per Ro, valore necessario per il calcolo della confidence, è stato scelto un valore di 2.5 per non rendere il rilevamento di anomalie troppo sensibile.

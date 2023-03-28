@@ -122,3 +122,42 @@ Utilizzare il SES ci limita a poter rilevare anomalie quali utilizzo improvviso 
 Il Progetto è stato testato durante un utilizzo normale del pc e poi durante una fase di stress. Durante l’utilizzo normale i valori monitorati rientravano nei bound generati grazie all’utilizzo di SES e quindi non sono stati generati allarmi. Durante la fase di stress invece, all’inizio di questa, dato l’improvviso aumento dei valori monitorati questi hanno superato i bound stimati e sono stati generati gli apposite allarmi. Gli allarmi vengono generati correttamente anche dopo aver superato il threshold di utilizzo indicato nei files di configurazione.
 
 Per quanto riguarda i valori scelti per l’utilizzo del SES (alpha e ro) è stato scelto un valore di smoothing alpha di 0.5 perché testando il codice con valori più piccoli il fitting dei dati era meno preciso. Per Ro, valore necessario per il calcolo della confidence, è stato scelto un valore di 2.5 per non rendere il rilevamento di anomalie troppo sensibile.
+
+## Esempio di esecuzione
+
+![d1](https://i.imgur.com/VzKgX4V.png)
+
+Dalla console è possibile vedere la percentuale dell'uso della cpu e i valori del grafico di Prometheus corrispondo ai valori letti.
+
+![d2](https://i.imgur.com/0gKy2kZ.png)
+
+La percentuale della cpu Usage è maggiore del 70% come è possibile vedere dalla console e l'alert corrispondente è in stato di Firing.
+
+![d3](https://i.imgur.com/hh9NkgF.png)
+![d4](https://i.imgur.com/Q8zP2xn.png)
+
+Grazie all'espressione cpu < cpuLow (espressione di Prometheus per visualizzare solo I momenti in cui il valore della cpu era inferiore al valore calcolato con SES del lower bound) è possibile visualizzare quando si è verificata l'anomalia, dall'immagine è possibile vedere che la notifica su telegram arriva correttamente e al momento giusto.
+
+![d5](https://i.imgur.com/tp5mCMu.png)
+
+Dal terminale è possibile vedere che l'utilizzo della cpu era molto maggiore di quello previsto (27% cpu usage e 23.2 % quello predicted). 
+
+
+### Utilizzo effettivo per 7 ore.
+
+Cpu usage:
+
+![d6](https://i.imgur.com/MNNOgjF.png)
+
+Cpu sopra upperbound (solo in 3 momenti):
+
+![d7](https://i.imgur.com/1OtLR2G.png)
+
+Cpu sotto il lowerbound:
+
+![d8](https://i.imgur.com/4GVoMiE.png)
+![d9](https://i.imgur.com/wr7QUWX.png)
+
+Ram:
+
+![d9](https://i.imgur.com/GIgxXTH.png)

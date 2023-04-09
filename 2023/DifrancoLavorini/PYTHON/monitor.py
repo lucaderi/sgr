@@ -53,7 +53,7 @@ avgcpuusagePred = [cpuPredictedValue]
 
 ramtotal = session.get(RAM_TOTAL)
 print('ram total: ', ramtotal.value)
-ramused = session.get(RAM_USAGE)
+ramused = session.get(RAM_USAGE)                    #it's ram available
 print('ram used: ', ramused.value)
 ramshared = session.get('.1.3.6.1.4.1.2021.4.13.0')
 print('ram shared: ', ramshared.value)
@@ -65,12 +65,16 @@ ramfree = session.get(RAM_FREE)
 print('ram free: ' , ramfree.value)
 
 
+#change 4/4/23 
 
 
-ramUsedPerc = (int(ramtotal.value)-int(ramfree.value))/int(ramtotal.value)*100
+#ramUsedPerc = (int(ramtotal.value)-int(ramfree.value))/int(ramtotal.value)*100
+ramUsedPerc = round((int(ramtotal.value)-int(ramused.value))/int(ramtotal.value)*100,1)
 print('ram used percentage: ' , ramUsedPerc)
-ramUsedtotPerc = (int(ramused.value)+int(ramtotalcached.value))/int(ramtotal.value)*100
-print('ram used percentage: ' , ramUsedtotPerc)
+
+
+#ramUsedtotPerc = (int(ramused.value)+int(ramtotalcached.value))/int(ramtotal.value)*100
+#print('ram used percentage: ' , ramUsedtotPerc)
 
 ramUsedArray = [ramUsedPerc]
 ramPredictedValue = ramUsedPerc
@@ -119,7 +123,11 @@ while True:
 	ramtotal = session.get(RAM_TOTAL)
 	ramused = session.get(RAM_USAGE)
 	ramfree = session.get(RAM_FREE)
-	ramUsedPerc = round((int(ramtotal.value)-int(ramfree.value))/int(ramtotal.value)*100,1)
+	
+	#change 4/4/2023
+	
+	ramUsedPerc = round((int(ramtotal.value)-int(ramused.value))/int(ramtotal.value)*100,1)
+	#ramUsedPerc = round((int(ramtotal.value)-int(ramfree.value))/int(ramtotal.value)*100,1)
 	print('ram used percentage: ', ramUsedPerc)
 	ramUsedArray.append(ramUsedPerc)
 	mostRecentRamPredValue = ramPredictedValue

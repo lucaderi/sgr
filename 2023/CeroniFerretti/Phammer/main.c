@@ -1,6 +1,6 @@
 #include "dependencies.h"
 
-static volatile sig_atomic_t keep_running = 1;
+static sig_atomic_t keep_running = 1;
 
 void sig_handler(int sig) {
 	keep_running = 0;
@@ -81,7 +81,7 @@ int main (int argc, char *argv[]) {
     struct sigaction action;
     action.sa_handler = sig_handler;
     sigaction(SIGINT, &action, NULL);
-	//srand(time(NULL));
+	srand(time(NULL));
 
 	char ipbase[14];
 	//Si crea il socket in RAW
@@ -116,7 +116,9 @@ int main (int argc, char *argv[]) {
 		tot_packets++;
 	}
 
-	printf("Program ended without fails and sent %d packets\n", (tot_packets);
+	close(s);
+
+	printf("Program ended without failures and sent %d packets\n", tot_packets);
 	
 	return 0;
 }

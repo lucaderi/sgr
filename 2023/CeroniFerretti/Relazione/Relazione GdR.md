@@ -9,7 +9,9 @@ In aggiunta, dopo aver comunicato gli indirizzi a IO, il programma rimane in att
 Per poter eseguire il programma è necessaria innanzitutto l’installazione di IntelOwl e la creazione di un account. Per l’installazione seguire le istruzioni nella documentazione fornita al seguente link [https://intelowl.readthedocs.io/en/latest/Installation.html#tl-dr](https://intelowl.readthedocs.io/en/latest/Installation.html#tl-dr).
 Attenzione: nelle ultime versioni di IntelOwl abbiamo riscontrato dei problemi nell'installazione, issue segnalate comunque da altri utenti. In caso che il problema non sia risolto provare una versione differente del programma
 Una volta completata accedere al client per poter creare un account. Per poter funzionare il nostro programma ha bisogno della chiave di accesso quindi procedere con la creazione della suddetta.
-![[Chiave.png]]
+
+<img width="261" alt="Chiave" src="https://user-images.githubusercontent.com/100482131/235109770-1f3e5eff-9055-413f-a35b-0c4e8bbd6039.png">
+
 La chiave così ottenuta va inserita nel file “pane_config.ini”.
 Oltre alla chiave è necessario inserire all'interno del file di configurazione la relativa URL del programma 
 A seguito di ciò procedere con l’installazione delle dipendenze, quindi eseguire
@@ -55,10 +57,12 @@ Una volta avviato il programma viene analizzato il file contenente la lista di b
 Le API di IO hanno una documentazione reperibile al seguente link: [https://pyintelowl.readthedocs.io/en/latest/](https://pyintelowl.readthedocs.io/en/latest/).
 Il nostro uso nello specifico è presente nel file intel_sender.py che contiene i metodi necessari per comunicare con IO. Il suo ruolo è semplice:
 -   Invia un IP da analizzare salvando il numero del Job
-![[Jobs iniziali.png]]
+<img width="1049" alt="Jobs iniziali" src="https://user-images.githubusercontent.com/100482131/235109391-3d553ec5-c022-4393-b2d9-bcef9e70dcef.png">
+
 ``` python
  client.send_observable_analysis_request(ip, analyzers_requested=["Pulsedive"], observable_classification="ip")
 ```
+
 -   Interroga lo stato di esecuzione del Job
 ``` python 
 client.get_job_by_id(job_id)
@@ -72,10 +76,14 @@ Per fare questo è necessario la chiave spiegata nei prerequisiti da inserire al
 ## IntelOwl: interfaccia e funzionamento base
 
 L’interfaccia principale di IO è quella mostrata qui sotto. Quello che verrà visualizzato sono solamente i task con un rischio medio o superiore dopo la prima scrematura iniziale. Questo è stato necessario poiché il processo di controllo di IO è relativamente lento anche con pochi controlli
-![[Dashboard.png]]
+
+<img width="1047" alt="Dashboard" src="https://user-images.githubusercontent.com/100482131/235109857-126a7d70-8897-43ec-ba3c-eb8219c1fb0b.png">
+
 I Jobs sono qui sottostanti. Il controllo di ogni IP corrisponde a un Job e possono essere inviati più di uno in contemporanea
 I Job completati hanno un report come quello sottostante
-![[Jobs finali.png]]
+
+<img width="1151" alt="Jobs finali" src="https://user-images.githubusercontent.com/100482131/235109914-349987eb-b511-45e7-bd7b-76c9b14116d0.png">
+
 IntelOwl offre la possibilità di utilizzare più analyzer per lo stesso observable. Per motivi di efficienza è stato scelto di utilizzarne solamente uno per svolgere le relative analisi, ovvero pulsedive.
 ## Test
 Per i nostri test abbiamo creato un apposito PCAP (fornito nella cartella) contenente degli IP malevoli da pacchetti creati con phammer. Gli IP in blacklist sono alcuni ma solamente 1 ovvero 210.89.63.21 viene considerato di rischio medio da parte di IO.

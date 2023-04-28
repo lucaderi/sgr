@@ -33,5 +33,6 @@ def workJob(job_id):
 config = configparser.ConfigParser()
 config.read('pane_config.ini')
 key_value = config.get('Key', 'Key')
+url_value = config.get('Url','URL')
 
-client = IntelOwl(key_value, "http://localhost:80", None)
+client = IntelOwl(key_value, url_value, None)

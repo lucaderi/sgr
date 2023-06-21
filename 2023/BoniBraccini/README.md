@@ -67,7 +67,7 @@ In this dashboard, Prometheus is utilized to graph timeseries of various statist
 
 
 <div style="text-align: center;">
-  <img src="./images/upload_dece4e12d5b238d24711091fcc26495e.jpg" alt="Image" width="900" height="1200">
+  <img src="/images/upload_dece4e12d5b238d24711091fcc26495e.jpg" alt="Image" width="900" height="1200">
 </div>
 
 
@@ -82,7 +82,7 @@ On the other hand, this other dasboard provides a more complete summary of the c
 This type of installation will run the honeypots in Docker containers, whereas the data collectors will run on the host machine.
 
 <div style="text-align: center;">
-  <img src="./images/upload_9850d2bfd3b856f1c6320b4f06221305.jpg" alt="Image" width="900" height="1200">
+  <img src="/images/upload_9850d2bfd3b856f1c6320b4f06221305.jpg" alt="Image" width="900" height="1200">
 </div>
 
 
@@ -136,7 +136,7 @@ The test will emulate a day of attacks in 1 hour.
 Here it is a similar expected output when testing 
 
 <div style="text-align: center;">
-  <img src="./images/test.jpg" alt="Image" style="width: 900px; height: 1200px; margin-left: -100px;">
+  <img src="/images/test.jpg" alt="Image" style="width: 900px; height: 1200px; margin-left: -100px;">
 </div>
 
 
@@ -157,7 +157,7 @@ pip install prometheus_client
 The test will emulate a day of attacks in 1 hour. 
 Here it is a similar expected output when testing 
 
-![](./images/upload_fb5a57b8c278221284e23fe7c69d0437.png)
+![](/images/upload_fb5a57b8c278221284e23fe7c69d0437.png)
 
 
 # Time Series  Dashboard Setup
@@ -173,7 +173,7 @@ The time series dashboard powered by prometheus and grafana **can be deployed in
 This type of installation will run the honeypots in Docker containers, whereas the data collectors will run on the host machine.
 
 <div style="text-align: center;">
-  <img src="./images/upload_9f451dd363e457aa17fa6e5bfd10bbd6.png" alt="Image" width="700" height="500">
+  <img src="/images/upload_9f451dd363e457aa17fa6e5bfd10bbd6.png" alt="Image" width="700" height="500">
 </div>
 
 
@@ -254,7 +254,7 @@ The Prometheus collectors expose an HTTP server on ports 8001 and 8002, both of 
 This type of installation requires a Virtual Machine where the honeypots will be executed and using rsync and VirtualBox shared folder the collectors scripts provided will read the logs and obtain the metrics.
 
 <div style="text-align: center;">
-  <img src="./images/upload_eb874f82e3eb65618a9feb9df9da97e9.png" alt="Image" width="700" height="500">
+  <img src="/images/upload_eb874f82e3eb65618a9feb9df9da97e9.png" alt="Image" width="700" height="500">
 </div>
 
 
@@ -449,17 +449,17 @@ By default, the server listens on http://localhost:3333.
 ## Setting up the plugin
 Once installed, the plugin will be available at as a datasouce within Grafana as shown below:
 
-![](./images/2023/upload_fb5a57b8c278221284e23fe7c69d0437.png )
+![](/images/2023/upload_fb5a57b8c278221284e23fe7c69d0437.png )
 
 In the datasource settings, in the https section, set the URL of  the server we started in the previous step.
-![](./images/upload_dea298925a608ca9c2b4cab87dae42f5.png)
+![](/images/upload_dea298925a608ca9c2b4cab87dae42f5.png)
 
 Then, in the MongoDb details section, set the MongoDB server details, specifying the database we want grafana to be able to access, as shown below:
-![](./images/upload_3ef702958d4261e24cd80b488d53387e.png)
+![](/images/upload_3ef702958d4261e24cd80b488d53387e.png)
 
 Finally, test the config by clicking the *Save & Test* butto. You should see the following message:
 
-![](./images/upload_f05819aeb432d90150a3f4a51bd9fdee.png)
+![](/images/upload_f05819aeb432d90150a3f4a51bd9fdee.png)
 
 
 The plugin has been succesfully set up, and can now be used as a datasource in any grafana dashboard. 
@@ -501,7 +501,7 @@ To test  *MongoTailAgentD.py*:
 
 Let's create a new empty panel in any dashboard and set MongoDB as the default datasource. In the query section, we can add a MongoDB query:
 
-![](./images/upload_bf7ff84a16a6894ca2992cd1ed63a558.png)
+![](/images/upload_bf7ff84a16a6894ca2992cd1ed63a558.png)
 
 
 Note: The plugin only supports the *aggregate* method, but it's not a deal-breaker by any means since it does not limit the number of queries that can be performed. Additionally, the query has to be in JSON format. For example, use *"$match"* instead of $match.
@@ -512,7 +512,7 @@ Here's an example of a *piechart* panel showing the top 10 countries from which 
 
 
 
-![](./images/upload_094ca0e7b0b73315db300e21c4eccc37.png)
+![](/images/upload_094ca0e7b0b73315db300e21c4eccc37.png)
 
 
 
@@ -528,7 +528,7 @@ After manually creating several dashboards filled with a wide range of different
 Below is a simple example showcasing the results of the query "top 10 attackers from the US":
 
 <div style="text-align: center;">
-  <img src="./images/upload_db69aae0d7307c4a243673e14afa81e1.png" alt="Image" width="1280" height="720">
+  <img src="/images/upload_db69aae0d7307c4a243673e14afa81e1.png" alt="Image" width="1280" height="720">
 </div>
 
 

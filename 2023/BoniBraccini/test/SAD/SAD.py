@@ -18,11 +18,11 @@ MAX_INTEVALS = 20160  # will overwrite delta values older than 7 days
 DELTA_DB = deque(maxlen=MAX_INTEVALS)
 
 
-COLLECTOR_ADDRESS = "demo" #insert your address or leave "demo" to use demo server
-PROMETHEUS_ADRESS = "demo" #insert your address or leave "demo" to use demo server
+COLLECTOR_ADDRESS = "demo" #address you want to retrieve training data from or (leave "demo" to use demo server)
+PROMETHEUS_ADRESS = "demo" ##address you want to retrieve training data from  (leave "demo" to use demo server)
 
-demo_domain1 = ['https://prometheus', '.edipen.','it']
-demo_domain2 = ['https://honeytest', '.edipen.','it']
+demo_domain1 = ['h'+'ttps://prometheus', '.edipen.','it']
+demo_domain2 = ['h'+'ttps://honeytest', '.edipen.','it']
 
 if PROMETHEUS_ADRESS == "demo":
    PROMETHEUS_ADRESS = ''.join(demo_domain1)

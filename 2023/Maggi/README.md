@@ -2,7 +2,7 @@
 Chiara Maggi, <c.maggi2@studenti.unipi.it>
 
 ## Introduzione 
-nDPI (https://www.ntop.org/products/deep-packet-inspection/ndpi/) è una libreria open-source utilizzata per la Deep Packet Inspection. Il progetto consiste nell'estrarre il filename (se presente) dal Content-Disposition presente nel response header di una risposta HTTP regolare. L'aggiunta del nome del file identificherà meglio i trasferimenti sospetti/dannosi.
+[nDPI](https://www.ntop.org/products/deep-packet-inspection/ndpi/) è una libreria open-source utilizzata per la Deep Packet Inspection. Il progetto consiste nell'estrarre il filename (se presente) dal Content-Disposition presente nel response header di una risposta HTTP regolare. L'aggiunta del nome del file identificherà meglio i trasferimenti sospetti/dannosi.
 <p align="center">
   <img src="./immagini/http_example.png" width="40%" height="20%">
 </p>

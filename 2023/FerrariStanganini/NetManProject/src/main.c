@@ -41,12 +41,12 @@
 #define YELLOW "\x1b[33m"
 #define NORMAL "\x1b[m"
 
-struct sockaddr_in broadcastIP;
-struct sockaddr_in allbroadcastIP;
-struct sockaddr_in minMultiIP;
-struct sockaddr_in maxMultiIP;
-struct sockaddr_in intraIP;
-struct sockaddr_in myIP;
+uint32_t broadcastIP;
+uint32_t allbroadcastIP;
+uint32_t minMultiIP;
+uint32_t maxMultiIP;
+uint32_t intraIP;
+uint32_t myIP;
 
 typedef struct
 {
@@ -376,6 +376,8 @@ void getBroadCast(char *device)
     struct ifaddrs *ifaddr, *ifa;
     struct sockaddr_in *sa = NULL;
     struct sockaddr_in *su = NULL;
+    struct sockaddr_in myip;
+    struct sockaddr_in br;
     char subnet_mask[INET_ADDRSTRLEN];
     char ip[INET_ADDRSTRLEN];
     char broad[INET_ADDRSTRLEN];
@@ -397,9 +399,11 @@ void getBroadCast(char *device)
         }
     }
 
-    inet_pton(AF_INET, ip, &myIP.sin_addr);
-    broadcastIP.sin_addr.s_addr = su->sin_addr.s_addr | ~(sa->sin_addr.s_addr);
-    inet_ntop(AF_INET, &(broadcastIP.sin_addr), broad, INET_ADDRSTRLEN);
+    inet_pton(AF_INET, ip, &myip.sin_addr);
+    myIP = ntohl(myip.sin_addr.s_addr);
+    br.sin_addr.s_addr = su->sin_addr.s_addr | ~(sa->sin_addr.s_addr);
+    broadcastIP = ntohl(br.sin_addr.s_addr);
+    inet_ntop(AF_INET, &(br.sin_addr), broad, INET_ADDRSTRLEN);
     printf("\nSubnetMask:%s \nLocalIP:%s \nBroadcastIP: %s\n", subnet_mask, ip, broad);
     freeifaddrs(ifaddr);
 }
@@ -419,13 +423,13 @@ void dummyProcesssPacket(u_char *_deviceId, const struct pcap_pkthdr *h, const u
     if (eth_type == 0x0800)
     {
         if (ip.ip_p == IPPROTO_TCP &&
-                (ntohl(ip.ip_dst.s_addr) != ntohl(broadcastIP.sin_addr.s_addr)) &&
-                (ntohl(ip.ip_dst.s_addr) != ntohl(intraIP.sin_addr.s_addr)) &&
+                (dst_ip != broadcastIP) &&
+                (dst_ip != intraIP) &&
                 //(ntohl(ip.ip_dst.s_addr) != ntohl(myIP.sin_addr.s_addr)) &&
                 //(ntohl(ip.ip_src.s_addr) != ntohl(myIP.sin_addr.s_addr)) &&
-                (ntohl(ip.ip_dst.s_addr) != ntohl(allbroadcastIP.sin_addr.s_addr)) &&
-                (ntohl(ip.ip_dst.s_addr) < ntohl(minMultiIP.sin_addr.s_addr) || ntohl(ip.ip_dst.s_addr) > ntohl(maxMultiIP.sin_addr.s_addr)))
-        {   
+                (dst_ip != allbroadcastIP) &&
+                (dst_ip < minMultiIP || dst_ip > maxMultiIP))
+        {  
             //time_dst = last rx packet time, time_src = last tx packet time, if host have only rx traffics, time_src = last rx packet time 
             uintptr_t r;
             if (hashmap_get(hash_BH, &ip.ip_src.s_addr, sizeof(ip.ip_src.s_addr), &r)) // src ip present in the hashmap 
@@ -521,10 +525,21 @@ int main(int argc, char *argv[])
 
     printf("Capturing from %s\n", device);
     getBroadCast(device);
-    inet_pton(AF_INET, "224.0.0.0", &minMultiIP.sin_addr);
-    inet_pton(AF_INET, "239.255.255.255", &maxMultiIP.sin_addr);
-    inet_pton(AF_INET, "255.255.255.255", &allbroadcastIP.sin_addr);
-    inet_pton(AF_INET, "192.168.222.11", &intraIP.sin_addr);
+    struct sockaddr_in allbroadcastip;
+    struct sockaddr_in minMultiip;
+    struct sockaddr_in maxMultiip;
+    struct sockaddr_in intraip;
+
+    inet_pton(AF_INET, "224.0.0.0", &minMultiip.sin_addr);
+    inet_pton(AF_INET, "239.255.255.255", &maxMultiip.sin_addr);
+    inet_pton(AF_INET, "255.255.255.255", &allbroadcastip.sin_addr);
+    inet_pton(AF_INET, "192.168.222.11", &intraip.sin_addr);
+
+
+    allbroadcastIP = ntohl(allbroadcastip.sin_addr.s_addr);
+    minMultiIP = ntohl(minMultiip.sin_addr.s_addr);
+    maxMultiIP = ntohl(maxMultiip.sin_addr.s_addr);
+    intraIP = ntohl(intraip.sin_addr.s_addr);
 
     promisc = 1;
     if ((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL)

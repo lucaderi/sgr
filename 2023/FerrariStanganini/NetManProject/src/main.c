@@ -67,6 +67,8 @@ struct pcap_stat pcapStats;
 roaring_bitmap_t *bitmap_BH;
 hashmap *hash_BH;
 
+struct timeval last_print;
+
 /*************************************************/
 
 char *__intoa(unsigned int addr, char *buf, u_short bufLen)
@@ -481,6 +483,12 @@ void dummyProcesssPacket(u_char *_deviceId, const struct pcap_pkthdr *h, const u
                 hashmap_set(hash_BH, s_addr, sizeof(in_addr_t), (uintptr_t)(void *)dst_data);
             }
         }
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        if ((now.tv_sec - last_print.tv_sec) > 1){
+            print_stats();
+            gettimeofday(&last_print, NULL);
+        }
     }
 }
 
@@ -548,13 +556,14 @@ int main(int argc, char *argv[])
         return (-1);
     }
 
+    gettimeofday(&last_print, NULL);
+
     signal(SIGINT, sigproc);
     signal(SIGTERM, sigproc);
-    signal(SIGALRM, my_sigalarm);
-    alarm(ALARM_SLEEP);
+
     pcap_loop(pd, -1, dummyProcesssPacket, NULL);
     pcap_close(pd);
-    alarm(0);
+    
     roaring_bitmap_free(bitmap_BH);
     hashmap_iterate(hash_BH, free_hashmap, NULL);
     hashmap_free(hash_BH);

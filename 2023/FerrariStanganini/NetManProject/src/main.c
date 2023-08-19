@@ -27,7 +27,7 @@
 #include <netinet/tcp.h>
 //#include <netinet/udp.h>
 #include <rrd.h>
-#include "map.c"
+#include "../c-hashmap/map.c"
 #include "patriciatree.c"
 
 #define ALARM_SLEEP 1

@@ -58,7 +58,6 @@ typedef struct
     long rx_packet_base;
     struct timeval time_src;
     struct timeval time_dst;
-    //roaring_bitmap_t *bitmap;
     struct Node* root;
     int t_patricia; //number of node
 } DATA;
@@ -135,23 +134,6 @@ int min(time_t a, time_t b)
     if (a < b)
         return a;
     return b;
-}
-
-/*************************************************/
-/*free the hashmap entry and the bitmap*/
-
-void free_entry(struct timeval time_dst, struct timeval time_src, void *key, DATA *data)
-{  
-    struct timeval time;
-    gettimeofday(&time, NULL);
-    if (min(time.tv_sec - time_dst.tv_sec, time.tv_sec - time_src.tv_sec) > 300)
-    {   
-        uintptr_t r;
-        //roaring_bitmap_free(data->bitmap);
-        free(data);
-        hashmap_remove(hash_BH, (in_addr_t *)key, sizeof(in_addr_t));
-        free(key);
-    }
 }
 
 /*************************************************/
@@ -322,9 +304,8 @@ void print_hash_entry(void *key, size_t ksize, uintptr_t d, void *usr)
         }
     }
 
-    if (!(roaring_bitmap_contains(bitmap_BH, *(in_addr_t *)key)))
-        free_entry(data->time_dst, data->time_src, key, data);
 }
+
 /*************************************************/
 
 int c = 0;
@@ -455,7 +436,6 @@ void dummyProcesssPacket(u_char *_deviceId, const struct pcap_pkthdr *h, const u
         {   
 
             memcpy(&tcp_hdr, p + sizeof(ehdr) + sizeof(ip), sizeof(struct tcphdr));
-            //printf("src_p %hu   dst_p %hu\n",tcp_hdr.th_dport, tcp_hdr.th_sport);
             //time_dst = last rx packet time, time_src = last tx packet time, if host have only rx traffics, time_src = last rx packet time 
             uintptr_t r;
             if (hashmap_get(hash_BH, &ip.ip_src.s_addr, sizeof(ip.ip_src.s_addr), &r)) // src ip present in the hashmap 

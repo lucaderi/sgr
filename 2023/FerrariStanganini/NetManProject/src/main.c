@@ -466,11 +466,11 @@ void dummyProcesssPacket(u_char *_deviceId, const struct pcap_pkthdr *h, const u
                 
                 roaring_bitmap_t* bitmap = search(data->root,(uint32_t)ip.ip_src.s_addr);
                 if (bitmap != NULL) {
-                    roaring_bitmap_add(bitmap, tcp_hdr.th_dport);
+                    roaring_bitmap_add(bitmap, ntohs(tcp_hdr.th_dport));
                 } else {
                     data->t_patricia = insert(data->root, (uint32_t)ip.ip_src.s_addr, data->t_patricia);
                     roaring_bitmap_t* bitmap_c = search(data->root,(uint32_t)ip.ip_src.s_addr);
-                    roaring_bitmap_add(bitmap_c, tcp_hdr.th_dport);
+                    roaring_bitmap_add(bitmap_c, ntohs(tcp_hdr.th_dport));
                 }
             }
             else // DST not present
@@ -487,7 +487,7 @@ void dummyProcesssPacket(u_char *_deviceId, const struct pcap_pkthdr *h, const u
 
                 dst_data->t_patricia = insert(dst_data->root, (uint32_t)ip.ip_src.s_addr, dst_data->t_patricia);               
                 roaring_bitmap_t* b = search(dst_data->root,(uint32_t)ip.ip_src.s_addr); 
-                roaring_bitmap_add(b, tcp_hdr.th_dport);
+                roaring_bitmap_add(b, ntohs(tcp_hdr.th_dport));
 
                 in_addr_t *s_addr = malloc(sizeof(in_addr_t));
                 memcpy(s_addr, &ip.ip_dst.s_addr, sizeof(in_addr_t));

@@ -103,13 +103,6 @@ char *__intoa(unsigned int addr, char *buf, u_short bufLen)
 
 /*************************************************/
 
-//void optimize_entry(void *key, size_t ksize, uintptr_t d, void *usr)
-//{
-//    DATA *data = (DATA *)d;
-//    roaring_bitmap_run_optimize(data->bitmap);
-//}
-
-/*************************************************/
 
 static char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
 char *intoa(unsigned int addr) { return (__intoa(addr, buf, sizeof(buf))); }
@@ -179,13 +172,14 @@ bool it(uint32_t value, void* p)
     if (hashmap_get(hash_BH, &value, sizeof(value), &r)) 
     {
         DATA *data = (DATA *)r;            
-        struct Result** r = traverseTree(data->root,data->t_patricia);
+        struct Result* res = traverseTree(data->root,data->t_patricia);
         for (int i=0; i<data->t_patricia; i++) {
             char s[500];
-            sprintf(s, "ip %s porte ", intoa(ntohl(r[i]->ip)));
+            sprintf(s, "ip %s porte ", intoa(ntohl(res[i].ip)));
             strcat(ips,s); 
-            roaring_iterate(r[i]->ports, iter_port, NULL);
+            roaring_iterate(res[i].ports, iter_port, NULL);
         }
+        free(res);
     }  
 
     sprintf(command, "rrdtool graph rrd_bin/graph/%s.png -w 1920 -h 1080 -D --start end-24h DEF:da1=%s.rrd:speed:AVERAGE LINE:da1#ff0000:'1' COMMENT:\"il blackhole è stato contattato da %s\"", intoa(ntohl(value)),rrdfile, ips);
@@ -208,10 +202,11 @@ void rd_create(in_addr_t ip)
     const char** rrd_argv = calloc(sizeof(char*),2);
     rrd_argv[0] = "DS:speed:GAUGE:10:0:1000000";
     rrd_argv[1] = "RRA:AVERAGE:0.5:1:86400";
+
     int ret = rrd_create_r(rrdfile, rra_step, start_time, rrd_argc, rrd_argv);
     if (ret != 0) {
-        printf("Errore CREATE: %s \n", rrd_get_error());
-        rrd_clear_error();
+        //printf("Errore CREATE: %s \n", rrd_get_error());
+        //rrd_clear_error();
         return;
     }
     free(rrd_argv);
@@ -295,13 +290,14 @@ void print_hash_entry(void *key, size_t ksize, uintptr_t d, void *usr)
         printf(" %2lld.%2lld.%-6lld |",(long long)src_time->tm_hour, (long long)src_time->tm_min, (long long)src_time->tm_sec);
         printf(" %6ld:%-6ld |\n", data->rx_packet, data->tx_packet);
         
-        struct Result** susu = traverseTree(data->root,data->t_patricia);
+        struct Result* res = traverseTree(data->root,data->t_patricia);
         printf("sender:\n");
         for (int i=0; i<data->t_patricia; i++) {
-            printf("   ip: %s con le porte: ", intoa(ntohl(susu[i]->ip)));
-            roaring_iterate(susu[i]->ports, iter, NULL);
+            printf("   ip: %s con le porte: ", intoa(ntohl(res[i].ip)));
+            roaring_iterate(res[i].ports, iter, NULL);
             printf("\n");
         }
+        free(res);
     }
 
 }
@@ -334,12 +330,9 @@ void free_hashmap(void *key, size_t ksize, uintptr_t d, void *usr)
 {
     DATA *data = (DATA *)d;
     free(key);
-    //TODO: free patricia tree
-    
-    //roaring_bitmap_free(data->bitmap);
+    freePatricia(data->root, data->t_patricia);
     free(data);
 }
-
 /*************************************************/
 
 void my_sigalarm(int sig)
@@ -488,12 +481,12 @@ void dummyProcesssPacket(u_char *_deviceId, const struct pcap_pkthdr *h, const u
                 dst_data->rx_packet = 1;
                 dst_data->tx_packet = 0;
                 dst_data->time_src = h->ts;
-                dst_data->time_dst = h->ts;
+                dst_data->time_dst = h->ts;                
                 dst_data->t_patricia = 0;
                 dst_data->root = createNode();
 
-                dst_data->t_patricia = insert(dst_data->root, (uint32_t)ip.ip_src.s_addr, dst_data->t_patricia);
-                roaring_bitmap_t* b = search(dst_data->root,(uint32_t)ip.ip_src.s_addr);
+                dst_data->t_patricia = insert(dst_data->root, (uint32_t)ip.ip_src.s_addr, dst_data->t_patricia);               
+                roaring_bitmap_t* b = search(dst_data->root,(uint32_t)ip.ip_src.s_addr); 
                 roaring_bitmap_add(b, tcp_hdr.th_dport);
 
                 in_addr_t *s_addr = malloc(sizeof(in_addr_t));
@@ -573,7 +566,7 @@ int main(int argc, char *argv[])
         printf("pcap_open_live: %s\n", errbuf);
         return (-1);
     }
-
+    
     gettimeofday(&last_print, NULL);
 
     signal(SIGINT, sigproc);
@@ -581,9 +574,11 @@ int main(int argc, char *argv[])
 
     pcap_loop(pd, -1, dummyProcesssPacket, NULL);
     pcap_close(pd);
-
+    
+    free(device);
     roaring_bitmap_free(bitmap_BH);
     hashmap_iterate(hash_BH, free_hashmap, NULL);
     hashmap_free(hash_BH);
+    rrd_get_error();
     return (0);
 }

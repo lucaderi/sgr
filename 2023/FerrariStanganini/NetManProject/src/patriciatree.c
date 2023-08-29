@@ -90,6 +90,11 @@ void traverse(struct Node* node, uint32_t ip, int level, struct Result** res) {
 
     traverse(node->left, ip << 1, level + 1, res);
     traverse(node->right, (ip << 1) | 1, level + 1, res);
+
+    if ((!(node->leaf))&&(!(node == NULL))){
+        roaring_bitmap_free(node->ports);
+        free(node);
+    }
 }
 
 struct Result** traverseTree(struct Node* root,int total) {

@@ -10,7 +10,7 @@ Questa cartella contiene i progetti studenti del corso di [Gestione di Rete](htt
 - Svolgere il progetto in modo che sia conforme alle specifiche concordate.
 - Una volta realizzato il progetto, creare una [pull request](https://opensource.com/article/19/7/create-pull-request-github) e (opzionale) notificate il docente.
 - La pull request verrà verificata e provata dal docente. Nel caso vengano trovati dei problemi, il docente commenterà il progetto nella pull request e richiederà delle modifiche per essere approvato.
-- Una volta che questa è stata validata sarà accettata ed il progetto verrà considerato cocluso e consegnato con successo. A questo punto è possibile concordare con il docente una data per lo svolgimento della prova orale.
+- Una volta che questa è stata validata sarà accettata ed il progetto verrà considerato concluso e consegnato con successo. A questo punto è possibile concordare con il docente una data per lo svolgimento della prova orale, previa registrazione all'esame.
 
 ## Contenuto Progetto
 Il progetto deve ovviamente contenere il codice sorgente di quanto concordato (nel caso come progetto si sia contributo ad altro progetto open source, va invece inserito il link alla pull request del progetto), ed una breve relazione (in formato markup o PDF) che contenga
@@ -22,5 +22,5 @@ Il progetto deve ovviamente contenere il codice sorgente di quanto concordato (n
 
 ## Note e Raccomandazioni
 - Nella consegna del codice sorgente **non** devono essere inviati files binari (.o) o eseguibili (.exe)
-- Tutti i files del progetto devono essere originali. Se utilizzate codice di terze parti dovete scriverlo nella relazione ed assicurarvi che la licenza con cui è distribuito sia open source e non proprietario.
+- Tutti i files del progetto devono essere originali. Se utilizzate codice di terze parti dovete scriverlo nella relazione ed assicurarvi che la licenza con cui è distribuito sia open source e non proprietaria.
 - Per i files di test evitare di allegare documenti (es. pcap) troppo grandi. In tal caso meglio mettere il riferimento a tali files (URL) piuttosto che includerli nella cartella del progetto.

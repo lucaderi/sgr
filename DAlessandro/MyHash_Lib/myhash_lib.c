@@ -126,6 +126,8 @@ void insert_data_frame(HashTable* hashTable, char *key, char* mac_source) {
         newElement->next = NULL;  // Imposta il next del nuovo elemento a NULL
     }
 
+    free(newDevice);
+
     return;
 }
 
@@ -170,6 +172,7 @@ void mac_address_insert(HashDeviceTable *hashDeviceTable, char key[]){
         current->next = deviceElement;
         deviceElement->next = NULL;  // Imposta il next del nuovo elemento a NULL
     }
+
     return;
 }
 
@@ -178,17 +181,13 @@ void deallocate_hash_table(HashTable *hash_table) {
     // Scorrere ogni elemento nella tabella hash
     for (int i = 0; i < TABLE_SIZE; i++) {
         HashElement *current_element = hash_table->table[i];
+
         while (current_element != NULL) {
             HashElement *temp = current_element;
             current_element = current_element->next;
             
             // Deallocazione della memoria per la tabella hash dei dispositivi WiFi collegati
-            HashDeviceElement *current_device_element = temp->devices.table[i];
-            while (current_device_element != NULL) {
-                HashDeviceElement *temp_device = current_device_element;
-                current_device_element = current_device_element->next;
-                free(temp_device);
-            }
+            deallocate_hash_device_table(&(temp->devices));
             
             // Deallocazione della memoria per l'elemento corrente nella tabella hash principale
             free(temp);
@@ -196,4 +195,22 @@ void deallocate_hash_table(HashTable *hash_table) {
     }
     // Deallocazione della memoria per la tabella hash principale
     free(hash_table);
+}
+
+/*deallocate_hash_device_table: funzione ausiliaria per deallocare la memoria della tabella hash dei dispositivi WiFi */
+void deallocate_hash_device_table(HashDeviceTable *hashDeviceTable) {
+    // Scorrere ogni indice della tabella hash
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        HashDeviceElement *current_element = hashDeviceTable->table[i];
+        
+        // Deallocazione della memoria per ciascun elemento nella lista concatenata
+        while (current_element != NULL) {
+            HashDeviceElement *temp = current_element;
+            current_element = current_element->next;
+            free(temp);
+        }
+        
+        // Imposta il puntatore dell'indice corrente a NULL dopo la deallocazione
+        hashDeviceTable->table[i] = NULL;
+    }
 }

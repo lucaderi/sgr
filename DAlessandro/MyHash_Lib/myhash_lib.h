@@ -66,3 +66,6 @@ void mac_address_insert(HashDeviceTable* hashDeviceTable, char key[]);
 
 /* deallocate_hash_table: funzione per deallocare la struttura dati */
 void deallocate_hash_table(HashTable* hashTable);
+
+/*deallocate_hash_device_table: funzione per deallocare la memoria della struttura HashDeviceElement */
+void deallocate_hash_device_table(HashDeviceTable *hashDeviceTable);

@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
                 break;
             // Verbose
             case 'v':
-                verbose = atoi(strdup(optarg));
+                verbose = atoi(optarg);
                 break;
         }
     }

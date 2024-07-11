@@ -1,11 +1,13 @@
-# Server library
+# Defaults
 server="nginx"
+run="latest"
 
 # Parse command line options
-while getopts :ms: opt; do
+while getopts :ms:r: opt; do
     case "${opt}" in
         m) minimal=1;; # Set minimal flag if -m option is provided
         s) server=${OPTARG};; # Set server variable to the value provided with -s option
+        r) run=${OPTARG};; # Set run variable to the value provided with -r option
     esac
 done
 
@@ -30,5 +32,5 @@ for l in "${libs[@]}"; do
     fi
 
     # Download trace file and get QUIC fingerprint using tshark
-    curl -s --output - "https://interop.seemann.io/logs/latest/${server}_$l/$t/sim/trace_node_left.pcap" | tshark -Y "quic" -V -r - | grep -m 1 "QUIC Fingerprint:"
+    curl --no-progress-meter -f --output - "https://interop.seemann.io/logs/${run}/${server}_$l/$t/sim/trace_node_left.pcap" | tshark -Y "quic_fingerprint.str" -T fields -e "quic_fingerprint.str" -r - | head -n 1
 done

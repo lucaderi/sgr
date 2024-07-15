@@ -1,4 +1,4 @@
-certifi==2023.7.22
+certifi==2024.7.4
 cffi==1.14.6
 charset-normalizer==2.0.2
 dpkt==1.9.6

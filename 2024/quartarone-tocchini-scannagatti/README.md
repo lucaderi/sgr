@@ -9,6 +9,11 @@ Questo progetto utilizza strumenti statistici per analizzare la rete di un'infra
 - Analisi del traffico di rete: Monitoraggio del traffico con statistiche dettagliate su byte e pacchetti scambiati, durata dei flussi e distribuzione del traffico per protocollo.
 - Rilevazione anomalie: Identificazione degli outlier basata su metriche come il goodput, la lunghezza dei pacchetti e l'utilizzo dei flag TCP.
 
+## Prerequisiti
+- python
+- ndpiReader
+- wireshark
+
 ## Installazione
 ### Download Repository
 ```bash
@@ -26,20 +31,21 @@ source env/bin/activate
 pip3 install -r requirements.txt
 ```
 
-### Avvio Programma
+### Riproduzione Test
+- Scaricare i file pcap da: https://drive.google.com/drive/folders/1LDs8K32zsLVVAleuv_e5ZK1crTJC6gaZ?usp=sharing
+- Eseguire il programma ndpiReader con le seguenti opzioni:
 ```bash
-python3 mqttanalyzer.py [-h] -f FILE [-o OUTPUT] [-F FLAGS [FLAGS ...]]
-
-An anomaly detection system for IoT networks
-
-options:
-  -h, --help            show this help message and exit
-  -f FILE, --file FILE  The file to analyze
-  -o OUTPUT, --output OUTPUT
-                        The output directory for the graphs
-  -F FLAGS [rst, ack, syn, psh, urg], --flags FLAGS [rst, ack, syn, psh, urg]
-                        Flags to use for the analysis
+./ndpiReader -i {file pcap da analizzare} -C {nome file csv da generare}
 ```
+- Eseguire MQTTAnalizer con il file csv prodotto nel passo precedente:
+```bash
+python3 src/mqttanalizer.py -f {path file csv da analizzare} -F ack rst -O {path directory in cui salvare i grafici generati}
+```
+#### Verifica Risultati
+Essendo i dataset non etichettati in modo specifico sull'identità degli attaccanti, per verificare i risultati, è necessaria un'analisi manuale tramite wireshark:
+- per alcuni file di test, la rilevazione delle anomalie può avvenire attraverso la sezione "expert information dialog".
+- per tutti i file di test, la rilevazione delle anomalie è identificabile attraverso la sezione "conversation", selezionando la schermata "IPv4" e ordinando i bytes in ordine decrescente.
+- per tutti i file di test, la rilevazione è possibile verificando che gli ip generati dal programma siano associati ai dispositivi "Raspberry Pi" (selezionando un pacchetto, è possibile visualizzare questa informazione sul campo ethernet), che, come spiegato all'interno della relazione, sono stati utilizzati come attaccanti. 
 
 ### Output
 Il programma restituisce in output un report sul terminale contenente:

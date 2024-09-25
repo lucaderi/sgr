@@ -68,6 +68,9 @@ def plot_top_ip_occurences(data, ax1, ax2, top=10, bar_width=0.35):
 
     top_src_ips = src_ip_counts.head(top)
     top_dst_ips = dst_ip_counts.head(top)
+
+    top = min(top, len(top_src_ips), len(top_dst_ips))
+
     indices = np.arange(top)
 
     # Plotting for source IPs
@@ -110,6 +113,8 @@ def plot_bytes_traffic(data, ax, top=10, bar_width=0.35):
 
     # Select the top IPs with the most total bytes
     top_ip_traffic = ip_traffic.sort_values("total_bytes", ascending=False).head(top)
+
+    top = min(top, len(top_ip_traffic))
 
     # Creation of positions for the bars
     indices = np.arange(top)
@@ -159,10 +164,13 @@ def plot_goodput_bytes_traffic(data, ax, top=10, bar_width=0.35):
         ip_traffic["c_to_s_goodput_bytes"] + ip_traffic["s_to_c_goodput_bytes"]
     )
 
+    top = min(top, len(ip_traffic))
+
     # Select the top IPs with the most total goodput bytes
     top_ip_traffic = ip_traffic.sort_values(
         "total_goodput_bytes", ascending=False
     ).head(top)
+
 
     indices = np.arange(top)
 

@@ -137,8 +137,8 @@ def aggregated_iqr_goodput_bytes(aggregated_flows):
         [value["goodputs_bytes"] for value in aggregated_flows.values()], 75
     )
     iqr = q3 - q1
-    lower_bound = q1 - 1.5 * iqr
-    upper_bound = q3 + 1.5 * iqr
+    lower_bound = q1 - (1.5 * iqr)
+    upper_bound = q3 + (1.5 * iqr)
 
     # Identify outliers based on the IQR values
     outliers = {}

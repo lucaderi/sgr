@@ -1,0 +1,98 @@
+import re
+import requests
+from datetime import datetime, timedelta
+import pytz
+
+
+# Espressione regolare per estrarre l'IP e il timestamp
+log_pattern = r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<timestamp>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2} [+\-]\d{4})\] \"(?P<request>[^\"]+)\" (?P<status>\d+)"
+
+# Fuso orario italiano
+italian_tz = pytz.timezone("Europe/Rome")
+
+# Variabili per memorizzare i gruppi
+gruppi = {}
+inizio_primo_gruppo = None
+gruppo_corrente = 1
+
+
+# get per verificare se l'ip è situtato in italia
+def is_ip_from_italy(ip):
+    try:
+        response = requests.get(f"https://ipinfo.io/{ip}/json")
+        data = response.json()
+        return data.get("country") == "IT"
+    except Exception as e:
+        print(f"Errore durante la geolocalizzazione dell'IP {ip}: {e}")
+        return False
+
+
+# lettura file e organizzazione in gruppi
+with open("www.ntop.org-access.log.13", "r") as file:
+    for line in file:
+        match = re.match(log_pattern, line)
+        if match:
+            ip = match.group("ip")
+            timestamp_str = match.group("timestamp")
+            request = match.group("request")
+            status = match.group("status")
+
+            # conversione timestamp in un oggetto datetime
+            timestamp_dt = datetime.strptime(timestamp_str, "%d/%b/%Y:%H:%M:%S %z")
+            timestamp_dt_italian = timestamp_dt.astimezone(italian_tz)
+
+            # set orario primo gruppo
+            if inizio_primo_gruppo is None:
+                inizio_primo_gruppo = timestamp_dt_italian
+                gruppi[gruppo_corrente] = []
+
+            # set numero gruppo corrente
+            delta = timestamp_dt_italian - inizio_primo_gruppo
+            gruppo_corrente = (delta // timedelta(minutes=5)) + 1
+
+            # Aggiungi la riga al gruppo appropriato
+            if gruppo_corrente not in gruppi:
+                gruppi[gruppo_corrente] = []
+            gruppi[gruppo_corrente].append({
+                "ip": ip,
+                "timestamp": timestamp_dt_italian,
+                "request": request,
+                "status": int(status)
+            })
+
+for gruppo, righe in gruppi.items():
+    sospetti = set()
+    fallimenti = {}
+    for log in righe:
+        ip = log["ip"]
+        request = log["request"]
+        status = log["status"]
+
+        # Controllo SQL Injection
+        if re.search(r"(?:' OR |UNION|SELECT|--)", request, re.IGNORECASE):
+            sospetti.add(ip)
+
+        # check url sospetta
+        if re.search(r"GET /\.", request):
+            sospetti.add(ip)
+
+        # Tentativi di login falliti consecutivi
+        if status >= 400:
+            if ip not in fallimenti:
+                fallimenti[ip] = 0
+            fallimenti[ip] += 1
+        else:
+            fallimenti[ip] = 0
+
+        # Controllo tentativi di login da IP fuori dall'Italia
+        if "login" in request and not is_ip_from_italy(ip):
+            sospetti.add(ip)
+
+    # Aggiungi IP con più fallimenti consecutivi
+    for ip, count in fallimenti.items():
+        if count >= 3:  # Soglia per fallimenti multipli consecutivi
+            sospetti.add(ip)
+
+    # Stampa gli IP sospetti per il gruppo corrente
+    if sospetti:
+        print(f"Gruppo {gruppo}: IP sospetti rilevati - {', '.join(sospetti)}")

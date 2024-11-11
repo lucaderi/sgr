@@ -1,98 +1,120 @@
 import re
-import requests
+import os
 from datetime import datetime, timedelta
 import pytz
+import geoip2.database
 
-
-# Espressione regolare per estrarre l'IP e il timestamp
+# regex per estrarre l'IP e il timestamp
 log_pattern = r"(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[(?P<timestamp>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2} [+\-]\d{4})\] \"(?P<request>[^\"]+)\" (?P<status>\d+)"
 
-# Fuso orario italiano
 italian_tz = pytz.timezone("Europe/Rome")
 
-# Variabili per memorizzare i gruppi
-gruppi = {}
-inizio_primo_gruppo = None
-gruppo_corrente = 1
+# setup reader per il database di geolocalizzazione IP
+reader = geoip2.database.Reader("dbip-country-lite-2024-11.mmdb")
 
-
-# get per verificare se l'ip è situtato in italia
+# Funzione per verificare se un IP è situato in Italia
 def is_ip_from_italy(ip):
     try:
-        response = requests.get(f"https://ipinfo.io/{ip}/json")
-        data = response.json()
-        return data.get("country") == "IT"
+        response = reader.country(ip)
+        return response.country.iso_code == "IT"
+    except geoip2.errors.AddressNotFoundError:
+        print(f"L'IP {ip} non è stato trovato nel database.")
+        return False
     except Exception as e:
         print(f"Errore durante la geolocalizzazione dell'IP {ip}: {e}")
         return False
 
+# Funzione principale per analizzare un file di log
+def analyze_log(file_name):
+    gruppi = {}
+    inizio_primo_gruppo = None
+    gruppo_corrente = 1
 
-# lettura file e organizzazione in gruppi
-with open("www.ntop.org-access.log.13", "r") as file:
-    for line in file:
-        match = re.match(log_pattern, line)
-        if match:
-            ip = match.group("ip")
-            timestamp_str = match.group("timestamp")
-            request = match.group("request")
-            status = match.group("status")
+    with open(file_name, "r") as file:
+        for line in file:
+            match = re.match(log_pattern, line)
+            if match:
+                ip = match.group("ip")
+                timestamp_str = match.group("timestamp")
+                request = match.group("request")
+                status = match.group("status")
 
-            # conversione timestamp in un oggetto datetime
-            timestamp_dt = datetime.strptime(timestamp_str, "%d/%b/%Y:%H:%M:%S %z")
-            timestamp_dt_italian = timestamp_dt.astimezone(italian_tz)
+                # Conversione del timestamp in un oggetto datetime
+                timestamp_dt = datetime.strptime(timestamp_str, "%d/%b/%Y:%H:%M:%S %z")
+                timestamp_dt_italian = timestamp_dt.astimezone(italian_tz)
 
-            # set orario primo gruppo
-            if inizio_primo_gruppo is None:
-                inizio_primo_gruppo = timestamp_dt_italian
-                gruppi[gruppo_corrente] = []
+                # Imposta l'orario del primo gruppo
+                if inizio_primo_gruppo is None:
+                    inizio_primo_gruppo = timestamp_dt_italian
+                    gruppi[gruppo_corrente] = []
 
-            # set numero gruppo corrente
-            delta = timestamp_dt_italian - inizio_primo_gruppo
-            gruppo_corrente = (delta // timedelta(minutes=5)) + 1
+                # Calcola il numero del gruppo corrente
+                delta = timestamp_dt_italian - inizio_primo_gruppo
+                gruppo_corrente = (delta // timedelta(minutes=5)) + 1
 
-            # Aggiungi la riga al gruppo appropriato
-            if gruppo_corrente not in gruppi:
-                gruppi[gruppo_corrente] = []
-            gruppi[gruppo_corrente].append({
-                "ip": ip,
-                "timestamp": timestamp_dt_italian,
-                "request": request,
-                "status": int(status)
-            })
+                # Aggiunge la riga al gruppo appropriato
+                if gruppo_corrente not in gruppi:
+                    gruppi[gruppo_corrente] = []
+                gruppi[gruppo_corrente].append({
+                    "ip": ip,
+                    "timestamp": timestamp_dt_italian,
+                    "request": request,
+                    "status": int(status)
+                })
 
-for gruppo, righe in gruppi.items():
-    sospetti = set()
-    fallimenti = {}
-    for log in righe:
-        ip = log["ip"]
-        request = log["request"]
-        status = log["status"]
+    # Analisi dei gruppi
+    for gruppo, righe in gruppi.items():
+        sospetti = set()
+        fallimenti = {}
+        for log in righe:
+            ip = log["ip"]
+            request = log["request"]
+            status = log["status"]
 
-        # Controllo SQL Injection
-        if re.search(r"(?:' OR |UNION|SELECT|--)", request, re.IGNORECASE):
-            sospetti.add(ip)
+            # Controllo SQL Injection
+            if re.search(r"(?:' OR |UNION|SELECT|--)", request, re.IGNORECASE):
+                sospetti.add(ip)
 
-        # check url sospetta
-        if re.search(r"GET /\.", request):
-            sospetti.add(ip)
+            # Controllo URL sospetto
+            if re.search(r"GET /\.", request):
+                sospetti.add(ip)
 
-        # Tentativi di login falliti consecutivi
-        if status >= 400:
-            if ip not in fallimenti:
+            # Tentativi di login falliti consecutivi
+            if status >= 400:
+                if ip not in fallimenti:
+                    fallimenti[ip] = 0
+                fallimenti[ip] += 1
+            else:
                 fallimenti[ip] = 0
-            fallimenti[ip] += 1
-        else:
-            fallimenti[ip] = 0
 
-        # Controllo tentativi di login da IP fuori dall'Italia
-        if "login" in request and not is_ip_from_italy(ip):
-            sospetti.add(ip)
+            # Controllo tentativi di login da IP fuori dall'Italia
+            if "login" in request and not is_ip_from_italy(ip):
+                sospetti.add(ip)
 
-    # Aggiungi IP con più fallimenti consecutivi
-    for ip, count in fallimenti.items():
-        if count >= 3:  # Soglia per fallimenti multipli consecutivi
-            sospetti.add(ip)
+        # Aggiunge IP con più fallimenti consecutivi
+        for ip, count in fallimenti.items():
+            if count >= 3:
+                sospetti.add(ip)
 
-    # Stampa gli IP sospetti per il gruppo corrente
-    if sospetti:
-        print(f"Gruppo {gruppo}: IP sospetti rilevati - {', '.join(sospetti)}")
+        # Stampa gli IP sospetti per il gruppo corrente
+        if sospetti:
+            print(f"Gruppo {gruppo} (file: {file_name}): IP sospetti rilevati - {', '.join(sospetti)}")
+
+# Funzione per ordinare e analizzare i file di log
+def analyze_log_files_in_directory(directory="log"):
+    # recupera tutti i file nella cartella e ordina per data di modifica
+    log_files = sorted(
+        [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))],
+        key=os.path.getmtime
+    )
+
+    # analisi file di log
+    for log_file in log_files:
+        print(f"Analizzando il file: {log_file}")
+        analyze_log(log_file)
+
+# Esegui l'analisi
+if __name__ == "__main__":
+    analyze_log_files_in_directory()
+
+    reader.close()

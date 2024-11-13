@@ -1,3 +1,4 @@
+import argparse
 import re
 import os
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ italian_tz = pytz.timezone("Europe/Rome")
 # setup reader per il database di geolocalizzazione IP
 reader = geoip2.database.Reader("dbip-country-lite-2024-11.mmdb")
 
+
 # Funzione per verificare se un IP è situato in Italia
 def is_ip_from_italy(ip):
     try:
@@ -23,6 +25,7 @@ def is_ip_from_italy(ip):
     except Exception as e:
         print(f"Errore durante la geolocalizzazione dell'IP {ip}: {e}")
         return False
+
 
 # Funzione principale per analizzare un file di log
 def analyze_log(file_name):
@@ -100,8 +103,9 @@ def analyze_log(file_name):
         if sospetti:
             print(f"Gruppo {gruppo} (file: {file_name}): IP sospetti rilevati - {', '.join(sospetti)}")
 
+
 # Funzione per ordinare e analizzare i file di log
-def analyze_log_files_in_directory(directory="log"):
+def analyze_log_files_in_directory(directory):
     # recupera tutti i file nella cartella e ordina per data di modifica
     log_files = sorted(
         [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))],
@@ -113,8 +117,25 @@ def analyze_log_files_in_directory(directory="log"):
         print(f"Analizzando il file: {log_file}")
         analyze_log(log_file)
 
-# Esegui l'analisi
-if __name__ == "__main__":
-    analyze_log_files_in_directory()
 
+# Funzione principale che gestisce gli argomenti da linea di comando
+def main():
+    # Creazione del parser per i parametri da linea di comando
+    parser = argparse.ArgumentParser(description="Analizza i file di log per attività sospette.")
+    parser.add_argument(
+        "log_directory",
+        help="Cartella contenente i file di log da analizzare"
+    )
+
+    # Estrazione degli argomenti
+    args = parser.parse_args()
+
+    # Esegui l'analisi sulla cartella specificata
+    analyze_log_files_in_directory(args.log_directory)
+
+    # Chiusura del reader GeoIP
     reader.close()
+
+
+if __name__ == "__main__":
+    main()

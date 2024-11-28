@@ -75,8 +75,8 @@ def analyze_log(file_name, reader):
             if re.search(r"(?:' OR |UNION|SELECT|--)", request, re.IGNORECASE):
                 sospetti.add(ip)
 
-            # Controllo URL sospetto
-            if re.search(r"GET /\.", request):
+           # Controllo URL sospetto
+            if re.search(r"GET /(\.|config|backup|env|passwd)", request, re.IGNORECASE):
                 sospetti.add(ip)
 
             # Tentativi di login falliti consecutivi

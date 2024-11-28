@@ -33,9 +33,9 @@ pip install pytz geoip2
 
 1. Assicurarsi di avere il file di database di geolocalizzazione IP (`dbip-country-lite-2024-11.mmdb`).
 2. Specifica la cartella dei log come argomento da linea di comando:
-
+3. Specificare il percorso del file di output (.txt)
    ```
-   python script.py /percorso/alla/cartella/dei/log
+   python main.py log dbip-country-lite-2024-11.mmdb output.txt
    ```
 
 3. Lo script analizzerà tutti i file di log nella cartella specificata, li ordinerà per data di modifica e avvierà l'analisi di sicurezza.

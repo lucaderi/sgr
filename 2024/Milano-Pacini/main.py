@@ -24,10 +24,10 @@ def is_ip_from_italy(ip, reader):
 
 
 def analyze_log(file_name, reader, output_file):
-    gruppi = {}
-    inizio_primo_gruppo = None
-    gruppo_corrente = 1
-    ip_segnalati_precedenti = set()  # IP segnalati nel gruppo precedente
+    time_windows = {}
+    inizio_primo_window = None
+    current_window = 1
+    ip_segnalati_precedenti = set()  # IP segnalati nel window precedente
 
     with open(file_name, "r") as file:
         for line in file:
@@ -42,33 +42,44 @@ def analyze_log(file_name, reader, output_file):
                 timestamp_dt = datetime.strptime(timestamp_str, "%d/%b/%Y:%H:%M:%S %z")
                 timestamp_dt_italian = timestamp_dt.astimezone(italian_tz)
 
-                # set l'orario del primo gruppo
-                if inizio_primo_gruppo is None:
-                    inizio_primo_gruppo = timestamp_dt_italian
-                    gruppi[gruppo_corrente] = []
+                # set l'orario del primo window
+                if inizio_primo_window is None:
+                    inizio_primo_window = timestamp_dt_italian
+                    time_windows[current_window] = {
+                        "start_time": inizio_primo_window,
+                        "end_time": inizio_primo_window + timedelta(minutes=5),
+                        "logs": []
+                    }
 
-                # get numero del gruppo corrente
-                delta = timestamp_dt_italian - inizio_primo_gruppo
-                gruppo_corrente = (delta // timedelta(minutes=5)) + 1
+                # get numero del window corrente
+                delta = timestamp_dt_italian - inizio_primo_window
+                current_window = (delta // timedelta(minutes=5)) + 1
 
-                # Aggiunge la riga al gruppo appropriato
-                if gruppo_corrente not in gruppi:
-                    gruppi[gruppo_corrente] = []
-                gruppi[gruppo_corrente].append({
+                # aggiunge la riga del log alla finestra temporale adeguata
+                if current_window not in time_windows:
+                    start_time = inizio_primo_window + timedelta(minutes=(current_window - 1) * 5)
+                    end_time = start_time + timedelta(minutes=5)
+                    time_windows[current_window] = {
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "logs": []
+                    }
+
+                time_windows[current_window]["logs"].append({
                     "ip": ip,
                     "timestamp": timestamp_dt_italian,
                     "request": request,
                     "status": int(status)
                 })
 
-    # Analisi dei gruppi
+    # analisi della finestra temporale attuale
     with open(output_file, "a") as out_file:
-        for gruppo, righe in sorted(gruppi.items()):
+        for window, data in sorted(time_windows.items()):
             sospetti = set()
             fallimenti = {}
             richieste_malevole = {}
 
-            for log in righe:
+            for log in data["logs"]:
                 ip = log["ip"]
                 request = log["request"]
                 status = log["status"]
@@ -81,7 +92,7 @@ def analyze_log(file_name, reader, output_file):
                 if re.search(r"GET /(\.|config|backup|env|passwd)", request, re.IGNORECASE):
                     richieste_malevole[ip] = richieste_malevole.get(ip, 0) + 1
 
-                # Tentativi di login falliti consecutivi
+                # tentativi di login falliti consecutivi
                 if status >= 400:
                     if ip not in fallimenti:
                         fallimenti[ip] = 0
@@ -93,38 +104,47 @@ def analyze_log(file_name, reader, output_file):
                 if "login" in request and not is_ip_from_italy(ip, reader):
                     richieste_malevole[ip] = richieste_malevole.get(ip, 0) + 1
 
-            # Segnala IP con richieste malevole e condizioni specifiche
+            # segnalazione IP con richieste malevole
             for ip, count in richieste_malevole.items():
                 if count >= 3 or ip in ip_segnalati_precedenti:
                     sospetti.add(ip)
 
-            # Aggiunge IP con più fallimenti consecutivi
+            # add IP con più fallimenti consecutivi
             for ip, count in fallimenti.items():
                 if count >= 3:
                     sospetti.add(ip)
 
-            # Scrive gli IP sospetti nel file di output
+            # write IP sospetti nel file di output.txt
             if sospetti:
-                out_file.write(f"Gruppo {gruppo} (file: {file_name}): IP sospetti rilevati - {', '.join(sospetti)}\n")
-                ip_segnalati_precedenti = sospetti  # Aggiorna i segnalati per il gruppo successivo
+                out_file.write(f"\n=== Periodo: {data['start_time'].strftime('%Y-%m-%d %H:%M:%S')} - {data['end_time'].strftime('%Y-%m-%d %H:%M:%S')} ===\n")
+                out_file.write(f"IP sospetti rilevati: {', '.join(sospetti)}\n")
+                ip_segnalati_precedenti = sospetti  # ip sospetti tenuti in memoria per il window successivo
 
 
-# Funzione per ordinare e analizzare i file di log
 def analyze_log_files_in_directory(directory, reader, output_file):
-    # Recupera tutti i file nella cartella e ordina per data di modifica
+    with open(output_file, "a") as out_file:
+        start_time = datetime.now().astimezone(italian_tz)
+        out_file.write("\n" + "=" * 50 + "\n")
+        out_file.write(f"Inizio analisi: {start_time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n")
+        out_file.write("=" * 50 + "\n")
+
+    # get tutti i file nella cartella e ordina per data di modifica
     log_files = sorted(
         [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))],
         key=os.path.getmtime
     )
 
-    # Analisi file di log
     for log_file in log_files:
         print(f"Analizzando il file: {log_file}")
         analyze_log(log_file, reader, output_file)
 
+    with open(output_file, "a") as out_file:
+        end_time = datetime.now().astimezone(italian_tz)
+        out_file.write("\n" + "=" * 50 + "\n")
+        out_file.write(f"Fine analisi: {end_time.strftime('%Y-%m-%d %H:%M:%S %Z')}\n")
+        out_file.write("=" * 50 + "\n")
 
 def main():
-    # Creazione del parser per i parametri da linea di comando
     parser = argparse.ArgumentParser(description="Analizza i file di log per attività sospette.")
     parser.add_argument(
         "log_directory",
@@ -146,11 +166,8 @@ def main():
         return
 
     reader = geoip2.database.Reader(args.db_path)
-
     analyze_log_files_in_directory(args.log_directory, reader, args.output_file)
-
     reader.close()
-
 
 if __name__ == "__main__":
     main()

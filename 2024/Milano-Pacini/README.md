@@ -54,5 +54,3 @@ Dove:
 - `<status>` è il codice di stato HTTP.
 
 - **Analisi per finestra temporale**: I log vengono analizzati in finestre temporali di 5 minuti. Gli IP sospetti vengono segnalati per ogni finestra temporale in cui vengono rilevati.
-
-Se desideri contribuire a questo progetto, sentiti libero di aprire una pull request. Ogni miglioramento è benvenuto!

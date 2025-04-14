@@ -1,0 +1,17 @@
+{
+    "country": {
+      "US": "us",
+      "IT": "it",
+      "FR": "fr",
+      "AT": "at",
+      "IE": "ie",
+      "NL": "nl",
+      "Europe": "europe",
+      "North-America": "north-america",
+      "South-America": "south-america",
+      "Asia": "asia",
+      "Oceania": "oceania",
+      "Africa": "africa"
+    }
+  }
+  

@@ -60,9 +60,12 @@ Move the `ntp_rtt_stats.txt` file into the **main Wireshark directory** ( *same 
 
 ### 1️⃣ country.json
 
-The `generator.py` file performs pings to servers from the [NTP Pool Project](website: https://www.ntppool.org/en/) ranging from server 0 to server 3. These servers are listed in the `country.json` file, where each country is associated with a corresponding NTP server domain. For example, the entry `"US": "us"` refers to the NTP `server us.pool.ntp.org`, and `"MX": "mx"` refers to the server `mx.pool.ntp.org`
+The `generator.py` file performs pings to servers from the [NTP Pool Project](https://www.ntppool.org/en/) ranging from server 0 to server 3. These servers are listed in the `country.json` file, where each country is associated with a corresponding NTP server domain. For example, the entry `"US": "us"` refers to the NTP `server us.pool.ntp.org`, and `"MX": "mx"` refers to the server `mx.pool.ntp.org`
 
-You can modify the `country.json` file based on your preferences to include other countries or specific NTP servers
+You can modify the `country.json` file based on your preferences but:
+
+- **Keys**: Must be valid country codes recognized by [MaxMind](https://www.maxmind.com/download/geoip/misc/region_codes.csv)
+- **Values**: Must correspond to valid zones supported by the NTP Pool Project ( *used to construct domain names like 0.us.pool.ntp.org, 1.europe.pool.ntp.org, etc...* )
 
 ### 2️⃣ parameters.json
 

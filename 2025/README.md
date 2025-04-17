@@ -1,6 +1,6 @@
 # RTT Geo-Location Anomaly Detector
 
-Un sistema ibrido composto da uno script Python e uno script Lua per Wireshark, progettato per rilevare anomalie nella localizzazione geografica degli host basandosi sui tempi di risposta (RTT). Il progetto può identificare l’uso di VPN, Tor, CDN o tecniche di mascheramento IP, confrontando gli RTT osservati nel traffico di rete con quelli attesi in base alla posizione geografica dichiarata dagli IP.
+RTT Geo-Location Anomaly Detector is a Wireshark plugin written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP and TLS packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
 ---
 

@@ -50,7 +50,7 @@ function create_rtt_reference(file_path)
         if country_code and mean and stddev then
 
             rtt_reference[country_code] = {
-                mean = tonumber(mean),  -- Converti il mean in numero
+                mean = tonumber(mean),     -- Converti il mean in numero
                 stddev = tonumber(stddev)  -- Converti lo stddev in numero
             }
 
@@ -66,7 +66,6 @@ end
 local file_path = "ntp_rtt_stats.txt"
 local rtt_reference = create_rtt_reference(file_path)
 
--- Stampa la struttura per verificare il risultato
 --for country_code, data in pairs(rtt_reference) do
 --    print(country_code, data.mean, data.stddev)
 --end
@@ -127,7 +126,6 @@ function rtt_checker.dissector(buffer, pinfo, tree)
         rtt_tcp = rtt_tcp * 1000
     end
 
-    -- In caso di manomissione di pacchetto, rtt_value varrà il primo valore non nil quindi rtt_tcp
     local rtt_value = rtt_tcp or icmp_resptime
 
     if rtt_value then

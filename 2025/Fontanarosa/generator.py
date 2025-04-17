@@ -31,11 +31,15 @@ OUTLIER_FACTOR = params["OUTLIER_FACTOR"]
 
 # Determina il sistema operativo per l'esecuzione del comando ping
 is_windows = platform.system().lower().startswith("win")
+is_mac = platform.system().lower().startswith("darwin")
+
+#print(f"windows ... {is_windows} .... mac {is_mac} ...");
 
 # Regex per Linux e Windows del comando ping
-rtt_regex_linux = re.compile(r'time=([\d.]+) ms', re.IGNORECASE)        # significa cattura + numeri decimali
-rtt_regex_windows = re.compile(r'durata[=<]([\d]+)ms', re.IGNORECASE)   # in windows può essere durata = oppure durata <
-# Durata da modificare in base alla lingua
+rtt_regex_linux = re.compile(r'time=([\d.]+)', re.IGNORECASE)        # significa cattura + numeri decimali
+rtt_regex_windows = re.compile(r'durata[=<]([\d]+)', re.IGNORECASE)   # in windows può essere durata = oppure durata <
+rtt_regex_mac = re.compile(r'=\s*[\d.]+/([\d.]+)', re.IGNORECASE)   # su mac l'output è min/avg/max ... = 8.8/9.9/.... e così noi prendiamo il secondo valore
+#! In caso di host in lingua straniera, modificare durata o time
 
 # Risultati finali
 rtt_results = {}
@@ -64,6 +68,8 @@ for country_code, country_host in country.items():
             try:
                 if is_windows:
                     cmd = ["ping", "-n", "1", "-w", str(PING_TIMEOUT * 1000), host]
+                elif is_mac:
+                    cmd = ["ping", "-c", "1", "-t", str(PING_TIMEOUT), host]
                 else:
                     cmd = ["ping", "-c", "1", "-W", str(PING_TIMEOUT), host]
 
@@ -71,7 +77,7 @@ for country_code, country_host in country.items():
                 result = subprocess.run( cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True )
                 output = result.stdout
                 print(output)
-                match = (rtt_regex_windows if is_windows else rtt_regex_linux).search(output)
+                match = (rtt_regex_windows if is_windows else rtt_regex_mac if is_mac else rtt_regex_linux).search(output)
                 #print(match)
                 if match:
                     # dove group(0) restituisce l'intera stringa mentre group(1) restituisce la porzione tra parentesi tonde

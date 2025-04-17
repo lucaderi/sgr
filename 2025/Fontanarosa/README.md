@@ -2,11 +2,11 @@
 
 What is RTT Geo-Location Anomaly Detector ?
 
-RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a Wireshark plugin written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP, TLS and ICMP packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
+RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a Wireshark plugin written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP and ICMP packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
 ---
 
-## 🤸 Quickstart
+# 🤸 Quickstart
 
 To get started with **RTT GAD**, follow these steps:
 
@@ -50,17 +50,17 @@ Move the `ntp_rtt_stats.txt` file into the **main Wireshark directory** ( *same 
 
 ---
 
-## ⚙️ How it works?
+# ⚙️ How it works?
 
 ### 1️⃣ country.json
 
-The `generator.py` file performs pings to servers from the [NTP Pool Project](website: https://www.ntppool.org/en/) ranging from server 0 to server 3. These servers are listed in the `country.json` file, where each country is associated with a corresponding NTP server domain. For example, the entry `"US": "us"` refers to the NTP `server 0.us.pool.ntp.org`, and `"MX": "mx"` refers to the server `0.mx.pool.ntp.org`
+The `generator.py` file performs pings to servers from the [NTP Pool Project](website: https://www.ntppool.org/en/) ranging from server 0 to server 3. These servers are listed in the `country.json` file, where each country is associated with a corresponding NTP server domain. For example, the entry `"US": "us"` refers to the NTP `server us.pool.ntp.org`, and `"MX": "mx"` refers to the server `mx.pool.ntp.org`
 
 You can modify the `country.json` file based on your preferences to include other countries or specific NTP servers
 
 ### 2️⃣ parameters.json
 
-The parameters.json file contains configuration parameters for executing the pings:
+The `parameters.json` file contains configuration parameters for executing the pings:
 
 **PING_COUNT**: Defines how many pings will be sent to each host
 
@@ -72,7 +72,7 @@ The parameters.json file contains configuration parameters for executing the pin
 
 ### 3️⃣ generator.py
 
-The generator.py script includes regular expressions to handle the output of the ping command across different operating systems:
+The `generator.py` script includes regular expressions to handle the output of the ping command across different operating systems:
 
 Linux Regex:
 ```
@@ -92,29 +92,29 @@ rtt_regex_mac = re.compile(r'=\s*[\d.]+/([\d.]+)', re.IGNORECASE)
 ```
 This regex captures the average RTT value from the output format typically seen on macOS, such as `... = nn.nn/xx.xx/...`
 
-These regular expressions are used to extract RTT values from the ping output. If your system is in a language other than English or Italian, you may need to adjust them accordingly
+These regular expressions are used to extract RTT values from the ping output. <mark>**If your system is in a language other than English or Italian, you may need to adjust them accordingly**</mark>
 
 ### 4️⃣ ntp_rtt_stats.txt
 
-The output of the generator.py script is a text file named ntp_rtt_stats.txt, which contains Round-Trip Time (RTT) statistics for the NTP servers. The file includes data for each country and the corresponding server. This file is generated in the current directory where the script is run and is used as a reference for comparison when analyzing RTT anomalies
+The output of the `generator.py` script is a text file named `ntp_rtt_stats.txt`, which contains Round-Trip Time ( *RTT* ) statistics for the NTP servers. The file includes data for each country and the corresponding server. This file is generated in the current directory where the script is run and is used as a reference for comparison when analyzing RTT anomalies
 
-Currently, the ntp_rtt_stats.txt file included in the repository contains RTT statistics from Italy to various NTP servers. If you're in a different country, it's recommended to re-run the generator.py script from your location to regenerate the file with more accurate local values
+**Currently**, the *ntp_rtt_stats.txt* file included in the repository **contains RTT statistics from Italy to various NTP servers**. If you're in a different country, it's recommended to re-run the `generator.py` script from your location to regenerate the file with more accurate local values
 
 ### 5️⃣ rtt_check.lua
 
-The rtt_check.lua script integrates with Wireshark and displays a dropdown menu containing the average RTT from your current location to various countries and continents. These values are taken from the pre-generated ntp_rtt_stats.txt file.
+The rtt_check.lua script integrates with Wireshark and displays a **dropdown menu** containing the **average RTT** from your current location to various countries and continents. These values are taken from the pre-generated `ntp_rtt_stats.txt` file.
 
 <p align="center"><img src="img/img1.png" /></p>
 <p align="center"><img src="img/img2.png" /></p>
 
 The script adds a custom field to each packet in Wireshark named RTT Anomaly, which includes the following details:
 
-- The measured country (based on the IP geolocation)
-- The measured RTT
-- The expected country (estimated based on RTT analysis)
-- The expected RTT for the measured country
+- The **measured country** ( *based on the IP geolocation* )
+- The **measured RTT**
+- The **expected country** ( *estimated based on RTT analysis* )
+- The **expected RTT** for the measured country
 
-If an anomaly is detected (i.e., the measured RTT significantly differs from the expected value), the script flags the packet with a protocol error, which Wireshark highlights in red.
+If an anomaly is detected ( *i.e., the measured RTT significantly differs from the expected value* ), the script flags the packet with a **protocol error**, which Wireshark highlights in red
 
 <p align="center"><img src="img/img3.png" /></p>
 
@@ -161,7 +161,9 @@ Report PDF o HTML con classificazione degli IP sospetti
 
 Integrazione con GeoIP (MaxMind) per visualizzare mappe
 
-📄 Licenza
+---
+
+# 📄 License
 Progetto accademico realizzato per fini didattici e di ricerca sulla sicurezza informatica.
 Autore: Nicolò Fontanarosa
 Università: Università di Pisa

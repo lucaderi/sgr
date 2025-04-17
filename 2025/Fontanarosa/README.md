@@ -4,7 +4,7 @@
 
 RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a <mark>***Wireshark plugin***</mark> written in Lua that **analyzes the Round-Trip Time** ( RTT ) of TCP and ICMP packets and **compares** it with an **expected average value for the country associated with the IP address**, **using** a **MaxMind geolocation database**. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
-![Static Badge](https://img.shields.io/badge/python-%20%3E%203.13-green?style=flat&labelColor=red&color=greed)
+![Static Badge](https://img.shields.io/badge/python-%20%3E%203.12-green?style=flat&labelColor=red&color=greed)
 <a href="https://www.wireshark.org/"><img src="https://img.shields.io/badge/Wireshark-%20%3E%203.6-%234285F4?labelColor=blue)"></a>
 ![Static Badge](https://img.shields.io/badge/license-MIT-blue)
 <a href="https://www.maxmind.com/en/geoip-databases"><img src="[https://img.shields.io/github/v/release/xnbox/DeepfakeHTTP?style=flat-square&color=28A745](https://img.shields.io/badge/MaxMind-Database-%237DCDA3?labelColor=%23FFA200)"></a>
@@ -46,11 +46,11 @@ Copy your Lua script ( *rtt_check.lua* ) into Wireshark's plugin directory. If y
 4. Click the link next to `Personal Plugins`
 5. Move the `rtt_check.lua` script into this folder
 
-### 3️⃣ Restart Wireshark to load the plugin
-
-### 4️⃣ Add the RTT Statistics File
+### 3️⃣ Add the RTT Statistics File
 
 Move the `ntp_rtt_stats.txt` file into the **main Wireshark directory** ( *same path where the main Wireshark executable is installed or where your plugin folder is located* )
+
+### 4️⃣ Restart Wireshark to load the plugin
 
 ### 5️⃣ Now you're ready to start analyzing RTT anomalies and detecting geo-location inconsistencies!
 
@@ -131,7 +131,7 @@ If an anomaly is detected ( *i.e., the measured RTT significantly differs from t
 
 # 📌 Requirements
 
-To run the `generator.py` script, you need to have **Python** installed on your system ( *Tested on Python version >= 3.13 * )
+To run the `generator.py` script, you need to have **Python** installed on your system ( *Tested on Python version >= 3.12* )
 The script uses the following standard libraries, which are included in the Python Standard Library
 
 - ✅ No external dependencies are required

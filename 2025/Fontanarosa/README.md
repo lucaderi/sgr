@@ -118,10 +118,10 @@ The rtt_check.lua script integrates with Wireshark and displays a **dropdown men
 
 The script adds a custom field to each packet in Wireshark named RTT Anomaly, which includes the following details:
 
-- The **measured country** ( *based on the IP geolocation* )
-- The **measured RTT**
-- The **expected country** ( *estimated based on RTT analysis* )
-- The **expected RTT** for the measured country
+- The **measured country** ( *based on the IP geolocation* ): **Detected country**
+- The **measured RTT**:                                       **Mesured RTT**
+- The **expected country** ( *estimated based on RTT* ):      **Estimated country**
+- The **expected RTT** for the measured country:              **Expected RTT**
 
 If an anomaly is detected ( *i.e., the measured RTT significantly differs from the expected value* ), the script flags the packet with a **protocol error**, which Wireshark highlights in red
 

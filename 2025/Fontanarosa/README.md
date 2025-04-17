@@ -50,16 +50,56 @@ Move the `ntp_rtt_stats.txt` file into the **main Wireshark directory** ( *same 
 
 ---
 
+## ⚙️ How it works?
 
-## ⚙️ Funzionamento
+### 1️⃣ country.json
 
-### 1. Raccolta RTT - `generator.py`
-Questo script invia richieste NTP a server pubblici in diversi paesi, calcola:
-- RTT medio (`mean`)
-- Deviazione standard (`std`)
-  
-Il risultato è salvato in `ntp_rtt_stats.txt` nel seguente formato:
-IT: 38.42 4.91 US: 105.89 12.32 JP: 278.56 18.97 ...
+The `generator.py` file performs pings to servers from the [NTP Pool Project](website: https://www.ntppool.org/en/) ranging from server 0 to server 3. These servers are listed in the `country.json` file, where each country is associated with a corresponding NTP server domain. For example, the entry `"US": "us"` refers to the NTP `server 0.us.pool.ntp.org`, and `"MX": "mx"` refers to the server `0.mx.pool.ntp.org`
+
+You can modify the `country.json` file based on your preferences to include other countries or specific NTP servers
+
+### 2️⃣ parameters.json
+
+The parameters.json file contains configuration parameters for executing the pings:
+
+PING_COUNT: Defines how many pings will be sent to each host
+
+PING_TIMEOUT: Specifies the maximum wait time in seconds for each ping before considering it failed
+
+PING_INTERVAL: Determines how quickly the pings are sent after receiving a result
+
+OUTLIER_FACTOR: Used to exclude RTT values that are too far from the average, adjusting the tolerance for anomalous values ( *Recommended value between 1.1 and 1.5* )
+
+### 3️⃣ generator.py
+
+The generator.py script includes regular expressions to handle the output of the ping command across different operating systems:
+
+Linux Regex:
+
+rtt_regex_linux = re.compile(r'time=([\d.]+)', re.IGNORECASE)
+This regex captures the RTT values in decimal numbers from the output of the ping command on Linux, where the format typically looks like time=xx.xx ms
+
+Windows Regex:
+
+rtt_regex_windows = re.compile(r'durata[=<]([\d]+)', re.IGNORECASE)
+This regex captures the RTT in Windows, where the output may show durata = xx ms or durata < xx ms depending on the system configuration
+
+macOS Regex:
+
+rtt_regex_mac = re.compile(r'=\s*[\d.]+/([\d.]+)', re.IGNORECASE)
+This regex captures the average RTT value from the output format typically seen on macOS, such as ... = nn.nn/xx.xx/...
+
+These regular expressions are used to extract RTT values from the ping output. If your system is in a language other than English or Italian, you may need to adjust them accordingly
+
+### 4️⃣ ntp_rtt_stats.txt
+
+The output of the generator.py script is a text file named ntp_rtt_stats.txt, which contains Round-Trip Time (RTT) statistics for the NTP servers. The file includes data for each country and the corresponding server. This file is generated in the current directory where the script is run and is used as a reference for comparison when analyzing RTT anomalies
+
+Currently, the ntp_rtt_stats.txt file included in the repository contains RTT statistics from Italy to various NTP servers. If you're in a different country, it's recommended to re-run the generator.py script from your location to regenerate the file with more accurate local values
+
+---
+
+
 
 ### 2. Analisi RTT - `rtt_check.lua`
 Lo script Lua si integra in Wireshark come plugin:

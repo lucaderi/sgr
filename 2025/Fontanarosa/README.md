@@ -5,7 +5,10 @@
 RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a <mark>***Wireshark plugin***</mark> written in Lua that **analyzes the Round-Trip Time** ( RTT ) of TCP and ICMP packets and **compares** it with an **expected average value for the country associated with the IP address**, **using** a **MaxMind geolocation database**. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
 ![Static Badge](https://img.shields.io/badge/python-%20%3E%203.13-green?style=flat&labelColor=red&color=greed)
-![Static Badge](https://img.shields.io/badge/Wireshark-%20%3C%203.6-blue)
+<a href="https://www.wireshark.org/"><img src="https://img.shields.io/badge/Wireshark-%20%3E%203.6-%234285F4?labelColor=blue)"></a>
+![Static Badge](https://img.shields.io/badge/license-MIT-blue)
+<a href="https://www.maxmind.com/en/geoip-databases"><img src="[https://img.shields.io/github/v/release/xnbox/DeepfakeHTTP?style=flat-square&color=28A745](https://img.shields.io/badge/MaxMind-Database-%237DCDA3?labelColor=%23FFA200)"></a>
+<a href="https://github.com/Nicofontanarosa"><img src="https://img.shields.io/badge/powered_by-Nicofontanarosa-blueviolet"></a>
 
 ---
 

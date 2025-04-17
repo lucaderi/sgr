@@ -1,8 +1,8 @@
 # RTT Geo-Location Anomaly Detector
 
-What is RTT Geo-Location Anomaly Detector ?
+### What is RTT Geo-Location Anomaly Detector ?
 
-RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a <mark>***Wireshark plugin***</mark> written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP and ICMP packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
+RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a <mark>***Wireshark plugin***</mark> written in Lua that **analyzes the Round-Trip Time** ( RTT ) of TCP and ICMP packets and **compares** it with an **expected average value for the country associated with the IP address**, **using** a **MaxMind geolocation database**. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
 ---
 

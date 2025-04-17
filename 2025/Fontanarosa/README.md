@@ -164,12 +164,13 @@ Integrazione con GeoIP (MaxMind) per visualizzare mappe
 ---
 
 # 📄 License
-Progetto accademico realizzato per fini didattici e di ricerca sulla sicurezza informatica.
-Autore: Nicolò Fontanarosa
-Università: Università di Pisa
-Anno: 2025
 
----
+This project is distributed under the terms of the MIT License. A complete copy of the license is available in the [LICENSE](LICENSE) file within this repository. Any contribution made to this project will be licensed under the same MIT License
+
+Academic project developed for educational and research purposes in the field of cybersecurity
+Author: Nicolò Fontanarosa
+University: University of Pisa
+Year: 2025
 
 ## 🙌 DISCLAIMER
 

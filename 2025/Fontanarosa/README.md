@@ -2,7 +2,7 @@
 
 What is RTT Geo-Location Anomaly Detector ?
 
-RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a Wireshark plugin written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP and TLS packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
+RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a Wireshark plugin written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP, TLS and ICMP packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
 ---
 
@@ -62,32 +62,35 @@ You can modify the `country.json` file based on your preferences to include othe
 
 The parameters.json file contains configuration parameters for executing the pings:
 
-PING_COUNT: Defines how many pings will be sent to each host
+**PING_COUNT**: Defines how many pings will be sent to each host
 
-PING_TIMEOUT: Specifies the maximum wait time in seconds for each ping before considering it failed
+**PING_TIMEOUT**: Specifies the maximum wait time in seconds for each ping before considering it failed
 
-PING_INTERVAL: Determines how quickly the pings are sent after receiving a result
+**PING_INTERVAL**: Determines how quickly the pings are sent after receiving a result
 
-OUTLIER_FACTOR: Used to exclude RTT values that are too far from the average, adjusting the tolerance for anomalous values ( *Recommended value between 1.1 and 1.5* )
+**OUTLIER_FACTOR**: Used to exclude RTT values that are too far from the average, adjusting the tolerance for anomalous values ( *Recommended value between 1.1 and 1.5* )
 
 ### 3️⃣ generator.py
 
 The generator.py script includes regular expressions to handle the output of the ping command across different operating systems:
 
 Linux Regex:
-
+```
 rtt_regex_linux = re.compile(r'time=([\d.]+)', re.IGNORECASE)
-This regex captures the RTT values in decimal numbers from the output of the ping command on Linux, where the format typically looks like time=xx.xx ms
+```
+This regex captures the RTT values in decimal numbers from the output of the ping command on Linux, where the format typically looks like `time=xx.xx ms`
 
 Windows Regex:
-
+```
 rtt_regex_windows = re.compile(r'durata[=<]([\d]+)', re.IGNORECASE)
-This regex captures the RTT in Windows, where the output may show durata = xx ms or durata < xx ms depending on the system configuration
+```
+This regex captures the RTT in Windows, where the output may show `durata = xx ms` or `durata < xx ms` depending on the system configuration
 
 macOS Regex:
-
+```
 rtt_regex_mac = re.compile(r'=\s*[\d.]+/([\d.]+)', re.IGNORECASE)
-This regex captures the average RTT value from the output format typically seen on macOS, such as ... = nn.nn/xx.xx/...
+```
+This regex captures the average RTT value from the output format typically seen on macOS, such as `... = nn.nn/xx.xx/...`
 
 These regular expressions are used to extract RTT values from the ping output. If your system is in a language other than English or Italian, you may need to adjust them accordingly
 
@@ -97,19 +100,23 @@ The output of the generator.py script is a text file named ntp_rtt_stats.txt, wh
 
 Currently, the ntp_rtt_stats.txt file included in the repository contains RTT statistics from Italy to various NTP servers. If you're in a different country, it's recommended to re-run the generator.py script from your location to regenerate the file with more accurate local values
 
----
+### 5️⃣ rtt_check.lua
 
+The rtt_check.lua script integrates with Wireshark and displays a dropdown menu containing the average RTT from your current location to various countries and continents. These values are taken from the pre-generated ntp_rtt_stats.txt file.
 
+<p align="center"><img src="img/img1.png" /></p>
+<p align="center"><img src="img/img2.png" /></p>
 
-### 2. Analisi RTT - `rtt_check.lua`
-Lo script Lua si integra in Wireshark come plugin:
-- Analizza pacchetti TCP SYN o pacchetti ICMP Echo (ping)
-- Calcola l’RTT osservato
-- Confronta con i dati medi dal file `ntp_rtt_stats.txt`
-- Se l’RTT osservato è significativamente diverso (>2×std), viene segnalato come **anomalia**
+The script adds a custom field to each packet in Wireshark named RTT Anomaly, which includes the following details:
 
-Ogni anomalia è visualizzata nella finestra di Wireshark, all’interno del tree del pacchetto, come:
-[RTT Geo Check] RTT observed: 40 ms, Expected: 130 ± 20 ms → Possibile VPN / CDN
+- The measured country (based on the IP geolocation)
+- The measured RTT
+- The expected country (estimated based on RTT analysis)
+- The expected RTT for the measured country
+
+If an anomaly is detected (i.e., the measured RTT significantly differs from the expected value), the script flags the packet with a protocol error, which Wireshark highlights in red.
+
+<p align="center"><img src="img/img3.png" /></p>
 
 ---
 

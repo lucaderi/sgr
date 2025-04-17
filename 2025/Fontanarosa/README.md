@@ -2,7 +2,7 @@
 
 What is RTT Geo-Location Anomaly Detector ?
 
-RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a Wireshark plugin written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP and ICMP packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
+RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a <mark>***Wireshark plugin***</mark> written in Lua that analyzes the Round-Trip Time ( RTT ) of TCP and ICMP packets and compares it with an expected average value for the country associated with the IP address, using a MaxMind geolocation database. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
 ---
 
@@ -120,46 +120,13 @@ If an anomaly is detected ( *i.e., the measured RTT significantly differs from t
 
 ---
 
-## 🧪 Esempio di utilizzo
+# 📌 Requirements
 
-1. Lancia lo script Python:
-   ```bash
-   python3 generator.py
-Verrà generato ntp_rtt_stats.txt aggiornato.
+To run the `generator.py` script, you need to have **Python** installed on your system ( *version 3.6 or higher is recommended* )
+The script uses the following standard libraries, which are included in the Python Standard Library
 
-Apri Wireshark con il plugin rtt_check.lua installato.
-
-Analizza un file .pcap con traffico TCP o ICMP.
-Il plugin evidenzierà pacchetti sospetti nella colonna "Info" o nel tree del pacchetto.
-
-📌 Requisiti
-Wireshark v3.4 o superiore con supporto a Lua
-
-Python 3.x
-
-Connessione Internet (per generare RTT reali)
-
-Python Dependencies:
-ntplib
-
-json
-
-concurrent.futures
-
-Installa con:
-
-bash
-Copia
-Modifica
-pip install ntplib
-🔎 Idee future e miglioramenti
-Aggiunta del fingerprinting QUIC (versioni, user agent, parametri di handshake)
-
-Esportazione automatica dei pacchetti anomali
-
-Report PDF o HTML con classificazione degli IP sospetti
-
-Integrazione con GeoIP (MaxMind) per visualizzare mappe
+- ✅ No external dependencies are required
+- **This plugin requires Wireshark version 3.6 or later**
 
 ---
 

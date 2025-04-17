@@ -4,6 +4,9 @@
 
 RTT Geo-Location Anomaly Detector ( ***RTT GAD*** ) is a <mark>***Wireshark plugin***</mark> written in Lua that **analyzes the Round-Trip Time** ( RTT ) of TCP and ICMP packets and **compares** it with an **expected average value for the country associated with the IP address**, **using** a **MaxMind geolocation database**. The goal is to determine whether the host is actually located in the region corresponding to its registered IP address ( *or if it is masking its true location using technologies such as VPNs, Tor, intermediate caches/CDNs, etc...* )
 
+![Static Badge](https://img.shields.io/badge/python-%20%3E%203.13-green?style=flat&labelColor=red&color=greed)
+![Static Badge](https://img.shields.io/badge/Wireshark-%20%3C%203.6-blue)
+
 ---
 
 # 🤸 Quickstart
@@ -122,7 +125,7 @@ If an anomaly is detected ( *i.e., the measured RTT significantly differs from t
 
 # 📌 Requirements
 
-To run the `generator.py` script, you need to have **Python** installed on your system ( *version 3.6 or higher is recommended* )
+To run the `generator.py` script, you need to have **Python** installed on your system ( *Tested on Python version >= 3.13 * )
 The script uses the following standard libraries, which are included in the Python Standard Library
 
 - ✅ No external dependencies are required
@@ -142,4 +145,6 @@ Year: 2025
 ## 🙌 DISCLAIMER
 
 While I do my best to detect location anomalies, I cannot guarantee that this software is error-free or 100% accurate. Please ensure that you respect users' privacy and have proper authorization to monitor, capture, and inspect network traffic
+
+![GitHub followers](https://img.shields.io/github/followers/Nicofontanarosa?style=social)
 

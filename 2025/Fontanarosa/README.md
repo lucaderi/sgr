@@ -143,10 +143,11 @@ The script uses the following standard libraries, which are included in the Pyth
 
 This project is distributed under the terms of the MIT License. A complete copy of the license is available in the [LICENSE](LICENSE) file within this repository. Any contribution made to this project will be licensed under the same MIT License
 
-Academic project developed for educational and research purposes in the field of cybersecurity
-Author: Nicolò Fontanarosa
-University: University of Pisa
-Year: 2025
+- Academic project developed for educational and research purposes in the field of cybersecurity
+- Author: Nicolò Fontanarosa
+- Email: nickcompanyofficial@gmail.com
+- University: University of Pisa
+- Year: 2025
 
 ## 🙌 DISCLAIMER
 

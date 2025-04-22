@@ -3,31 +3,94 @@
 
 --##################################################
 
--- Mappatura dei continenti , esclusa l'antartica, in base a latitudine e longitudine ( approssimativa ) 
-local continent_bounds = {
+-- Mappatura dei continenti in base a latitudine e longitudine ( approssimativa ) 
+local continents = {
 
-    ["Africa"] = {lat_min = -35, lat_max = 35, lon_min = -20, lon_max = 52},
-    ["Europe"] = {lat_min = 35, lat_max = 70, lon_min = -25, lon_max = 52},
-    ["Asia"] = {lat_min = -8, lat_max = 76, lon_min = 52, lon_max = 180},
-    ["Oceania"] = {lat_min = -55, lat_max = -8, lon_min = 110, lon_max = 180},
-    ["North-America"] = {lat_min = 13, lat_max = 70, lon_min = -170, lon_max = -50},
-    ["South-America"] = {lat_min = -56, lat_max = 13, lon_min = -80, lon_max = -30}
-
+    ["Oceania"] = {
+        {-11.88, 110}, {33.13, 140}, {-5, 165}, {-5, 180},
+        {-52.5, 180}, {-52.5, 142.5}, {-31.88, 110}
+    },
+    ["Antarctica"] = {
+        {-60, -180}, {-60, 180}, {-90, 180}, {-90, -180}
+    },
+    ["Africa"] = {
+        {15, -30}, {28.25, -13}, {35.42, -10}, {38, 10},
+        {33, 27.5}, {31.74, 34.58}, {29.54, 34.92},
+        {27.78, 34.46}, {11.3, 44.3}, {12.5, 52},
+        {-60, 75}, {-60, -30}
+    },
+    ["Europe"] = {
+        {90, -10}, {90, 77.5}, {42.5, 48.8}, {42.5, 30},
+        {40.79, 28.81}, {41, 29}, {40.55, 27.31}, {40.4, 26.75},
+        {40.05, 26.36}, {39.17, 25.19}, {35.46, 27.91}, {33, 27.5},
+        {38, 10}, {35.42, -10}, {28.25, -13}, {15, -30},
+        {57.5, -37.5}, {78.13, -10}
+    },
+    ["North-America"] = {
+        {90, -168.75}, {90, -10}, {78.13, -10}, {57.5, -37.5},
+        {15, -30}, {15, -75}, {1.25, -82.5}, {1.25, -105},
+        {51, -180}, {60, -180}, {60, -168.75}
+    },
+    ["South-America"] = {
+        {1.25, -105}, {1.25, -82.5}, {15, -75}, {15, -30},
+        {-60, -30}, {-60, -105}
+    },
+    ["Asia"] = {
+        {90, 77.5}, {42.5, 48.8}, {42.5, 30}, {40.79, 28.81},
+        {41, 29}, {40.55, 27.31}, {40.4, 26.75}, {40.05, 26.36},
+        {39.17, 25.19}, {35.46, 27.91}, {33, 27.5}, {31.74, 34.58},
+        {29.54, 34.92}, {27.78, 34.46}, {11.3, 44.3}, {12.5, 52},
+        {-60, 75}, {-60, 110}, {-31.88, 110}, {-11.88, 110},
+        {33.13, 140}, {51, 166.6}, {60, 180},
+        {90, 180}
+    }
 }
 
--- Funzione per determinare il continente in base alla latitudine e longitudine
-local function get_continent(lat, lon)
+-- Funzione che verifica se un punto (lat, lon) è dentro un poligono definito dai suoi vertici -> Algoritmo di Ray-Casting
+-- L'idea di base è quella di tracciare una linea orizzontale ( parallela all'asse delle X ) dal punto in questione
+-- e contare quante volte questa linea interseca i lati del poligono. Se il numero di intersezioni è dispari, il punto è all'interno del poligono; se è pari, è all'esterno
+function is_point_in_polygon(point, polygon)
 
-    for continent, bounds in pairs(continent_bounds) do
-        
-        if lat > bounds.lat_min and lat <= bounds.lat_max and lon >= bounds.lon_min and lon < bounds.lon_max then
-            return continent
+    local x, y = point[1], point[2]  -- Estrae latitudine (x) e longitudine (y) dal punto
+    local n = #polygon               -- Numero di vertici del poligono
+    local inside = false             -- Variabile che terrà traccia se il punto è dentro il poligono o no
+
+    -- Itera su ogni lato del poligono
+    for i = 1, n do
+
+        local x1, y1 = polygon[i][1], polygon[i][2]                      -- Vertice iniziale del lato
+        local x2, y2 = polygon[(i % n) + 1][1], polygon[(i % n) + 1][2]  -- Vertice finale del lato che alla fine sarà l'ultimo lato del poligono
+
+        -- Controlla se il punto si trova tra i due vertici in latitudine (y)
+        if (y1 > y) ~= (y2 > y) then
+            -- Calcola la longitudine del punto di intersezione tra il lato e la linea orizzontale che passa per `y`
+            local x_intersection = (y - y1) * (x2 - x1) / (y2 - y1) + x1
+
+            -- Se il punto si trova alla sinistra della linea di intersezione (x < x_intersection),
+            -- invertiamo il valore di `inside` ( true / false ) per determinare se il punto è dentro il poligono
+            if x < x_intersection then
+                inside = not inside
+            end
         end
-
     end
 
-    return "Unknown"  -- Se non rientra in nessuna delle aree definite
+    -- Restituisce true se il punto è dentro il poligono, false altrimenti
+    return inside
+end
 
+-- Funzione che restituisce il nome del continente in cui si trova il punto
+function get_continent(point, continents)
+    -- Itera su ogni continente e il relativo poligono
+    for continent, polygon in pairs(continents) do
+        -- Se il punto è dentro il poligono del continente
+        if is_point_in_polygon(point, polygon) then
+            -- print(continent)
+            -- print("\n\n")
+            return continent  -- Restituisce il nome del continente
+        end
+    end
+
+    return "Unknown"  -- Se nessun poligono contiene il punto, restituisce "Unknown"
 end
 
 --##################################################
@@ -79,6 +142,9 @@ local function estimate_response_country(rtt)
     for country, stats in pairs(rtt_reference) do
 
         local diff = math.abs(rtt - stats.mean)
+
+        --print("country, mean, diff: ",country, stats.mean, diff)
+
         if diff < min_difference then
             min_difference = diff
             best_match = country
@@ -144,29 +210,31 @@ function rtt_checker.dissector(buffer, pinfo, tree)
             local threshold_lower = math.huge
             local continent = "Unknown"
             local estimated_country = estimate_response_country(rtt_value) 
+            local used_country
 
-            if rtt_reference[country] then
+            -- Se il paese non è presente, useremo il continente
+            if not rtt_reference[country] then
 
-                mean = rtt_reference[country].mean
-                stddev = rtt_reference[country].stddev
-                
+                local point = {lat, lon}
+                continent = get_continent(point, continents)
+
+            end
+
+            if rtt_reference[country] then used_country = country else used_country = continent end
+
+            if rtt_reference[used_country] then
+
+                mean = rtt_reference[used_country].mean
+                stddev = rtt_reference[used_country].stddev
+
                 -- I valori soglia sono 2 volte la deviazione standard
                 threshold_upper = mean + (2 * stddev)  -- Soglia superiore
                 threshold_lower = mean - (2 * stddev)  -- Soglia inferiore
 
-            else continent = get_continent(lat, lon) end
-
-            if rtt_reference[continent] then
-
-                mean = rtt_reference[continent].mean
-                stddev = rtt_reference[continent].stddev
-                threshold_upper = mean + (2 * stddev)
-                threshold_lower = mean - (2 * stddev)
-
             end
 
             -- Se non ho nè country nè continente => visualizza Unknown
-            if (rtt_value > threshold_upper or rtt_value < threshold_lower) and estimated_country ~= country then
+            if (rtt_value > threshold_upper or rtt_value < threshold_lower) and estimated_country ~= used_country then
  
                 local subtree = tree:add(rtt_checker, "RTT Anomaly"):set_generated()
                 subtree:add("Detected country: ", country):set_generated()

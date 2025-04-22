@@ -48,7 +48,7 @@ Copy your Lua script ( *rtt_check.lua* ) into Wireshark's plugin directory. If y
 
 ### 3️⃣ Add the RTT Statistics File
 
-Move the `ntp_rtt_stats.txt` file into the **main Wireshark directory** ( *same path where the main Wireshark executable is installed or where your plugin folder is located* ) which typically corresponds to:
+Move the `ntp_rtt_stats.txt` file into the **main Wireshark directory** ( *same path where the main Wireshark executable is installed* ) which typically corresponds to:
 
 - **Windows**:
  `C:\Program Files\Wireshark\`

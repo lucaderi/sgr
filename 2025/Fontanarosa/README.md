@@ -144,7 +144,7 @@ To run the `generator.py` script, you need to have **Python** installed on your 
 The script uses the following standard libraries, which are included in the Python Standard Library
 
 - ✅ No external dependencies are required
-- **This plugin requires Wireshark version 3.6 or later**
+- **This plugin requires Wireshark version 4.4 or later**
 
 ---
 

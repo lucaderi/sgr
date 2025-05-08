@@ -1,0 +1,65 @@
+\chapter{Introduzione}
+
+\section{Traccia del Progetto}
+
+\textbf{Wireshark Plugin Analisi dell'RTT per la Verifica della Localizzazione IP}
+\newline\newline
+Sviluppare un plugin per Wireshark in \texttt{Lua} che analizzi il Round-Trip Time (RTT) dei pacchetti di handshake (es. \textit{TCP SYN-ACK}, \textit{TLS ClientHello}) e lo confronti con un valore medio atteso per il paese associato all'IP tramite un database di geolocalizzazione (es. \textit{MaxMind}).
+L'obiettivo è verificare se l'host che risponde si trova effettivamente nella regione in cui il suo indirizzo IP è stato registrato
+
+\section{Descrizione}
+
+L'architettura del progetto prevede due componenti principali:
+
+\begin{enumerate}
+
+  \item Un file \texttt{generator.py} scritto in Python, che effettua ping verso vari server NTP appartenenti all'\textit{NTP Pool Project} per ottenere RTT medi dal paese da cui viene eseguito lo script verso i vari paesi dei server NTP.
+  \item Uno script \texttt{rtt\_check.lua} per Wireshark che utilizza i valori calcolati per identificare eventuali anomalie nell' RTT misurato rispetto a quanto atteso dalla localizzazione dell'indirizzo IP fatto con Maxmind DB.
+  
+\end{enumerate}
+
+\section{Background Teorico}
+
+\subsection{Dissector, Post-Dissecotr e Tap}
+
+In Wireshark, utilizzando il linguaggio Lua, esistono tre meccanismi principali per ispezionare ed elaborare i pacchetti:
+
+\begin{itemize}
+  \item \textbf{Dissector}: utilizzato quando si vuole modificare il modo in cui Wireshark mostra il pacchetto, analizzando il \textit{payload} grezzo di un protocollo.
+  \begin{itemize}
+    \item Viene chiamato durante la fase di dissezione, ovvero appena Wireshark identifica il protocollo.
+  \end{itemize}
+
+  \item \textbf{Post-dissector}: usato quando si vogliono analizzare i pacchetti dopo che tutti i dissector standard hanno terminato la loro analisi, per aggiungere informazioni extra o confrontare dati tra più protocolli.
+  \begin{itemize}
+    \item Non analizza direttamente il \textit{payload}, ma legge i campi già estratti da altri dissector.
+  \end{itemize}
+
+  \item \textbf{Tap}: utile per raccogliere statistiche, dati temporali o esportare flussi di pacchetti.
+\end{itemize}
+
+\subsection{RTT ( Round-Trip Time )}
+
+L'RTT (Round-Trip Time) è il tempo che un pacchetto impiega per viaggiare dalla sorgente alla destinazione e poi ritornare alla sorgente. È una misura comune utilizzata per valutare la latenza di una rete e può essere influenzato da vari fattori, come la distanza fisica tra i nodi, la congestione della rete, e la qualità della connessione.
+
+\subsection{Outlier}
+
+Un \textit{outlier} è un dato che si discosta significativamente dal resto dei dati in un insieme. In un contesto di RTT, un outlier rappresenta un valore di latenza che è notevolmente più alto o più basso rispetto alla maggior parte degli altri valori raccolti. Gli outlier possono essere causati da vari fattori, come errori di rete, congestione o malfunzionamenti di qualche nodo della rete. È importante identificare e trattare questi valori, in quanto possono influire negativamente sulle analisi statistiche, portando a conclusioni errate.
+
+\subsection{Media}
+
+La \textit{media} è una misura di tendenza centrale che rappresenta il valore medio di un insieme di dati. Nel caso dell'RTT, la media rappresenta il tempo medio che un pacchetto impiega per viaggiare dalla sorgente alla destinazione e ritorno.
+
+\subsection{Deviazione Standard}
+
+La \textit{deviazione standard} è una misura che indica quanto i valori di un insieme di dati si discostano dalla media. Una bassa deviazione standard indica che i valori sono vicini alla media, mentre una deviazione standard elevata implica che i valori sono sparsi su un ampio intervallo. Nel caso dell'RTT, una deviazione standard bassa indica che la latenza è consistente e stabile, mentre una deviazione standard alta potrebbe suggerire variabilità nella connessione o la presenza di problemi di rete.
+
+\subsection{Z-Score}
+
+Lo \textit{z-score}, noto anche come \textit{punteggio standardizzato}, è una misura statistica che indica di quante deviazioni standard un dato valore si discosta dalla media di un set di dati. È definito come:
+
+\[
+z = \frac{x - \mu}{\sigma}
+\]
+
+dove \( x \) è il valore osservato, \( \mu \) è la media del campione e \( \sigma \) è la deviazione standard del campione. Il \textit{z-score} è utile per identificare valori anomali in una distribuzione normale, poiché valori di \( z \) che si discostano significativamente dalla media (ad esempio, \( |z| > 2 \)) possono essere considerati fuori dal normale intervallo di variabilità. Questo è particolarmente utile nell'analisi dei dati per rilevare outliers.

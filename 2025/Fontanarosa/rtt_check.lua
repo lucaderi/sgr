@@ -125,8 +125,9 @@ function create_rtt_reference(file_path)
 
 end
 
--- Default è il percorso di Wireshark
-local file_path = "ntp_rtt_stats.txt"
+-- Determina il separatore di directory in base al sistema operativo
+local separator = package.config:sub(1,1)  -- '/' su Unix-like, '\' su Windows
+local file_path = Dir.global_config_path() .. separator .. "ntp_rtt_stats.txt"
 local rtt_reference = create_rtt_reference(file_path)
 
 --for country_code, data in pairs(rtt_reference) do

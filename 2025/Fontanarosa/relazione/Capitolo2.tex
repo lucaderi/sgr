@@ -97,7 +97,7 @@ Per iniziare con RTT GAD, segui questi passaggi:
   Sposta lo script \texttt{rtt\_check.lua} nella directory dei plugin di Wireshark. Wireshark carica automaticamente i plugin Lua posizionati in queste directory a seconda del tuo sistema operativo:
   
   \begin{itemize}
-    \item \textbf{Windows:} C:\textbackslash Program Files\textbackslash Wireshark\textbackslash plugins\textbackslash <version>\textbackslash
+    \item \textbf{Windows:} C:\textbackslash Program Files\textbackslash Wireshark\textbackslash plugins\textbackslash 
     \item \textbf{macOS:} ~/.local/lib/wireshark/plugins
     \item \textbf{Linux:} /usr/lib/wireshark/plugins/<version>/
   \end{itemize}
@@ -112,12 +112,10 @@ Per iniziare con RTT GAD, segui questi passaggi:
   Sposta lo script \texttt{rtt\_check.lua} in questa cartella
   
   \item[\textbf{3}] \textbf{Aggiungi il file di statistiche RTT} \\
-  Sposta il file \texttt{ntp\_rtt\_stats.txt} nella directory principale di Wireshark ( lo stesso percorso in cui è installato l'eseguibile principale di Wireshark ) ovvero:
+  Sposta il file \texttt{ntp\_rtt\_stats.txt} nella directory dei plugin personale di Wireshark come prima. Su windows ls cartella è:
 
   \begin{itemize}
-    \item \textbf{Windows:} C:\textbackslash Program Files\textbackslash Wireshark\textbackslash
-    \item \textbf{macOS:} ~/.local/lib/wireshark/
-    \item \textbf{Linux:} /usr/lib/wireshark/
+    \item \textbf{Windows:} C:\textbackslash Users\textbackslash <username>\textbackslash AppData \textbackslash Roaming \textbackslash Wireshark \textbackslash plugins
   \end{itemize}
 
   \item[\textbf{4}] \textbf{Riavvia Wireshark per caricare il plugin}

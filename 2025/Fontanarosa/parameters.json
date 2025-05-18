@@ -1,0 +1,9 @@
+{
+    "parameters": {
+      "PING_COUNT": 10,
+      "PING_TIMEOUT": 2,
+      "PING_INTERVAL": 0.2,
+      "OUTLIER_FACTOR": 1.1
+    }
+  }
+  

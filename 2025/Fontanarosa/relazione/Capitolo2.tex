@@ -1,0 +1,132 @@
+\chapter{Funzionamento}
+
+\section{Files}
+
+\subsection{rtt\_check.lua}
+
+Lo script \texttt{rtt\_check.lua} analizza il Round-Trip Time (RTT) dei pacchetti \textbf{TCP e ICMP}. Questi pacchetti vengono esaminati estraendone l'RTT e confrontandolo con i valori di RTT attesi in base alla localizzazione geografica dell'indirizzo IP associato al pacchetto tramite database.\\
+\\
+Lo script \texttt{rtt\_check.lua} è stato implementato come un \textbf{Post Dissector}\\
+\\
+Lo script \texttt{rtt\_check.lua} aggiunge una voce personalizzata a ciascun pacchetto contenente:
+
+\begin{itemize}
+  \item Il paese reale dell'IP secondo MaxMind: \texttt{Detected country}
+  \item Il tempo di risposta misurato (RTT reale): \texttt{Measured RTT}
+  \item Il paese stimato in base all'RTT: \texttt{Estimated country}
+  \item L'RTT medio stimato per il paese rilevato: \texttt{Expected RTT}
+\end{itemize}
+\\
+Un valore di RTT osservato (\texttt{RTT\_value}) viene considerato \textbf{anomalo} se non rientra nell'intervallo definito dalla media e dalla deviazione standard dei tempi di risposta noti per un determinato paese.\\
+\\
+Formalmente, un \texttt{RTT\_value} è considerato \textbf{valido} se: 
+
+\begin{equation} 
+\texttt{RTT\_MEAN} - k \cdot \texttt{DEVIAZIONE\_STANDARD} \leq \texttt{RTT\_value} \leq \texttt{RTT\_MEAN} + k \cdot \texttt{DEVIAZIONE\_STANDARD} 
+\end{equation} 
+\\
+Nel nostro sistema, il fattore \( k \) è impostato a 2 ( valore comunemente usato per identificare valori anomali in una distribuzione normale ). In realtà, questo valore \( k \) rappresenta un'applicazione dello \textbf{z-score}. In altre parole, \( k \) può essere visto come il valore dello \textbf{z-score} che definisce la soglia di tolleranza per identificare un valore anomalo. Comunemente stabilita come 2 deviazioni standard ( corrispondente a circa il 95\% dei valori in una distribuzione normale ).\\
+\\
+Pertanto, un RTT è accettabile se si trova \textbf{entro due deviazioni standard dalla media}.\\
+\\ 
+Se il valore \texttt{RTT\_value} non rientra in questo intervallo, viene etichettato come \textbf{potenziale anomalia} e segnalato come errore di protocollo in rosso su Wireshark.
+\\
+Questa segnalazione avviene anche in caso di incongruenza tra il \textbf{paese sorgente misurato e il paese sorgente stimato}.
+
+\subsection{Gestione Paesi Sconosciuti e Calcolo del Continente}
+
+All'interno dello script \texttt{rtt\_check.lua}, viene effettuato un confronto tra il paese rilevato per un determinato pacchetto e i dati salvati in memoria nel file \texttt{ntp\_rtt\_stats.txt}, generato dallo script Python.\\
+\\
+Tuttavia, non tutti i paesi definiti nel database MaxMind sono presenti nel file di riferimento RTT, poiché il file è generato in modo selettivo. Quando ciò accade, lo script opera come segue:
+
+\begin{enumerate}
+  \item Estrae le coordinate geografiche ( latitudine e longitudine ) del paese non presente in memoria.
+  \item Utilizza queste coordinate per determinare il continente di appartenenza.
+  \item Confronta l'RTT del pacchetto osservato con il valore medio stimato per quel continente.
+\end{enumerate}
+\\
+I continenti sono definiti tramite intervalli di latitudine e longitudine che formano dei poligoni complessi. Questi intervalli sono stati verificati attraverso \href{https://www.gps-coordinates.net/}{gps-coordinates.net} e uno script Python di testing, che analizza un set di coordinate geografiche note, rappresentandone i confini:
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{img/continent_test_output.png}
+  \caption{Risultato del test Python per la verifica delle coordinate dei continenti}
+\end{figure}
+
+Se si esegue generetor.py dall'italia, il risultato dovrebbe assomigliare ad una cosa di questo tipo:
+
+\begin{figure}[hp!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{img/Continental_RTT_Avg_Europe.png}
+  \caption{RTT medio tra i paesi europei e l'estero}
+\end{figure}
+\clearpage
+\subsection{country.json}
+
+Il sistema sfrutta il file \texttt{country.json}, contenente le associazioni tra codici paese (es. \texttt{"US"}) e i relativi domini dei server \href{https://www.ntppool.org/it/}{NTP} (es. \texttt{0.us.pool.ntp.org}). Questi domini vengono pingati per stimare il tempo medio di risposta.\\
+
+\subsection{parameters.json}
+
+Il file \texttt{parameters.json} contiene i parametri per eseguire i ping:
+
+\begin{itemize}
+
+  \item \texttt {PING COUNT}: definisce quanti ping verranno eseguiti per ciascun host.
+  \item \texttt {PING TIMEOUT}: è il tempo massimo di attesa per ogni ping prima di considerarlo fallito.
+  \item \texttt {PING INTERVAL}: definisce quanto velocemente i ping vengono inviati dopo aver ottenuto un risultato.
+  \item \texttt {OUTLIER FACTOR}: è usato per escludere i valori RTT che sono troppo lontani dalla media, regolando la tolleranza per i valori anomali.
+  
+\end{itemize}
+
+\subsection{ntp\_rtt\_stats.txt}
+
+Il file di output \texttt{ntp\_rtt\_stats.txt}, generato dal \texttt{generator.py}, contiene le medie degli RTT per ogni paese misurato. Questo viene poi letto dallo script Lua durante l'analisi dei pacchetti.\\
+
+\section{Installazione}
+
+Per iniziare con RTT GAD, segui questi passaggi:
+
+\begin{enumerate}
+  \item[\textbf{1}] \textbf{Installa il database GeoIP2 Country di MaxMind} \\
+  Scarica il database GeoLite2 Country ( gratuito con registrazione ) o un altro database GeoIP2 Country dal sito ufficiale di MaxMind.\\
+
+  Puoi anche seguire questo utile tutorial video di Chris Greer per maggiori informazioni: \\
+  \href{https://www.youtube.com/watch?v=some-video-id}{YouTube – Come scaricare GeoLite2}
+  
+  \item[\textbf{2}] \textbf{Installa il plugin Lua} \\
+  Sposta lo script \texttt{rtt\_check.lua} nella directory dei plugin di Wireshark. Wireshark carica automaticamente i plugin Lua posizionati in queste directory a seconda del tuo sistema operativo:
+  
+  \begin{itemize}
+    \item \textbf{Windows:} C:\textbackslash Program Files\textbackslash Wireshark\textbackslash plugins\textbackslash 
+    \item \textbf{macOS:} ~/.local/lib/wireshark/plugins
+    \item \textbf{Linux:} /usr/lib/wireshark/plugins/<version>/
+  \end{itemize}
+  
+  Copia lo script Lua (\texttt{rtt\_check.lua}) nella directory dei plugin di Wireshark. Se stai usando la directory dei plugin personali, assicurati che esista e crea la cartella plugins se necessario.
+  
+  \textbf{Metodo GUI ( consigliato ):} \\
+  Apri Wireshark \\
+  Clicca su Aiuto → Info su Wireshark \\
+  Vai alla scheda Cartelle \\
+  Clicca sul link accanto a Plugin Personali \\
+  Sposta lo script \texttt{rtt\_check.lua} in questa cartella
+  
+  \item[\textbf{3}] \textbf{Aggiungi il file di statistiche RTT} \\
+  Sposta il file \texttt{ntp\_rtt\_stats.txt} nella directory dei plugin personale di Wireshark come prima. Su windows ls cartella è:
+
+  \begin{itemize}
+    \item \textbf{Windows:} C:\textbackslash Users\textbackslash <username>\textbackslash AppData \textbackslash Roaming \textbackslash Wireshark \textbackslash plugins
+  \end{itemize}
+
+  \item[\textbf{4}] \textbf{Riavvia Wireshark per caricare il plugin}
+  
+  \item[\textbf{5}] \textbf{Ora sei pronto per iniziare ad analizzare le anomalie RTT e rilevare incongruenze nella geolocalizzazione!}
+\end{enumerate}
+
+\section{Requirements}
+
+Per eseguire lo script \texttt{generator.py}, è necessario avere Python installato sul proprio sistema ( \textbf{Testato su Python versione >= 3.12} ). Lo script utilizza le seguenti librerie standard, che sono incluse nella libreria standard di Python.\\
+\begin{itemize}
+    \item[\textbf{1}] Non sono richieste dipendenze esterne. 
+    \item[\textbf{2}] Questo plugin richiede Wireshark versione 3.6 o successiva.
+\end{itemize}

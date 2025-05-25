@@ -1,14 +1,13 @@
 /*
  *
  * Prerequisite
- * sudo apt-get install gcc
  * sudo apt-get install libpcap-dev
  *
  * Compilation
- * gcc pcount -o pcount.c ndpifun.c -lpcap -lm
+ * gcc pcount.c -o pcount ndpifun.c -lpcap -lm
  * 
  * Execution
- * sudo ./pcount -i <file.pcap> -v 1 (-r filename.txt)
+ * sudo ./pcount -i <file.pcap> -v 1 (-r file.txt)
  *
 */
 
@@ -88,7 +87,7 @@ char *report_path = NULL;
 
 // Macro per scrivere l'output del programma su un file di testo
 // lo slash serve per dire che la macro continua alla riga successiva.
-// do-while(0) per trattare le macro multi riga come un'unica istruzione, per evitare di confondere più else
+// do-while per trattare le macro multi riga come un'unica istruzione, per evitare di confondere più else
 #define out(...) do { \
   if(report_file) fprintf(report_file, __VA_ARGS__); \
   else printf(__VA_ARGS__); \
@@ -109,26 +108,6 @@ int compare_keys(FlowKey* a, FlowKey* b){ // Confronto due FlowKey
             memcmp(&a->ipv6.ip_dst, &b->ipv6.ip_dst, sizeof(struct in6_addr)) == 0 &&
             a->port_src == b->port_src &&
             a->port_dst == b->port_dst);
-  }
-}
-
-/* *************************************** */
-
-int match_flow_bidir(FlowKey* a, FlowKey* b){
-  if(a->is_ipv6 != b->is_ipv6) return 0;
-
-  if(!a->is_ipv6){
-    return ((a->ipv4.ip_src == b->ipv4.ip_src && a->ipv4.ip_dst == b->ipv4.ip_dst &&
-            a->port_src == b->port_src && a->port_dst == b->port_dst) ||
-            (a->ipv4.ip_src == b->ipv4.ip_dst && a->ipv4.ip_dst == b->ipv4.ip_src &&
-            a->port_src == b->port_dst && a->port_dst == b->port_src));
-  } else {
-    return ((memcmp(&a->ipv6.ip_src, &b->ipv6.ip_src, sizeof(struct in6_addr)) == 0 &&
-            memcmp(&a->ipv6.ip_dst, &b->ipv6.ip_dst, sizeof(struct in6_addr)) == 0 &&
-            a->port_src == b->port_src && a->port_dst == b->port_dst) ||
-            (memcmp(&a->ipv6.ip_src, &b->ipv6.ip_dst, sizeof(struct in6_addr)) == 0 &&
-            memcmp(&a->ipv6.ip_src, &b->ipv6.ip_dst, sizeof(struct in6_addr)) == 0 &&
-            a->port_src == b->port_dst && a->port_dst == b->port_src));
   }
 }
 
@@ -158,7 +137,7 @@ FlowData* get_or_create_flow(FlowKey* key){
     new_flow->key = *key;
     new_flow->packet_count = 0;
     new_flow->zero_window_count = 0;
-    new_flow->win_stats = ndpi_alloc_data_analysis(128);  // Usa sliding window di 128 valori per un risparmio della memoria
+    new_flow->win_stats = ndpi_alloc_data_analysis(128);  // Usa sliding window di 128 valori
 
     return new_flow;
 }
@@ -474,6 +453,14 @@ void dummyProcesssPacket(u_char *_deviceId,
 
       tcp_hdr = (struct tcphdr *)(p + sizeof(struct ether_header) + ip_header_len); // Header TCP
 
+      if (tcp_hdr->th_flags & TH_RST) {
+        // Scarto pacchetti con flag RST per l'analisi della finestra
+        if (numPkts == 0) gettimeofday(&startTime, NULL);
+        numPkts++, numBytes += h->len;
+        return;
+      }
+
+
       uint16_t window = ntohs(tcp_hdr->th_win); // Network byte order (big endian) to host byte order (little endian)
 
       FlowKey key;
@@ -507,6 +494,14 @@ void dummyProcesssPacket(u_char *_deviceId,
 
     if(ip6_hdr->ip6_nxt == IPPROTO_TCP){
       struct tcphdr *tcp_hdr = (struct tcphdr *)(ip6_hdr + 1); // TCP header che si trova dopo l'header classico IPv6
+
+      if (tcp_hdr->th_flags & TH_RST) {
+        // Scarto pacchetti con flag RST per l'analisi della finestra
+        if (numPkts == 0) gettimeofday(&startTime, NULL);
+        numPkts++, numBytes += h->len;
+        return;
+      }
+
 
       uint16_t window = ntohs(tcp_hdr->th_win); // Estraggo dimensione della finestra
 
@@ -546,109 +541,61 @@ void dummyProcesssPacket(u_char *_deviceId,
 void flow_analysis(){
   out("\n======= ANALISI FLUSSI TCP =======\n");
 
-  int *printed = calloc(flow_count, sizeof(int));
-
   for(int i=0;i<flow_count;i++){
-    if(printed[i]) continue;
-
-    FlowData* fwd = &all_flows[i];
-
-    // Cerco la direzione opposta
-    FlowData *rev = NULL;
-    for(int j=i+1;j<flow_count;j++){
-      if(match_flow_bidir(&fwd->key,&all_flows[j].key)){
-        rev = &all_flows[j];
-        printed[j] = 1;
-        break;
-      }
-    }
-
-    // Imposto il flusso [i] come già stampato
-    printed[i] = 1;
+    FlowData *flow = &all_flows[i];
     
     char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
-    if (fwd->key.is_ipv6) {
-        inet_ntop(AF_INET6, &fwd->key.ipv6.ip_src, src, sizeof(src));
-        inet_ntop(AF_INET6, &fwd->key.ipv6.ip_dst, dst, sizeof(dst));
+    if (flow->key.is_ipv6) {
+        inet_ntop(AF_INET6, &flow->key.ipv6.ip_src, src, sizeof(src));
+        inet_ntop(AF_INET6, &flow->key.ipv6.ip_dst, dst, sizeof(dst));
     } else {
-        inet_ntop(AF_INET, &fwd->key.ipv4.ip_src, src, sizeof(src));
-        inet_ntop(AF_INET, &fwd->key.ipv4.ip_dst, dst, sizeof(dst));
+        inet_ntop(AF_INET, &flow->key.ipv4.ip_src, src, sizeof(src));
+        inet_ntop(AF_INET, &flow->key.ipv4.ip_dst, dst, sizeof(dst));
     }
     out("╔══════════════════════════════════════════════════════════════╗\n");
-    out("║Flusso %s:%d ⇄ %s:%d\n",
-    src, fwd->key.port_src,
-    dst, fwd->key.port_dst);
+    out("║Flusso %s:%d → %s:%d\n",
+    src, flow->key.port_src,
+    dst, flow->key.port_dst);
     out("╚══════════════════════════════════════════════════════════════╝\n");
 
-    // Analisi fwd
-    float avg = ndpi_data_mean(fwd->win_stats);
-    float dev_std = ndpi_data_stddev(fwd->win_stats);
-    u_int64_t min = ndpi_data_min(fwd->win_stats);
-    u_int64_t max = ndpi_data_max(fwd->win_stats);
+    // Analisi flow
+    float avg = ndpi_data_mean(flow->win_stats);
+    if (avg == 0) avg = 1; // Proteggo la divisione per 0 del CV
+    float dev_std = ndpi_data_stddev(flow->win_stats);
+    u_int64_t min = ndpi_data_min(flow->win_stats);
+    u_int64_t max = ndpi_data_max(flow->win_stats);
 
-    out("→ Direzione %s → %s\n", src, dst);
-
-    if(fwd->packet_count < MIN_PACKETS_FOR_ANALYSIS){
+    if(flow->packet_count < MIN_PACKETS_FOR_ANALYSIS){
       out("[!] Troppi pochi pacchetti per un'analisi affidabile [!]\n");
     }
 
-    out("  Pacchetti: %d\n", fwd->packet_count);
+    out("  Pacchetti: %d\n", flow->packet_count);
 
     out("  Finestra [min: %" PRIu64 ", max: %" PRIu64 ", media: %.2f]\n", min, max, avg);
 
-    if(fwd->zero_window_count > 0){
-      out("  ⚠ Anomalia ⚠ : dimensione finestra TCP uguale a zero (%d volte)\n", fwd->zero_window_count);
+    if(flow->zero_window_count > 0){
+      out("  ⚠ Anomalia ⚠ : dimensione finestra TCP uguale a zero (%d volte)\n", flow->zero_window_count);
     }
 
-    // Anomalia se supera 18.000 (valore trovato dalle diverse prove effuttuate catturando flussi) e se la dvstd supera il 70% della media -> "coefficente di variazione" (per evitare falsi allarmi su finestre alte e stabili)
-    if(dev_std > 18000.0 && dev_std > 0.7 * avg && fwd->packet_count > MIN_PACKETS_FOR_ANALYSIS){
-      out("  ⚠ Anomalia ⚠ : Forti oscillazioni della finestra TCP (dev_std=%.2f)\n", dev_std);
-    } else if(dev_std > 10000.0 && dev_std > 0.7 * avg && fwd->packet_count > MIN_PACKETS_FOR_ANALYSIS){
-      out("  Oscillazioni moderate della finestra TCP (dev_std=%.2f)\n", dev_std);
-    }
+    // Calcolo il coefficente di variazione con "soglia" dinamica a seconda dei pacchetti
+    float cv = dev_std / avg;
+    float soglia;
 
-    if(rev){
-      char src2[INET6_ADDRSTRLEN], dst2[INET6_ADDRSTRLEN];
+    if      (flow->packet_count > 10000) soglia = 1.0;
+    else if (flow->packet_count >  5000) soglia = 1.5;
+    else if (flow->packet_count >  1000) soglia = 2.0;
+    else if (flow->packet_count >   500) soglia = 3.0;
+    else if (flow->packet_count >   100) soglia = 5.0;
+    else if (flow->packet_count >    50) soglia = 7.0;
+    else soglia = 10.0;
 
-      if (rev->key.is_ipv6) {
-          inet_ntop(AF_INET6, &rev->key.ipv6.ip_src, src2, sizeof(src2));
-          inet_ntop(AF_INET6, &rev->key.ipv6.ip_dst, dst2, sizeof(dst2));
-      } else {
-          inet_ntop(AF_INET, &rev->key.ipv4.ip_src, src2, sizeof(src2));
-          inet_ntop(AF_INET, &rev->key.ipv4.ip_dst, dst2, sizeof(dst2));
-      }
-
-      // Analisi rev
-      avg = ndpi_data_mean(rev->win_stats);
-      dev_std = ndpi_data_stddev(rev->win_stats);
-      min = ndpi_data_min(rev->win_stats);
-      max = ndpi_data_max(rev->win_stats);
-
-      out("\n→ Direzione %s → %s\n", src2, dst2);
-
-      if(rev->packet_count < MIN_PACKETS_FOR_ANALYSIS){
-        out("[!] Troppi pochi pacchetti per un'analisi affidabile [!]\n");
-      }
-
-      out("  Pacchetti: %d\n", rev->packet_count);
-      out("  Finestra [min: %" PRIu64 ", max: %" PRIu64 ", media: %.2f]\n", min, max, avg);
-
-      if(rev->zero_window_count > 0){
-        out("  ⚠ Anomalia ⚠ : dimensione finestra TCP uguale a zero (%d volte)\n", rev->zero_window_count);
-      }
-
-      // Anomalia se supera 18.000 e se la dvstd supera il 70% della media
-      if(dev_std > 18000.0 && dev_std > 0.7 * avg && rev->packet_count > MIN_PACKETS_FOR_ANALYSIS){
-        out("  ⚠ Anomalia ⚠ : Forti oscillazioni della finestra TCP (dev_std=%.2f)\n", dev_std);
-      } else if(dev_std > 10000.0 && dev_std > 0.7 * avg && fwd->packet_count > MIN_PACKETS_FOR_ANALYSIS){
-        out("  Oscillazioni moderate della finestra TCP (dev_std=%.2f)\n", dev_std);
-      }
+    if(cv > soglia){
+      out("  ⚠ Anomalia ⚠ : Forti oscillazioni della finestra TCP (cv=%.2f)\n", cv);
     }
 
     out("----------------------------------------------------------------\n");
   }
-  free(printed);
 }
 
 /* *************************************** */
@@ -686,7 +633,7 @@ void printHelp(void) {
 
 /* *************************************** */
 
-// Libero memoria allocata
+// Libero memoria
 void cleanup_flows(){
   for(int i=0;i<flow_count;i++){
     ndpi_free_data_analysis(all_flows[i].win_stats, 1); // Con parametro 1 libera anche il puntatore

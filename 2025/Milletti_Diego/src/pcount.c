@@ -2,12 +2,16 @@
  *
  * Prerequisite
  * sudo apt-get install libpcap-dev
+ * sudo apt install libndpi-dev
  *
  * Compilation
- * gcc pcount.c -o pcount ndpifun.c -lpcap -lm
+ * -> gcc pcount.c -o pcount ndpifun.c -lpcap -lndpi -lm
+ * -> make
  * 
  * Execution
- * sudo ./pcount -i <file.pcap> -v 1 (-r file.txt)
+ * ./pcount -i <file.pcap> -> Standard
+ * ./pcount -i <file.pcap> -v 1 -> Verbose
+ * (-r file_report.txt) -> Optional
  *
 */
 
@@ -46,7 +50,8 @@ struct pcap_stat pcapStats;
 
 
 #include <inttypes.h>
-#include "header.h"
+#include <ndpi/ndpi_api.h> 
+
 
 #define MIN_PACKETS_FOR_ANALYSIS 15
 
@@ -479,14 +484,15 @@ void dummyProcesssPacket(u_char *_deviceId,
       ndpi_data_add_value(flow->win_stats, (u_int64_t)window);
 
       //stampa info preliminare
-      char src[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN];
-      inet_ntop(AF_INET, &(ip_hdr->ip_src), src, INET_ADDRSTRLEN);
-      inet_ntop(AF_INET, &(ip_hdr->ip_dst), dst, INET_ADDRSTRLEN);
-      printf("Flusso IPv4 %s:%d -> %s:%d | Finestra: %u\n",
-            src, ntohs(tcp_hdr->th_sport),
-            dst, ntohs(tcp_hdr->th_dport),
-            window);
-
+      if(verbose){
+        char src[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(ip_hdr->ip_src), src, INET_ADDRSTRLEN);
+        inet_ntop(AF_INET, &(ip_hdr->ip_dst), dst, INET_ADDRSTRLEN);
+        printf("Flusso IPv4 %s:%d -> %s:%d | Finestra: %u\n",
+              src, ntohs(tcp_hdr->th_sport),
+              dst, ntohs(tcp_hdr->th_dport),
+              window);
+      }
     }
   }
   if(eth_type == 0x86DD){ // Solo indirizzi IPv6
@@ -522,13 +528,15 @@ void dummyProcesssPacket(u_char *_deviceId,
       ndpi_data_add_value(flow->win_stats, (u_int64_t)window);
 
       // Stampa info preliminare IPv6
-      char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
-      inet_ntop(AF_INET6, &ip6_hdr->ip6_src, src, sizeof(src)); // Conversione da IPv6 binario a stringa
-      inet_ntop(AF_INET6, &ip6_hdr->ip6_dst, dst, sizeof(dst));
-      printf("Flusso IPv6 %s:%d → %s:%d | Finestra: %u\n",
-            src, ntohs(tcp_hdr->th_sport),
-            dst, ntohs(tcp_hdr->th_dport),
-            window);
+      if(verbose){
+        char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &ip6_hdr->ip6_src, src, sizeof(src)); // Conversione da IPv6 binario a stringa
+        inet_ntop(AF_INET6, &ip6_hdr->ip6_dst, dst, sizeof(dst));
+        printf("Flusso IPv6 %s:%d → %s:%d | Finestra: %u\n",
+              src, ntohs(tcp_hdr->th_sport),
+              dst, ntohs(tcp_hdr->th_dport),
+              window);
+      }
     }
   }
   if (numPkts == 0) gettimeofday(&startTime, NULL);
@@ -539,10 +547,13 @@ void dummyProcesssPacket(u_char *_deviceId,
 
 
 void flow_analysis(){
-  out("\n======= ANALISI FLUSSI TCP =======\n");
 
+  int found_anomaly = 0;
+
+  out("\n======= ANALISI FLUSSI TCP =======\n");
   for(int i=0;i<flow_count;i++){
     FlowData *flow = &all_flows[i];
+    int has_problem = 0;
     
     char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
@@ -553,35 +564,24 @@ void flow_analysis(){
         inet_ntop(AF_INET, &flow->key.ipv4.ip_src, src, sizeof(src));
         inet_ntop(AF_INET, &flow->key.ipv4.ip_dst, dst, sizeof(dst));
     }
-    out("╔══════════════════════════════════════════════════════════════╗\n");
-    out("║Flusso %s:%d → %s:%d\n",
-    src, flow->key.port_src,
-    dst, flow->key.port_dst);
-    out("╚══════════════════════════════════════════════════════════════╝\n");
 
     // Analisi flow
-    float avg = ndpi_data_mean(flow->win_stats);
+    float avg = ndpi_data_average(flow->win_stats);
     if (avg == 0) avg = 1; // Proteggo la divisione per 0 del CV
     float dev_std = ndpi_data_stddev(flow->win_stats);
     u_int64_t min = ndpi_data_min(flow->win_stats);
     u_int64_t max = ndpi_data_max(flow->win_stats);
 
-    if(flow->packet_count < MIN_PACKETS_FOR_ANALYSIS){
-      out("[!] Troppi pochi pacchetti per un'analisi affidabile [!]\n");
-    }
-
-    out("  Pacchetti: %d\n", flow->packet_count);
-
-    out("  Finestra [min: %" PRIu64 ", max: %" PRIu64 ", media: %.2f]\n", min, max, avg);
-
     if(flow->zero_window_count > 0){
-      out("  ⚠ Anomalia ⚠ : dimensione finestra TCP uguale a zero (%d volte)\n", flow->zero_window_count);
+      has_problem = 1;
+      found_anomaly = 1;
     }
 
     // Calcolo il coefficente di variazione con "soglia" dinamica a seconda dei pacchetti
     float cv = dev_std / avg;
     float soglia;
 
+    /* scegli la soglia in base al numero di pacchetti */
     if      (flow->packet_count > 10000) soglia = 1.0;
     else if (flow->packet_count >  5000) soglia = 1.5;
     else if (flow->packet_count >  1000) soglia = 2.0;
@@ -591,10 +591,32 @@ void flow_analysis(){
     else soglia = 10.0;
 
     if(cv > soglia){
-      out("  ⚠ Anomalia ⚠ : Forti oscillazioni della finestra TCP (cv=%.2f)\n", cv);
+      has_problem = 1;
+      found_anomaly = 1;
     }
 
-    out("----------------------------------------------------------------\n");
+    if(has_problem || verbose == 1){
+      out("╔══════════════════════════════════════════════════════════════╗\n");
+      out("║Flusso %s:%d → %s:%d\n",
+      src, flow->key.port_src,
+      dst, flow->key.port_dst);
+      out("╚══════════════════════════════════════════════════════════════╝\n");
+      if(flow->packet_count < MIN_PACKETS_FOR_ANALYSIS){
+        out("[!] Troppi pochi pacchetti per un'analisi affidabile [!]\n");
+      }
+      out("  Pacchetti: %d\n", flow->packet_count);
+      out("  Finestra [min: %" PRIu64 ", max: %" PRIu64 ", media: %.2f]\n", min, max, avg);
+      if(flow->zero_window_count > 0){
+        out("  ⚠ Anomalia ⚠ : dimensione finestra TCP uguale a zero (%d volte)\n", flow->zero_window_count);
+      }
+      if(cv > soglia){
+        out("  ⚠ Anomalia ⚠ : Forti oscillazioni della finestra TCP (cv=%.2f)\n", cv);
+      }
+      out("----------------------------------------------------------------\n");
+    }
+  }
+  if(found_anomaly == 0){
+    printf("======= Nessuna anomalia rilevata =======\n");
   }
 }
 
@@ -711,11 +733,7 @@ int main(int argc, char* argv[]) {
     }
   }
   
-  if(geteuid() != 0) {
-    printf("Please run this tool as superuser\n");
-    return(-1);
-  }
-  
+
   if(device == NULL) {
     printf("ERROR: Missing -i\n");    
     printHelp();
@@ -723,6 +741,8 @@ int main(int argc, char* argv[]) {
   }
 
   printf("Capturing from %s\n", device);
+  int is_live_capture = 0;
+
 
  if(stat(device, &s) == 0) {
     /* Device is a file on filesystem */
@@ -733,10 +753,16 @@ int main(int argc, char* argv[]) {
  } else {
     /* hardcode: promisc=1, to_ms=500 */
     promisc = 1;
+    is_live_capture = 1;
     if((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL) {
       printf("pcap_open_live: %s\n", errbuf);
       return(-1);
     }
+  }
+
+  if(is_live_capture && geteuid() != 0) {
+    printf("Please run this tool as superuser to capture from a live interface\n");
+    return(-1);
   }
  
 if(bpfFilter == NULL) { // Applicazione filtro TCP come default
@@ -751,8 +777,11 @@ if(pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) { // Programma di fil
     }
 }
 
-  if(drop_privileges("nobody") < 0)
-    return(-1);
+  if(is_live_capture) {
+    if(drop_privileges("nobody") < 0)
+      return -1;
+  }
+
   
   signal(SIGINT, sigproc);
   signal(SIGTERM, sigproc);

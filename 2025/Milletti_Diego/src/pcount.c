@@ -5,7 +5,7 @@
  * sudo apt install libndpi-dev
  *
  * Compilation
- * -> gcc pcount.c -o pcount ndpifun.c -lpcap -lndpi -lm
+ * -> gcc pcount.c -o pcount -lpcap -lndpi -lm
  * -> make
  * 
  * Execution

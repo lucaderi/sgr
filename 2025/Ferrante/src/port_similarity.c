@@ -13,7 +13,7 @@
 #include <dirent.h>
 #include <math.h>
 
-#define RRD_FILES "./rrds"
+#define RRD_FILES "rrds"
 #define MAX_NUM_RRDS 8192
 #define DEFAULT_STEP 60
 #define DEFAULT_ALPHA 0.5
@@ -23,8 +23,6 @@
 #define DEFAULT_COMMUNITY "public"
 #define SNMP_INIT "snmp_manager"
 
-volatile sig_atomic_t keep_running = 1;
-u_int verbose = 0, skip_zero = 0, similarity_threshold = DEFAULT_THRESHOLD;
 
 typedef struct {
     char* path;
@@ -39,6 +37,9 @@ typedef struct{
     struct snmp_session *ss;
     rrd_file_stats *rrds;
 }agent_info;
+
+volatile sig_atomic_t keep_running = 1;
+u_int verbose = 0, skip_zero = 0, similarity_threshold = DEFAULT_THRESHOLD;
 
 /* *************************************************** */
 
@@ -173,11 +174,12 @@ void find_rrds(char *basedir, char *filename, rrd_file_stats *rrds, u_int *num_r
 
 /* *************************************************** */
 
-
 void handle_sigint(int sig) {
     keep_running = 0;
-    printf("\n[INFO] Caught SIGINT, terminating gracefully...\n");
+    printf("\n[INFO] Caught SIGNAL, terminating gracefully...\n");
 }
+
+/* *************************************************** */
 
 void init_session(struct snmp_session **ss, char* agent, char* community){
     struct snmp_session session;
@@ -189,7 +191,13 @@ void init_session(struct snmp_session **ss, char* agent, char* community){
     session.community = (u_char *)community;
     session.community_len = strlen((char *)session.community);
     *ss = snmp_open(&session);
+    if(!*ss){
+        printf("error snmp_open");
+        exit(1);
+    }
 }
+
+/* *************************************************** */
 
 int getNumIf(struct snmp_session *ss){
     struct snmp_pdu *pdu;
@@ -211,7 +219,9 @@ int getNumIf(struct snmp_session *ss){
     if (response) snmp_free_pdu(response);
 }
 
-void getIfOutBytes(struct snmp_session *ss, int nIf, int* ifOutB){
+/* *************************************************** */
+
+void getIfOutBytes(struct snmp_session *ss, int nIf, unsigned int* ifOutB, int* snmp_ack){
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
     int status;
@@ -229,17 +239,30 @@ void getIfOutBytes(struct snmp_session *ss, int nIf, int* ifOutB){
     snmp_add_null_var(pdu, anOID, anOID_len);
 
     status = snmp_synch_response(ss, pdu, &response);
+    if (status != STAT_SUCCESS) {
+        if (status == STAT_TIMEOUT) {
+            printf("[ERROR] Timeout contattando host %s\n", ss->peername);
+        } else if (status == STAT_ERROR) {
+            printf("[ERROR] Errore SNMP generico\n");
+        } else {
+            printf("[ERROR] Stato SNMP sconosciuto: %d\n", status);
+        }
+    }
 
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
         int i;
         for(vars = response->variables,i=0; vars; vars = vars->next_variable, i++){
-            *(ifOutB+i)=(int)*vars->val.integer;
+            ifOutB[i] = (unsigned int)*vars->val.integer;
         }
+
     } else {
         printf("SNMP error\n");
+        *snmp_ack = 1;
     }
     if (response) snmp_free_pdu(response);
 }
+
+/* *************************************************** */
 
 void init_rrd(char* name, int step, int nIf, agent_info *info){
     int argc=6;
@@ -247,10 +270,10 @@ void init_rrd(char* name, int step, int nIf, agent_info *info){
     if(mkdir(name, 0755) == 0)
         printf("Creating folder for this hostname... \n");
     char buffer[BUF_LENGTH];
-    int count = 1;
-    while(count != nIf+1){
+    int count = 0;
+    while(count != nIf){
         //argv[0] lo skippa
-        snprintf(buffer, sizeof(buffer), "%s/%d.rrd",name, count);
+        snprintf(buffer, sizeof(buffer), "%s/%d.rrd",name, count+1);
         info->rrds[count].path = strdup(buffer);
         argv[1]= strdup(buffer);
         argv[2]="--step";
@@ -266,18 +289,20 @@ void init_rrd(char* name, int step, int nIf, agent_info *info){
     free(argv);
 }
 
-void update_rrd(char *name, int nIf, const int *ifOutB){
+/* *************************************************** */
+
+void update_rrd(char *name, int nIf, const unsigned int *ifOutB){
     time_t timestamp = time(NULL);
     int argc=3;
     char **argv = malloc((argc)*sizeof(char*));
     char buffer[BUF_LENGTH];
-    int count = 1;
+    int count = 0;
 
-    while(count != nIf+1){
+    while(count != nIf){
         //argv[0] lo skippa
-        snprintf(buffer, sizeof(buffer), "%s/%d.rrd",name, count);
+        snprintf(buffer, sizeof(buffer), "%s/%d.rrd",name, count+1);
         argv[1]= strdup(buffer);
-        snprintf(buffer,sizeof(buffer), "%ld:%d", timestamp, ifOutB[count]);
+        snprintf(buffer,sizeof(buffer), "%ld:%u", timestamp, ifOutB[count]);
         argv[2]= strdup(buffer);
         SYSCZ(rrd_update(argc, argv), "Error updating rrds");
         count++;
@@ -286,25 +311,50 @@ void update_rrd(char *name, int nIf, const int *ifOutB){
     free(argv);
 }
 
-void closeAll(int* ifOutB, struct snmp_session *ss){
-    free(ifOutB);
-    snmp_close(ss);
+/* *************************************************** */
+
+//aiuta a gestire overflow contatori
+unsigned int calc_diff(unsigned int old_val, unsigned int new_val) {
+    if(new_val >= old_val) {
+        return new_val - old_val;
+    } else {
+        // overflow occurred
+        return (UINT32_MAX - old_val) + new_val + 1;
+    }
 }
+
+/* *************************************************** */
 
 // Thread per polling SNMP
 void* polling_thread(void* arg) {
     agent_info *info = (agent_info *)arg;
-    char filename[64];
+    unsigned int prev_ifOutB[info->nIf];
+    unsigned int delta_ifOutB[info->nIf];
 
     struct timespec interval = { .tv_sec = info->step, .tv_nsec = 0 };
+    int snmp_ack;
+    unsigned int first = 1;
 
     while (keep_running) {
         printf("[THREAD] Polling SNMP data...\n");
-        int ifOutB[info->nIf];
+        unsigned int ifOutB[info->nIf];
+        snmp_ack = 0;
 
         // recupero bytes in uscita dalle interfacce
-        getIfOutBytes(info->ss,info->nIf,ifOutB);
-        update_rrd(info->base_dir, info->nIf, ifOutB);
+        getIfOutBytes(info->ss,info->nIf,ifOutB, &snmp_ack);
+        if(!snmp_ack){
+            if(first){
+                update_rrd(info->base_dir, info->nIf, ifOutB);
+                memcpy(prev_ifOutB, ifOutB, sizeof(prev_ifOutB));
+                first=0;
+            }else{
+                for(int i = 0; i<info->nIf ; i++){
+                    delta_ifOutB[i] = calc_diff(prev_ifOutB[i], ifOutB[i]);
+                    prev_ifOutB[i] = ifOutB[i];
+                }
+                update_rrd(info->base_dir, info->nIf, delta_ifOutB);
+            }
+        }
 
 
         // Attesa con possibilità di interruzione da segnale
@@ -317,13 +367,17 @@ void* polling_thread(void* arg) {
     return NULL;
 }
 
+/* *************************************************** */
+
 static void help(){ //TODO aggiungere skipzero, verbose
-    printf("Usage: port_similarity -h <hostname> | -l [-a <alpha>][-t <threshold>]\n"
+    printf("Usage: port_similarity -h <hostname> | -l [-a <alpha>][-t <threshold>][-s <step][-v][-z]\n"
            "-a             | Set alpha. Valid range >0 .. <1. Default %.2f\n"
            "-h <hostname>  | Hostname or IP address of the agent\n"
            "-t <threshold> | Similarity threshold. Default %u (0 == alike)\n"
            "-l             | Use localhost instead of specifying hostname (%s)\n"
            "-s             | Set RRD step. Valid range >0. Default %d\n"
+           "-v             | Verbose\n"
+           "-z             | Skip zero RRDs during comparison\n"
             ,
            DEFAULT_ALPHA, DEFAULT_THRESHOLD, DEFAULT_AGENT, DEFAULT_STEP);
 
@@ -333,12 +387,15 @@ static void help(){ //TODO aggiungere skipzero, verbose
     exit(0);
 }
 
+/* *************************************************** */
+
 int main(int argc, char *argv[]) {
     agent_info *info;
+    rrd_time_value_t start_tv, end_tv;
     int c;
     time_t start, end;
     float alpha;
-    char *hostname = NULL;
+    char *hostname = NULL, *start_s, *end_s;
     u_int step;
     pthread_t poll_thread;
 
@@ -346,6 +403,8 @@ int main(int argc, char *argv[]) {
 
     /* Default */
 
+    start_s = "now-1d";
+    end_s = "now";
     alpha = DEFAULT_ALPHA;
     similarity_threshold = DEFAULT_THRESHOLD;
     step = DEFAULT_STEP;
@@ -361,10 +420,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        perror("sigaction SIGTERM");
+        exit(1);
+    }
 
     // TODO FINIRE OPTION ARG
-    while((c = getopt(argc, argv, "a:h:t:ls:")) != '?') {
+    while((c = getopt(argc, argv, "a:h:t:ls:vz")) != '?') {
         if(c == -1) break;
 
         switch(c) {
@@ -392,6 +454,14 @@ int main(int argc, char *argv[]) {
                 step = 10;
                 break;
 
+            case 'z':
+                skip_zero = 1;
+                break;
+
+            case 'v':
+                verbose = 1;
+                break;
+
             case 's':
             {
                 int s = atoi(optarg);
@@ -413,16 +483,29 @@ int main(int argc, char *argv[]) {
             help();
 
     //inizializzo sessione
-    init_session(&info->ss, DEFAULT_AGENT, DEFAULT_COMMUNITY);
+    init_session(&info->ss, hostname, DEFAULT_COMMUNITY);
     // recupero il numero di interfacce dell'agent
     SYSCN(info->rrds, ndpi_calloc(sizeof(rrd_file_stats), MAX_NUM_RRDS), "Not enough memory! \n");
     info->nIf = getNumIf(info->ss);
     char base_dir[64];
     snprintf(base_dir, sizeof(base_dir), "%s/%s", RRD_FILES, hostname);
     info->base_dir = strdup(base_dir);
+    printf("%s\n", base_dir);
     info->step = step;
     init_rrd(info->base_dir, info->step, info->nIf, info);
+    /*
+    if((rrd_parsetime(start_s, &start_tv) != NULL)) {
+        printf("Unable to parse start time %s\n", start_s);
+        return(-1);
+    }
 
+    if((rrd_parsetime(end_s, &end_tv) != NULL)) {
+        printf("Unable to parse end time %s\n", end_s);
+        return(-1);
+    }
+
+    rrd_proc_start_end(&start_tv, &end_tv, &start, &end);
+     */
     start = time(NULL);
 
     SYSCZ(pthread_create(&poll_thread, NULL, polling_thread, (void*)info), "Error creating polling thread");
@@ -431,16 +514,23 @@ int main(int argc, char *argv[]) {
 
     end = time(NULL);
 
-    /* Find all rrd's */
-    //find_rrds(basedir, filename, rrds, &num_rrds);
-
     /* Read RRD's data */
     for(int i=0; i<info->nIf; i++)
         analyze_rrd(&info->rrds[i], start, end);
 
     find_rrd_similarities(info->rrds, info->nIf);
 
+    if(verbose) {
+        for(int i=0; i<info->nIf; i++)
+            printf("%s\t%.1f\t%.1f\n", info->rrds[i].path, info->rrds[i].average, info->rrds[i].stddev);
+    }
 
+    for(int i=0; i<info->nIf; i++) {
+        ndpi_free_bin(&info->rrds[i].b);
+        free(info->rrds[i].path);
+    }
+
+    ndpi_free(info);
     snmp_close(info->ss);
     return 0;
 }

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante
+# Install script for directory: /Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/sgr/2025/Ferrante
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/sgr/2025/Ferrante/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

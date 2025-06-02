@@ -23,7 +23,7 @@ $(OUT): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(OUT) $(LDFLAGS)
 
 run-local: $(OUT)
-	./$(OUT) -l
+	./$(OUT) -l -v -z -s 10
 
 clean:
 	rm -f $(OUT)

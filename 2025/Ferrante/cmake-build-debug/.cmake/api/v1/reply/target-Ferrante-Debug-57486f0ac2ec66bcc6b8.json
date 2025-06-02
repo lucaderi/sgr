@@ -86,7 +86,7 @@
 				},
 				{
 					"backtrace" : 7,
-					"path" : "/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante/src/utils/ndpi/src/include"
+					"path" : "/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/sgr/2025/Ferrante/src/utils/ndpi/src/include"
 				}
 			],
 			"language" : "C",
@@ -128,7 +128,7 @@
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante/src/utils/ndpi/src/lib/libndpi.a",
+				"fragment" : "/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/sgr/2025/Ferrante/src/utils/ndpi/src/lib/libndpi.a",
 				"role" : "libraries"
 			},
 			{

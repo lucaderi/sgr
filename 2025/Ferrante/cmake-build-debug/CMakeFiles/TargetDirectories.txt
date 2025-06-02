@@ -1,0 +1,3 @@
+/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante/cmake-build-debug/CMakeFiles/Ferrante.dir
+/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/Ferrante/cmake-build-debug/CMakeFiles/rebuild_cache.dir

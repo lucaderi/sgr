@@ -16,7 +16,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-debug/CMakeFiles/3.28.1/CMakeSystem.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.28.6/CMakeSystem.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -500,7 +500,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-debug/CMakeFiles/3.28.1/CMakeCCompiler.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.28.6/CMakeCCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -639,7 +639,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-debug/CMakeFiles/3.28.1/CMakeCCompiler.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.28.6/CMakeCCompiler.cmake"
 		}
 	],
 	"kind" : "cmakeFiles",

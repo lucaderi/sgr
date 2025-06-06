@@ -5,6 +5,6 @@
 -- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
--- Configuring done (0.6s)
+-- Configuring done (0.7s)
 -- Generating done (0.0s)
 -- Build files have been written to: /Users/lucoferro/Documents/unipi/III_ANNO_24-25/secondo_semestre/GR/sgr/2025/Ferrante/cmake-build-debug

@@ -53,7 +53,8 @@ struct pcap_stat pcapStats;
 #include <ndpi/ndpi_api.h> 
 
 
-#define MIN_PACKETS_FOR_ANALYSIS 15
+#define MIN_PACKETS_FOR_ANALYSIS 10
+#define PACKETS_TO_SKIP 3
 
 typedef struct {
   uint8_t is_ipv6; // IPv4 = 0, IPv6 = 1
@@ -76,6 +77,7 @@ typedef struct {
     struct ndpi_analyze_struct *win_stats;
     int packet_count;
     int zero_window_count;
+    int skipped_initial;  // Pacchetti saltati all'inizio
 } FlowData; // Struttura per l'intero flusso TCP
 
 FlowData *all_flows = NULL;
@@ -142,6 +144,7 @@ FlowData* get_or_create_flow(FlowKey* key){
     new_flow->key = *key;
     new_flow->packet_count = 0;
     new_flow->zero_window_count = 0;
+    new_flow->skipped_initial = 0;
     new_flow->win_stats = ndpi_alloc_data_analysis(128);  // Usa sliding window di 128 valori
 
     return new_flow;
@@ -478,10 +481,17 @@ void dummyProcesssPacket(u_char *_deviceId,
       FlowData *flow = get_or_create_flow(&key);
 
       flow->packet_count++;
+
       if(window == 0){
         flow->zero_window_count++;
       }
-      ndpi_data_add_value(flow->win_stats, (u_int64_t)window);
+
+      if (flow->skipped_initial < PACKETS_TO_SKIP) {
+          flow->skipped_initial++;   // Salta i primi 3 pacchetti per non influenzare l'analisi 
+      } else {
+          ndpi_data_add_value(flow->win_stats, window);
+      }
+
 
       //stampa info preliminare
       if(verbose){
@@ -508,7 +518,6 @@ void dummyProcesssPacket(u_char *_deviceId,
         return;
       }
 
-
       uint16_t window = ntohs(tcp_hdr->th_win); // Estraggo dimensione della finestra
 
       FlowKey key;
@@ -525,7 +534,11 @@ void dummyProcesssPacket(u_char *_deviceId,
         flow->zero_window_count++;
       }
 
-      ndpi_data_add_value(flow->win_stats, (u_int64_t)window);
+      if (flow->skipped_initial < PACKETS_TO_SKIP) {
+          flow->skipped_initial++;   // Salta i primi 3 pacchetti per non influenzare l'analisi 
+      } else {
+          ndpi_data_add_value(flow->win_stats, window);
+      }
 
       // Stampa info preliminare IPv6
       if(verbose){
@@ -581,13 +594,14 @@ void flow_analysis(){
     float cv = dev_std / avg;
     float soglia;
 
-    /* scegli la soglia in base al numero di pacchetti */
-    if      (flow->packet_count > 10000) soglia = 1.0;
-    else if (flow->packet_count >  5000) soglia = 1.5;
-    else if (flow->packet_count >  1000) soglia = 2.0;
-    else if (flow->packet_count >   500) soglia = 3.0;
-    else if (flow->packet_count >   100) soglia = 5.0;
-    else if (flow->packet_count >    50) soglia = 7.0;
+    // Scegli la soglia in base al numero di pacchetti sottraendo quelli skippati inizialmente
+    int real_packet = flow->packet_count - flow->skipped_initial;
+    if      (real_packet > 10000) soglia = 0.3;
+    else if (real_packet >  5000) soglia = 0.4;
+    else if (real_packet >  1000) soglia = 0.5;
+    else if (real_packet >   500) soglia = 0.6;
+    else if (real_packet >   100) soglia = 0.7;
+    else if (real_packet >    50) soglia = 0.8;
     else soglia = 10.0;
 
     if(cv > soglia){
@@ -601,11 +615,13 @@ void flow_analysis(){
       src, flow->key.port_src,
       dst, flow->key.port_dst);
       out("╚══════════════════════════════════════════════════════════════╝\n");
-      if(flow->packet_count < MIN_PACKETS_FOR_ANALYSIS){
+      if(real_packet < MIN_PACKETS_FOR_ANALYSIS){
         out("[!] Troppi pochi pacchetti per un'analisi affidabile [!]\n");
+        out("----------------------------------------------------------------\n");
+        continue;
       }
       out("  Pacchetti: %d\n", flow->packet_count);
-      out("  Finestra [min: %" PRIu64 ", max: %" PRIu64 ", media: %.2f]\n", min, max, avg);
+      out("  Finestra [min: %" PRIu64 ", max: %" PRIu64 ", media: %.2f, cv: %.2f]\n", min, max, avg, cv);
       if(flow->zero_window_count > 0){
         out("  ⚠ Anomalia ⚠ : dimensione finestra TCP uguale a zero (%d volte)\n", flow->zero_window_count);
       }

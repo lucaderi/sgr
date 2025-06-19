@@ -1,9 +1,0 @@
-*.o
-*.out
-*.rrd
-*.log
-build/
-.idea/
-CMakeLists.txt
-cmake-build-debug/
-

@@ -50,13 +50,13 @@ for i in {0..50}; do
   OUT1=$((2000000 + $i * 700))
 
   # iface2 con una piccola variazione casuale
-  OUT2=$(($OUT1 + RANDOM % 40))
+  OUT2=$(($OUT1 + RANDOM % 70))
 
   #same per iface3 e 4
 
-  OUT3=$((100000 + $i * 200))
+  OUT3=$((100000 + $i * 500))
 
-  OUT4=$(($OUT3 + RANDOM % 20))
+  OUT4=$(($OUT3 + RANDOM % 100))
 
   #metto una if totalmente uguale
 

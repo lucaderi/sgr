@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include "utils/macros.h"
-#include "ndpi_api.h"
+#include "ndpi/ndpi_api.h"
 #include <errno.h>
 #include <sys/stat.h>
 #include <dirent.h>

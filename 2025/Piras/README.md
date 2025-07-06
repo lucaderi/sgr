@@ -50,7 +50,7 @@ sudo apt install wireshark  # o brew install wireshark su macOS
 
 2. Avvia il parsing parallelo:
 ```bash
-python parser_parallel.py
+python parser.py
 ```
 
 3. Analizza le anomalie:

@@ -100,7 +100,7 @@ La classificazione dei dispositivi segue questa logica:
   - Costruisce profili per ogni IP basati sulla frequenza e tipo di codici Modbus usati
   - Salva il risultato in `profiles.json`
 
-  - Il modulo **profile_check (standalone)**:
+- Il modulo **profile_check (standalone)**:
   - Legge `parsed_data.csv`
   - Verifica che il comportamento della nuova cattura sia coerente col profilo costruito nella precedente
   - Segnala eventuali anomalie

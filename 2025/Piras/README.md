@@ -113,7 +113,7 @@ La classificazione dei dispositivi segue questa logica:
   - Legge `parsed_data.csv`
   - Verifica che il comportamento della nuova cattura sia coerente col profilo costruito nella precedente
   - Segnala eventuali anomalie
-
+  - è necessario che sia gia stata eseguita due volte l'analisi di catture di pacchetti: andrò infatti a confrontare il profilo dei device, scritto a partire da una cattura precedente, con quello di una nuova scansione.
 ---
 
 ### ✅ Esempio output `parsed_data.csv`

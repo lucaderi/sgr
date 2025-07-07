@@ -60,6 +60,11 @@ sudo apt install tshark
 ```bash
 python3 ics_modbus_analyzer.py
 ```
+
+3. Check anomalie profili:
+```bash
+python3 profile_check.py
+```
 ---
 
 ### 🔎 Dettagli tecnici

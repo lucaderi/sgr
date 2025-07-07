@@ -85,6 +85,10 @@ La classificazione dei dispositivi segue questa logica:
 - Se usa solo FC `3` o `4`: → `HMI`
 - Altrimenti: → `unknown`
 
+---
+
+### 🔎 Descrizione dei moduli
+
 - Il modulo di **parser**:
   - Estrae pacchetti Modbus dal file `.pcap`
   - Salva un file `parsed_data.csv` con i campi: `Time`, `SrcIP`, `DstIP`, `FunctionCode`

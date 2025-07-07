@@ -133,4 +133,15 @@ Time,SrcIP,DstIP,FunctionCode
 ]
 ```
 
+### ✅ Esempio `config.cfg`
+```json
+input_pcap=modbus_sample.pcap
+parsed_csv=parsed_data.csv
+anomalies_json=anomalies_json
+profiles=profiles_json
+threads=16
+blacklist=43,8,22
+expected=3,4,6,15,16
+```
+
 ---

@@ -134,7 +134,7 @@ Time,SrcIP,DstIP,FunctionCode
 ```
 
 ### ✅ Esempio `config.cfg`
-```json
+```text
 input_pcap=modbus_sample.pcap
 parsed_csv=parsed_data.csv
 anomalies_json=anomalies_json

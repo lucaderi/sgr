@@ -60,10 +60,11 @@ if stream in seen_streams:
 seen_streams.add(stream)
 ```
 
-Logica di classificazione
 
 Se un IP è destinatario di un comando di scrittura → classificato come PLC
+
 Se un IP è mittente di una richiesta di lettura → classificato come HMI/SCADA
+
 Tutti gli altri IP → Unknown
 
 Output

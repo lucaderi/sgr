@@ -15,11 +15,6 @@ Modbus è un protocollo di comunicazione industriale master/slave, molto diffuso
 - `16` - Write Multiple Registers (tipico per PLC)
 - `43` - Encapsulated Interface (spesso usato per diagnostica, anche potenzialmente malevola)
 
-  Il sistema di analisi utilizza queste informazioni per:
-- Identificare comportamenti sospetti (es. FC non attesi → anomalie)
-- Classificare i dispositivi in base alle FC usate (es. HMI vs PLC)
-- Generare profili di comunicazione per ogni IP
-
 ### Documentazione: 
 ``` https://modbus.org/specs.php ```
 
@@ -66,13 +61,13 @@ seen_streams.add(stream)
 
 ### Semplificazione
 
-Nella realtà un PLC risponde ad un qualsiasi comando con una sorta di ack il quale consiste nello stesso identico pacchetto rispedito al mittente.
-Quindi nella pratica si dovrebbe considerare una sorta di delay tra i vari pacchetti e anche l'inversione di destinazione e sorgente, per distinguere comandi da ack.
-Da qui anche il fatto che viene analizzato solo il primo pacchetto di uno stream, senza considerare che lo stesso stream potrebbe essere usato per diversi comandi.
+Nella realtà un PLC risponde ad un qualsiasi comando con una sorta di ack il quale consiste nello stesso identico pacchetto rispedito al mittente.  
+Quindi nella pratica si dovrebbe considerare una sorta di delay tra i vari pacchetti e anche l'inversione di destinazione e sorgente, per distinguere comandi da ack.  
+Da qui anche il fatto che viene analizzato solo il primo pacchetto di uno stream, senza considerare che lo stesso stream potrebbe essere usato per diversi comandi.  
 
-Nella logica semplificata che abbiamo adottato, vogliamo evitare ambiguità con i PLC, che:
-Ricevono FC 5/6/15/16 → quindi se un IP riceve scritture, è quasi certamente un PLC
-Ma se un IP invia FC 5/6/15/16, può essere un HMI, oppure un altro controllore, oppure un attaccante.
+Nella logica semplificata che abbiamo adottato, vogliamo evitare ambiguità con i PLC, che:  
+Ricevono FC 5/6/15/16 → quindi se un IP riceve scritture, è quasi certamente un PLC  
+Ma se un IP invia FC 5/6/15/16, può essere un HMI, oppure un altro controllore, oppure un attaccante.  
 
 Quindi, per minimizzare falsi positivi, ci limitiamo a definire tale classificazione:
 

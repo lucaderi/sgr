@@ -1,20 +1,5 @@
 # ICS-Modbus-Analyzer
 
-### 📌 Descrizione del progetto
-
-ICS-Modbus-Analyzer è uno strumento per l'analisi passiva di traffico Modbus/TCP in ambienti ICS. Permette di estrarre, classificare e analizzare pacchetti da file `.pcap`, evidenziando comportamenti anomali e profilando automaticamente i dispositivi presenti nella rete.
-
-Questa versione include:
-- Parsing parallelo di file `.pcap` tramite splitting e multiprocessing
-- Estrazione automatica di IP, Function Code e timestamp
-- Ordinamento temporale globale e generazione di `parsed_data.csv`
-- Analisi delle anomalie (function code inattesi o blacklistati)
-- Classificazione automatica dei dispositivi in PLC / HMI / unknown
-- Generazione di profili comportamentali per ogni IP
-- Visualizzazione temporale del traffico
-
----
-
 ## ℹ️ Protocollo Modbus e Function Code
 
 Modbus è un protocollo di comunicazione industriale master/slave, molto diffuso nei sistemi SCADA e ICS. I messaggi Modbus includono un **Function Code (FC)** che indica il tipo di operazione richiesta.
@@ -35,36 +20,70 @@ Il sistema di analisi utilizza queste informazioni per:
 - Classificare i dispositivi in base alle FC usate (es. HMI vs PLC)
 - Generare profili di comunicazione per ogni IP
 
----
+Documentazione: https://modbus.org/specs.php
 
-### ⚙️ Requisiti
+### 📌 Descrizione del progetto
 
-- Python 3.x
-- `pyshark`
-- `editcap` (parte di Wireshark)
+ICS-Modbus-Analyzer è uno strumento per l'analisi passiva di traffico Modbus/TCP in ambienti ICS. Permette di estrarre, classificare e analizzare pacchetti da file `.pcap`, evidenziando comportamenti anomali e profilando automaticamente i dispositivi presenti nella rete.
 
-#### Installazione:
+Questa versione include:
+- Parsing di file `.pcap`
+- Estrazione automatica di IP, Function Code e timestamp
+- Ordinamento temporale globale e generazione di `parsed_data.csv`
+- Analisi delle anomalie (function code inattesi o blacklistati)
+- Classificazione automatica dei dispositivi in PLC / HMI / unknown
+- Generazione di profili comportamentali per ogni IP
+- Visualizzazione temporale del traffico
+
+La classificazione dei dispositivi segue questa logica:
+Questo modulo classifica gli indirizzi IP rilevati nel traffico Modbus TCP nei seguenti ruoli:
+
+🟦 PLC – Dispositivi che ricevono comandi di scrittura (Function Code 5, 6, 15, 16)
+
+🟨 HMI/SCADA – Dispositivi che inviano richieste di lettura (Function Code 3, 4)
+
+⚪ Unknown – Dispositivi coinvolti nel traffico ma che non soddisfano nessuno dei criteri sopra
+
+🛠️ Come funziona
+Formato CSV in input
+Lo script richiede un file .csv con le seguenti colonne:
+
 ```bash
-pip install pyshark
-sudo apt install wireshark  # o brew install wireshark su macOS
-sudo apt install tshark
+Time, SrcIP, DstIP, FunctionCode, TCPStream
 ```
 
----
+Prima richiesta per stream TCP
+Per garantire una classificazione corretta, lo script analizza solo il primo pacchetto per ogni tcp.stream, assumendo che contenga la vera richiesta Modbus:
 
-### ▶️ Come usare il progetto
-
-1. Posiziona un file `.pcap` chiamato `modbus_sample.pcap` nella directory del progetto
-
-2. Avvia il tool:
-```bash
-python3 ics_modbus_analyzer.py
+```python
+if stream in seen_streams:
+    continue
+seen_streams.add(stream)
 ```
 
-3. Check anomalie profili:
+Logica di classificazione
+
+Se un IP è destinatario di un comando di scrittura → classificato come PLC
+Se un IP è mittente di una richiesta di lettura → classificato come HMI/SCADA
+Tutti gli altri IP → Unknown
+
+Output
+I ruoli vengono stampati a console, mostrando tutti gli IP osservati:
+
 ```bash
-python3 profile_check.py
+[+] Classificazione completa IP (prima richiesta per stream):
+  141.81.0.10     => HMI/SCADA
+  141.81.0.86     => PLC
+  141.81.0.55     => Unknown
 ```
+
+
+Se viene rilevato un pacchetto contenente function code non presenti tra quelli previsti dal file di configurazione,
+o viene rilevato un pacchetto il cui function code si trova nella blacklist fornita attraverso lo stesso, viene segnalata una anomalia.
+
+Anomalie sono segnalate anche dal modulo di verifica dei profili 'profile_check.py' nel caso in cui vengano rilevati, dal
+csv della più recente scansione, operazioni con function code rimasti sino ad allora inutilizzati dagli stessi device sotto osservazione.
+
 ---
 
 ### 🔎 Dettagli tecnici
@@ -73,17 +92,11 @@ python3 profile_check.py
   - `input_pcap`: file di input `.pcap` contenente traffico Modbus
   - `parsed_csv`: file CSV che conterrà i pacchetti estratti e processati
   - `output_json`: (se usato nel modulo di analisi) contiene anomalie rilevate
-  - `threads`: numero di thread da usare nel parser
   - `chunk_size`: numero di pacchetti per file chunk
   - `blacklist`: lista di codici Modbus considerati pericolosi
   - `expected`: lista di codici Modbus attesi nel sistema
 
 Le anomalie vengono segnalate nel file `anomalies.json` con motivo e metadati.
-
-La classificazione dei dispositivi segue questa logica:
-- Se un IP usa FC di scrittura (`6`, `5`, `15`, `16`) + lettura: → `PLC`
-- Se usa solo FC `3` o `4`: → `HMI`
-- Altrimenti: → `unknown`
 
 ---
 
@@ -114,6 +127,36 @@ La classificazione dei dispositivi segue questa logica:
   - Verifica che il comportamento della nuova cattura sia coerente col profilo costruito nella precedente
   - Segnala eventuali anomalie
   - è necessario che sia gia stata eseguita due volte l'analisi di catture di pacchetti: andrò infatti a confrontare il profilo dei device, scritto a partire da una cattura precedente, con quello di una nuova scansione.
+
+---
+
+### ⚙️ Requisiti
+
+- Python 3.x
+- `pyshark`
+
+#### Installazione:
+
+```bash
+pip install pyshark
+sudo apt install tshark
+```
+
+---
+
+### ▶️ Come usare il progetto
+
+1. Posiziona un file `.pcap` chiamato `modbus_sample.pcap` nella directory del progetto
+
+2. Avvia il tool:
+```bash
+python3 ics_modbus_analyzer.py
+```
+
+3. Check anomalie profili:
+```bash
+python3 profile_check.py
+```
 ---
 
 ### ✅ Esempio output `parsed_data.csv`

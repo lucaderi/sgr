@@ -19,7 +19,8 @@ def analyze(pcap_file, csv_file, output_json, expected, blacklist):
                  str(pkt.sniff_time), 
                  pkt.ip.get('src', 'N/A'), 
                  pkt.ip.get('dst', 'N/A'), 
-                 pkt.modbus.get('func_code', 'N/A')
+                 pkt.modbus.get('func_code', 'N/A'),
+                 pkt.tcp.stream or 'N/A'
                  ])
             
         except AttributeError:
@@ -28,7 +29,7 @@ def analyze(pcap_file, csv_file, output_json, expected, blacklist):
         
     with open(csv_file, "w", newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['Time', 'SrcIP', 'DstIP', 'FunctionCode'])
+        writer.writerow(['Time', 'SrcIP', 'DstIP', 'FunctionCode', 'TCPStream'])
         writer.writerows(rows)
         
     cap.close()
@@ -86,23 +87,48 @@ def analyze(pcap_file, csv_file, output_json, expected, blacklist):
         print(f"{t} | {bar} ({c})")
             
 def classify_roles(csv_file):
-    roles = defaultdict(lambda: 'unknown')
-    usage = defaultdict(set)
+    usage = defaultdict(lambda: {'as_dst_fc': set(), 'as_src_fc': set()})
+    all_ips = set()
+    roles = {}
+    seen_streams = set()
 
     with open(csv_file) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            usage[row['SrcIP']].add(row['FunctionCode'])
+            try:
+                fc = int(row['FunctionCode'])
+                stream = int(row['TCPStream'])
+            except ValueError:
+                continue
 
-    for ip, funcs in usage.items():
-        if '6' in funcs or '5' in funcs or '15' in funcs or '16' in funcs:
-                    roles[ip] = 'PLC'
-        elif '3' in funcs or '4' in funcs:
-                    roles[ip] = 'HMI'
-    
-    print("\n[+] IP Classification:")
-    for ip, role in roles.items():
-        print(f"  {ip} => {role}")
+            src = row['SrcIP']
+            dst = row['DstIP']
+            all_ips.update([src, dst])
+
+            # Solo la prima richiesta per ogni stream
+            if stream in seen_streams:
+                continue
+            seen_streams.add(stream)
+
+            if fc in {3, 4}:
+                usage[src]['as_src_fc'].add(fc)
+            if fc in {5, 6, 15, 16}:
+                usage[dst]['as_dst_fc'].add(fc)
+
+    # Classificazione di tutti gli IP visti
+    for ip in all_ips:
+        dst_fc = usage[ip]['as_dst_fc']
+        src_fc = usage[ip]['as_src_fc']
+        if dst_fc:
+            roles[ip] = 'PLC'
+        elif src_fc:
+            roles[ip] = 'HMI/SCADA'
+        else:
+            roles[ip] = 'Unknown'
+
+    print("\n[+] Classificazione completa IP (prima richiesta per stream):")
+    for ip in sorted(roles.keys()):
+        print(f"  {ip:<15} => {roles[ip]}")
         
 def build_profiles(csv_file, profile_json):
     profiles = defaultdict(lambda: {'function_codes': set(), 'count': 0})

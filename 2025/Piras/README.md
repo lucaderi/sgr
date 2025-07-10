@@ -82,23 +82,9 @@ o viene rilevato un pacchetto il cui function code si trova nella blacklist forn
 Anomalie sono segnalate anche dal modulo di verifica dei profili 'profile_check.py' nel caso in cui vengano rilevati, dal
 csv della più recente scansione, operazioni con function code rimasti sino ad allora inutilizzati dagli stessi device sotto osservazione.
 
----
-
-### 🔎 Dettagli tecnici
-
-- Tutti i **parametri di esecuzione** sono definiti nel file `config.cfg`, che viene letto automaticamente.
-  - `input_pcap`: file di input `.pcap` contenente traffico Modbus
-  - `parsed_csv`: file CSV che conterrà i pacchetti estratti e processati
-  - `output_json`: (se usato nel modulo di analisi) contiene anomalie rilevate
-  - `chunk_size`: numero di pacchetti per file chunk
-  - `blacklist`: lista di codici Modbus considerati pericolosi
-  - `expected`: lista di codici Modbus attesi nel sistema
-
 Le anomalie vengono segnalate nel file `anomalies.json` con motivo e metadati.
 
----
-
-### 🔎 Descrizione dei moduli
+### Descrizione dei moduli
 
 - Il modulo di **parser**:
   - Estrae pacchetti Modbus dal file `.pcap`
@@ -144,9 +130,11 @@ sudo apt install tshark
 
 ### ▶️ Come usare il progetto
 
-1. Posiziona un file `.pcap` chiamato `modbus_sample.pcap` nella directory del progetto
+1. Posiziona un file `.pcap` chiamato `modbus_sample.pcap` nella directory del progetto  
 
-2. Avvia il tool:
+1.1. Assicurati che sia presente nella directory anche il file di configurazione: trovi alla fine del README un esempio.    
+
+3. Avvia il tool:
 ```bash
 python3 ics_modbus_analyzer.py
 ```

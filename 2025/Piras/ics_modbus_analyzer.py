@@ -1,42 +1,39 @@
 import json, csv
 import pyshark
-import os, subprocess
 from datetime import datetime
-from multiprocessing import Pool
 from collections import Counter
 from collections import defaultdict
-
-def split_pcap(input_pcap, output_prefix="chunk", packets_per_file=500):
-    print("[*] Splitting pcap file...")
-    cmd = ["editcap", "-c", str(packets_per_file), input_pcap, f"{output_prefix}.pcap"]
-    subprocess.run(cmd, check=True)
-
-
-def parse_chunk(pcap_file):
-    #print(f"[+] Parsing {pcap_file}...")
+    
+def analyze(pcap_file, csv_file, output_json, expected, blacklist):
+    anomalies, func_counts, src_ips = [], Counter(), Counter()
+    
+    print(f"[+] Parsing {pcap_file}...")
+    
     cap = pyshark.FileCapture(pcap_file, display_filter='modbus', keep_packets=False)
     rows = []
+    
     for pkt in cap:
+        
         try:
-            rows.append([str(pkt.sniff_time), pkt.ip.get('src', 'N/A'), pkt.ip.get('dst', 'N/A'), pkt.modbus.get('func_code', 'N/A')])
+            rows.append([
+                 str(pkt.sniff_time), 
+                 pkt.ip.get('src', 'N/A'), 
+                 pkt.ip.get('dst', 'N/A'), 
+                 pkt.modbus.get('func_code', 'N/A')
+                 ])
             
         except AttributeError:
+            
             continue
+        
+    with open(csv_file, "w", newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Time', 'SrcIP', 'DstIP', 'FunctionCode'])
+        writer.writerows(rows)
+        
     cap.close()
-    return rows
-
-
-def collect_chunks(prefix="chunk"):
-    return sorted([f for f in os.listdir('.') if f.startswith(prefix) and f.endswith(".pcap")])
-
-
-def clean_chunks(prefix="chunk"):
-    for f in collect_chunks(prefix):
-        os.remove(f)
-    print("[*] Temporary chunk files removed.")
     
-def analyze(csv_file, output_json, expected, blacklist):
-    anomalies, func_counts, src_ips = [], Counter(), Counter()
+    print("[✓] Parsing completato e file CSV generato.")
 
     with open(csv_file) as f:
         reader = csv.DictReader(f)
@@ -155,25 +152,7 @@ def main():
     anomalies_json = config.get("anomalies_json", "anomalies.json")
     profiles_json = config.get("profile_json", "profiles.json")
     
-    split_pcap(input_pcap)
-
-    chunks = collect_chunks()
-    all_rows = []
-
-    with Pool(threads) as pool:
-        results = pool.map(parse_chunk, chunks)
-        for r in results:
-            all_rows.extend(r)
-
-    with open(output_csv, "w", newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Time', 'SrcIP', 'DstIP', 'FunctionCode'])
-        writer.writerows(all_rows)
-
-    clean_chunks()
-    print("[✓] Parsing completato e file CSV generato.")
-    
-    analyze(output_csv, anomalies_json, expected, blacklist)
+    analyze(input_pcap, output_csv, anomalies_json, expected, blacklist)
     classify_roles(output_csv)
     build_profiles(output_csv, profiles_json)
 

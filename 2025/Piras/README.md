@@ -20,7 +20,8 @@ Modbus è un protocollo di comunicazione industriale master/slave, molto diffuso
 
 ## 📌 Descrizione del progetto
 
-ICS-Modbus-Analyzer è uno strumento per l'analisi passiva di traffico Modbus/TCP in ambienti ICS. Permette di estrarre, classificare e analizzare pacchetti da file `.pcap`, evidenziando comportamenti anomali e profilando automaticamente i dispositivi presenti nella rete.
+ICS-Modbus-Analyzer è uno strumento per l'analisi passiva di traffico Modbus/TCP in ambienti ICS.  
+Permette di estrarre, classificare e analizzare pacchetti da file `.pcap`, evidenziando comportamenti anomali e profilando automaticamente i dispositivi presenti nella rete.
 
 Questa versione include:
 - Parsing di file `.pcap`
@@ -84,6 +85,24 @@ csv della più recente scansione, operazioni con function code rimasti sino ad a
 
 Le anomalie vengono segnalate nel file `anomalies.json` con motivo e metadati.
 
+### Esempio di anomalia
+
+Contesto:
+Expected = [1,2,3,4,5,6,15,16]
+Blacklist = [43]
+
+| Time                  | SrcIP        | DstIP        | FunctionCode |
+| --------------------- | ------------ | ------------ | ------------ |
+| 2025-07-10 14:05:12.7 | 192.168.1.50 | 192.168.1.10 | **43**       |
+
+Il pacchetto contiene FC 43, che:
+
+Non è tra quelli previsti → anomalia funzionale  
+È anche nella blacklist → anomalia critica o potenzialmente malevola  
+
+Viene descritto nell'apposita sezione anche il modulo standalone `profile_check` che permette di identificare  
+anomalie basate non solo su expected list e blacklist ma anche su comportamento atteso dei device.
+
 ### Descrizione dei moduli
 
 - Il modulo di **parser**:
@@ -106,11 +125,47 @@ Le anomalie vengono segnalate nel file `anomalies.json` con motivo e metadati.
   - Costruisce profili per ogni IP basati sulla frequenza e tipo di codici Modbus usati
   - Salva il risultato in `profiles.json`
 
-- Il modulo **profile_check (standalone)**:
-  - Legge `parsed_data.csv`
-  - Verifica che il comportamento della nuova cattura sia coerente col profilo costruito nella precedente
-  - Segnala eventuali anomalie
-  - è necessario che sia gia stata eseguita due volte l'analisi di catture di pacchetti: andrò infatti a confrontare il profilo dei device, scritto a partire da una cattura precedente, con quello di una nuova scansione.
+### Modulo **profile_check (standalone)**
+
+Questo modulo fornisce una dimostrazione di una possibile integrazione del tool con un IDS anomaly based, fornendo dati in formato json che permettano al sistema di rilevamento di rilevare comportamenti insoliti  
+da parte dei device.
+
+- Legge `parsed_data.csv`  
+- Verifica che il comportamento della nuova cattura sia coerente col profilo costruito nella precedente  
+- Segnala eventuali anomalie  
+- è necessario che sia gia stata eseguita due volte l'analisi di catture di pacchetti: andrò infatti a   confrontare il profilo dei device, scritto a partire da una cattura precedente, con quello di una nuova scansione.  
+
+### Esempio
+
+```json
+
+{
+  "192.168.0.10": {
+    "function_codes": ["3", "4", "6", "16"],
+    "count": 245
+  },
+  "192.168.0.20": {
+    "function_codes": ["3", "4"],
+    "count": 112
+  }
+}
+
+```
+Questo indica che:
+
+L'IP 192.168.0.10 è un PLC → usa 6, 16  
+L'IP 192.168.0.20 è un HMI → solo 3, 4  
+
+File parsed_data.csv (traffico attuale da analizzare)
+
+Time,SrcIP,DstIP,FunctionCode
+2025-07-09 10:00:01.000000,192.168.0.20,192.168.0.10,3
+2025-07-09 10:00:02.000000,192.168.0.20,192.168.0.10,4
+2025-07-09 10:00:03.000000,192.168.0.20,192.168.0.10,6
+2025-07-09 10:00:04.000000,192.168.0.10,192.168.0.20,43
+
+192.168.0.20 (HMI) ora sta usando anche il codice 6, tipico dei PLC
+192.168.0.10 ha usato il codice 43, non presente nel suo profilo
 
 ---
 

@@ -38,7 +38,9 @@ Questa versione include:
 La classificazione dei dispositivi segue questa logica:
 
 🟦 PLC – Dispositivi che ricevono comandi di scrittura (Function Code 5, 6, 15, 16)
+
 🟨 HMI/SCADA – Dispositivi che inviano richieste di lettura (Function Code 3, 4)
+
 ⚪ Unknown – Dispositivi coinvolti nel traffico ma che non soddisfano nessuno dei criteri sopra
 
 🛠️ Come funziona

@@ -15,7 +15,7 @@ Modbus è un protocollo di comunicazione industriale master/slave, molto diffuso
 - `16` - Write Multiple Registers (tipico per PLC)
 - `43` - Encapsulated Interface (spesso usato per diagnostica, anche potenzialmente malevola)
 
-Il sistema di analisi utilizza queste informazioni per:
+  Il sistema di analisi utilizza queste informazioni per:
 - Identificare comportamenti sospetti (es. FC non attesi → anomalie)
 - Classificare i dispositivi in base alle FC usate (es. HMI vs PLC)
 - Generare profili di comunicazione per ogni IP

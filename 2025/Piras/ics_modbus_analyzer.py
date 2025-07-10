@@ -144,9 +144,8 @@ def load_config(path="config.cfg"):
 def main():
     config = load_config("config.cfg")
     
-    input_pcap = config.get("input_pcap", "modbus_sample.pcap)
+    input_pcap = config.get("input_pcap", "modbus_sample.pcap")
     output_csv = config.get("parsed_csv","parsed_data.csv")
-    threads = config.get("threads", 16)
     expected = config.get("expected_function_codes", "1,2,3,4,5,6,15,16")
     blacklist = config.get("blacklist_function_codes", "")
     anomalies_json = config.get("anomalies_json", "anomalies.json")

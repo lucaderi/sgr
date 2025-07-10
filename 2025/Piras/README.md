@@ -60,9 +60,9 @@ seen_streams.add(stream)
 | 2025-07-10 14:01:38.0 | **192.168.1.101** | 192.168.1.30  | **16**       | 2         |
 | 2025-07-10 14:01:38.2 | 192.168.1.30      | 192.168.1.101 | 16           | 2         |
 
-192.168.1.100 ha inviato richieste con Function Code 3 e 4 → classificato come HMI/SCADA
-192.168.1.30 ha ricevuto una richiesta con Function Code 16 → classificato come PLC
-192.168.1.101 ha inviato un comando di scrittura → non classificato come HMI (solo letture), quindi → Unknown
+192.168.1.100 ha inviato richieste con Function Code 3 e 4 → classificato come HMI/SCADA  
+192.168.1.30 ha ricevuto una richiesta con Function Code 16 → classificato come PLC  
+192.168.1.101 ha inviato un comando di scrittura → non classificato come HMI (solo letture), quindi → Unknown  
 
 ### Semplificazione
 

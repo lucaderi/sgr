@@ -38,9 +38,9 @@ Questa versione include:
 
 ### Logica di classificazione
 
-🟦 PLC – Dispositivi che ricevono comandi di scrittura (Function Code 5, 6, 15, 16)
-🟨 HMI/SCADA – Dispositivi che inviano richieste di lettura (Function Code 3, 4)
-⚪ Unknown – Dispositivi coinvolti nel traffico ma che non soddisfano nessuno dei criteri sopra
+🟦 PLC – Dispositivi che ricevono comandi di scrittura (Function Code 5, 6, 15, 16)  
+🟨 HMI/SCADA – Dispositivi che inviano richieste di lettura (Function Code 3, 4)  
+⚪ Unknown – Dispositivi coinvolti nel traffico ma che non soddisfano nessuno dei criteri sopra  
 
 Per garantire una classificazione corretta, lo script analizza solo il primo pacchetto per ogni tcp.stream, assumendo che contenga la vera richiesta Modbus:
 

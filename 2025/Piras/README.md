@@ -1,10 +1,10 @@
 # ICS-Modbus-Analyzer
 
-### 📌 Protocollo Modbus e Function Code
+## 📌 Protocollo Modbus e Function Code
 
 Modbus è un protocollo di comunicazione industriale master/slave, molto diffuso nei sistemi SCADA e ICS. I messaggi Modbus includono un **Function Code (FC)** che indica il tipo di operazione richiesta.
 
-## 📌 Esempi comuni di Function Code:
+### 📌 Esempi comuni di Function Code:
 - `01` - Read Coils
 - `02` - Read Discrete Inputs
 - `03` - Read Holding Registers (tipico per HMI)
@@ -20,9 +20,10 @@ Il sistema di analisi utilizza queste informazioni per:
 - Classificare i dispositivi in base alle FC usate (es. HMI vs PLC)
 - Generare profili di comunicazione per ogni IP
 
-Documentazione: https://modbus.org/specs.php
+### Documentazione: 
+``` https://modbus.org/specs.php ```
 
-### 📌 Descrizione del progetto
+## 📌 Descrizione del progetto
 
 ICS-Modbus-Analyzer è uno strumento per l'analisi passiva di traffico Modbus/TCP in ambienti ICS. Permette di estrarre, classificare e analizzare pacchetti da file `.pcap`, evidenziando comportamenti anomali e profilando automaticamente i dispositivi presenti nella rete.
 
@@ -35,7 +36,7 @@ Questa versione include:
 - Generazione di profili comportamentali per ogni IP
 - Visualizzazione temporale del traffico
 
-### 📌 Logica di classificazione
+### Logica di classificazione
 
 🟦 PLC – Dispositivi che ricevono comandi di scrittura (Function Code 5, 6, 15, 16)
 🟨 HMI/SCADA – Dispositivi che inviano richieste di lettura (Function Code 3, 4)
@@ -48,8 +49,37 @@ if stream in seen_streams:
     continue
 seen_streams.add(stream)
 ```
+### Esempio di classificazione
 
-## 📌 Anomalie
+| Time                  | SrcIP             | DstIP         | FunctionCode | TCPStream |
+| --------------------- | ----------------- | ------------- | ------------ | --------- |
+| 2025-07-10 14:01:32.1 | **192.168.1.100** | 192.168.1.10  | **3**        | 0         |
+| 2025-07-10 14:01:32.2 | 192.168.1.10      | 192.168.1.100 | 3            | 0         |
+| 2025-07-10 14:01:35.4 | **192.168.1.100** | 192.168.1.20  | **4**        | 1         |
+| 2025-07-10 14:01:35.5 | 192.168.1.20      | 192.168.1.100 | 4            | 1         |
+| 2025-07-10 14:01:38.0 | **192.168.1.101** | 192.168.1.30  | **16**       | 2         |
+| 2025-07-10 14:01:38.2 | 192.168.1.30      | 192.168.1.101 | 16           | 2         |
+
+192.168.1.100 ha inviato richieste con Function Code 3 e 4 → classificato come HMI/SCADA
+192.168.1.30 ha ricevuto una richiesta con Function Code 16 → classificato come PLC
+192.168.1.101 ha inviato un comando di scrittura → non classificato come HMI (solo letture), quindi → Unknown
+
+### Semplificazione
+
+Nella realtà un PLC risponde ad un qualsiasi comando con una sorta di ack il quale consiste nello stesso identico pacchetto rispedito al mittente.
+Quindi nella pratica si dovrebbe considerare una sorta di delay tra i vari pacchetti e anche l'inversione di destinazione e sorgente, per distinguere comandi da ack.
+Da qui anche il fatto che viene analizzato solo il primo pacchetto di uno stream, senza considerare che lo stesso stream potrebbe essere usato per diversi comandi.
+
+Nella logica semplificata che abbiamo adottato, vogliamo evitare ambiguità con i PLC, che:
+Ricevono FC 5/6/15/16 → quindi se un IP riceve scritture, è quasi certamente un PLC
+Ma se un IP invia FC 5/6/15/16, può essere un HMI, oppure un altro controllore, oppure un attaccante.
+
+Quindi, per minimizzare falsi positivi, ci limitiamo a definire tale classificazione:
+
+Un HMI è un dispositivo che invia FC di lettura (3, 4)
+Un PLC è un dispositivo che riceve FC di scrittura (5, 6, 15, 16)
+
+### Anomalie
 
 Se viene rilevato un pacchetto contenente function code non presenti tra quelli previsti dal file di configurazione,
 o viene rilevato un pacchetto il cui function code si trova nella blacklist fornita attraverso lo stesso, viene segnalata una anomalia.

@@ -1,1 +1,415 @@
+#include <pcap.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <signal.h>
+
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+
+#define INTERVAL 1      // Intervallo di aggiornamento (in secondi)
+#define HASH_SIZE 64        // Dimensione ridotta visti i test in locale
+#define SOGLIA 3      // Per generare un allert (molto bassa visti i test in locale)
+#define CLEANUP_INTERVAL 60
+
+// Strutture dati per IP e porte
+struct PortNode {
+    uint16_t port;
+    struct PortNode *next;
+    time_t last_seen;   
+};
+
+struct IPEntry {
+    uint32_t ip;  
+    struct PortNode *ports;
+    struct IPEntry *next;  // Gestione collisioni (lista di IP con stesso hash)
+    int alert_sent;    
+    int port_count;
+};
+
+struct IPEntry *ip_table[HASH_SIZE];
+
+int syn_count = 0;      
+int keep_running = 1;
+
+pcap_t *handle = NULL;
+
+time_t start_time;
+
+FILE *logfile;
+
+// Handler per CTRL+C
+void int_handler(int sig) {
+    printf("\n[INFO] Interruzione ricevuta. Terminazione in corso...\n");
+    keep_running = 0;
+    if (handle != NULL) {
+        pcap_breakloop(handle);     // Ferma pcap_dispatch        
+    }
+}
+
+// Hash function
+int hash_ip(uint32_t ip) {
+    return ntohl(ip) % HASH_SIZE; // Converte in host byte order
+}
+
+void free_ip_table() {
+    for (int i = 0; i < HASH_SIZE; i++) {
+        struct IPEntry *entry = ip_table[i];
+        while (entry != NULL) {
+            // Libera la lista di porte
+            struct PortNode *curr_port = entry->ports;
+            while (curr_port != NULL) {
+                struct PortNode *to_free_port = curr_port;
+                curr_port = curr_port->next;
+                free(to_free_port);
+            }
+
+            // Libera l'IPEntry
+            struct IPEntry *to_free_entry = entry;
+            entry = entry->next;
+            free(to_free_entry);
+        }
+        ip_table[i] = NULL;
+    }
+}
+
+// Inserisce IP e porta nella struttura
+void insert_ip_port(uint32_t ip, uint16_t port) {
+    time_t now = time(NULL);
+
+    char *time_str = ctime(&now);
+
+    int index = hash_ip(ip);
+    struct IPEntry *entry = ip_table[index];
+
+    // Controlla se l'IP è già presente
+    while (entry != NULL) {
+        if (entry->ip == ip) {
+            // IP già presente, controlla se la porta è già presente
+            struct PortNode *p = entry->ports;
+            while (p != NULL) {
+                if (p->port == port) {      // La porta è già presente, aggiorna last_seen
+                    p->last_seen = now;
+                    return; 
+                }
+                p = p->next;
+            }
+
+            // Porta non presente, la aggiunge
+            struct PortNode *new_port = malloc(sizeof(struct PortNode));
+            if (!new_port) {
+                fprintf(stderr, "[ERRORE] malloc fallita.\n");
+                return;
+            }
+            new_port->port = port;
+            new_port->last_seen = now;
+            new_port->next = entry->ports;
+
+            entry->ports = new_port;
+            entry->port_count++;
+
+            // Controlla soglia
+            if (entry->port_count >= SOGLIA && !entry->alert_sent) {
+                entry->alert_sent = 1;      // Invia un solo allert per IP
+                struct in_addr ip_addr; 
+                ip_addr.s_addr = ip;
+                printf("\a[ALLERTA] %s Possibile port scan da %s\n", time_str, inet_ntoa(ip_addr));
+                // Scrive anche sul file di log
+                if (logfile != NULL) {
+                    fprintf(logfile, " %s Possibile port scan da %s\n\n", time_str, inet_ntoa(ip_addr));
+                } 
+                else {
+                    fprintf(stderr, "[ERRORE] impossibile aprire il file di log.\n");
+                }
+            }
+            return;
+        }
+        entry = entry->next;
+    }
+
+    // Nuovo IP, crea nuovo nodo
+    struct IPEntry *new_entry = malloc(sizeof(struct IPEntry));
+    if (!new_entry) {
+        fprintf(stderr, "[ERRORE] malloc fallita\n");
+        return;
+    }
+
+    new_entry->ip = ip;
+    new_entry->ports = NULL;
+    new_entry->next = ip_table[index]; 
+    new_entry->port_count = 0;
+    new_entry->alert_sent = 0;
+
+    struct PortNode *new_port = malloc(sizeof(struct PortNode));
+    if (!new_port) {
+        fprintf(stderr, "[ERRORE] malloc fallita.\n");
+        free(new_entry);    
+        return;
+    }
+    new_port->port = port;
+    new_port->last_seen = now;
+    new_port->next = NULL;
+
+    new_entry->ports = new_port;
+    new_entry->port_count = 1;
+
+    ip_table[index] = new_entry;
+}
+
+// Funzione di pulizia per rimuovere porte vecchie         
+void cleanup_old_ports() {
+    time_t now = time(NULL);
+    for (int i = 0; i < HASH_SIZE; i++) {
+        struct IPEntry *entry = ip_table[i];
+        struct IPEntry *prev_entry = NULL; 
+        
+        while (entry != NULL) {
+            struct PortNode *prev = NULL;
+            struct PortNode *curr = entry->ports;
+
+            while (curr != NULL) {
+                if ((now - curr->last_seen) > CLEANUP_INTERVAL) {
+                    // Porta vecchia, rimuove
+                    if (prev == NULL) {
+                        entry->ports = curr->next;
+                    } 
+                    else {
+                        prev->next = curr->next;
+                    }
+                    struct PortNode *to_free = curr;
+                    curr = curr->next;
+                    free(to_free);
+                    entry->port_count--;
+                } 
+                else {
+                    prev = curr;
+                    curr = curr->next;
+                }
+            }
+
+            // Se l'entry non ha più porte, la rimuove dalla tabella hash
+            if (entry->port_count == 0) {
+                struct IPEntry *to_free_entry = entry;
+                if (prev_entry == NULL) {
+                    // Entry è la prima nella lista della bucket hash
+                    ip_table[i] = entry->next;
+                } else {
+                    prev_entry->next = entry->next;
+                }
+                entry = entry->next;
+                free(to_free_entry);
+            } else {
+                prev_entry = entry;
+                entry = entry->next;
+            }
+        }
+    }
+}
+
+// Stampa IP -> porte (per debug)
+void print_ip_table() {
+    for (int i = 0; i < HASH_SIZE; i++) {
+        struct IPEntry *entry = ip_table[i];
+        while (entry != NULL) {
+            struct in_addr ip_addr = { .s_addr = entry->ip };
+            printf("IP %s -> Porte: ", inet_ntoa(ip_addr));
+            struct PortNode *p = entry->ports;
+            while (p != NULL) {
+                printf("%d ", p->port);
+                p = p->next;
+            }
+            printf("\n");
+            entry = entry->next;
+        }
+    }
+}
+
+// Funzione di gestione pacchetti
+void packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+    
+    struct ip *ip_hdr = (struct ip *)(packet + 14);   // Saltia header Ethernet (14 byte)                         
+    
+    if (ip_hdr->ip_p != IPPROTO_TCP) return;        // Se non è TCP, esce
+
+    // Salta header IP   
+    struct tcphdr *tcp_hdr = (struct tcphdr *)((u_char *)ip_hdr + (ip_hdr->ip_hl * 4));
+
+    // Verifica flag: SYN attivo, ACK non attivo (già filtrato da BPF)
+    if ((tcp_hdr->th_flags & TH_SYN) && !(tcp_hdr->th_flags & TH_ACK)) {
+        
+        uint32_t src_ip = ip_hdr->ip_src.s_addr;
+        uint16_t dst_port = ntohs(tcp_hdr->th_dport);
+
+        insert_ip_port(src_ip, dst_port);       // Salva IP e porta di destinazione
+        syn_count++;
+    }
+}
+
+int main() {
+
+    char errbuf[PCAP_ERRBUF_SIZE];
+
+    struct bpf_program filter;      // Berkeley Packet Filter
+    char filter_exp[] = "tcp[tcpflags] & tcp-syn != 0 and tcp[tcpflags] & tcp-ack == 0 and dst portrange 1-1024";    // Controlla solo le porte tra 1 e 1024 
+
+    // Apre il file in modalità append
+    logfile = fopen("portscan_alert.log", "a");
+    if (logfile == NULL) {
+        fprintf(stderr, "[ERRORE] Nell'apertura del file di log.\n");
+        return 1;
+    }
+
+    // Imposta handler CTRL+C
+    struct sigaction sa;
+    sa.sa_handler = int_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;  
+    sigaction(SIGINT, &sa, NULL);
+
+    // Controlla se il file RRD esiste, altrimenti lo crea
+    if (access("portscan.rrd", F_OK) != 0) {
+        printf("[INFO] Database RRD non trovato. Creazione...\n");
+
+        int ret = system("rrdtool create portscan.rrd --step 1 "
+                         "DS:syn:COUNTER:10:0:U "   
+                         "RRA:AVERAGE:0.5:1:600 "
+                        ); //10 minuti (dati ogni 1 sec)
+
+        if (ret != 0) {
+            fprintf(stderr, "[ERRORE] Impossibile creare il database RRD.\n");
+            return 1;
+        }
+    }
+
+    // Ricerca e scelta dell'interfaccia per lo sniffing                
+    pcap_if_t *alldevs, *dev;
+
+    if (pcap_findalldevs(&alldevs, errbuf) == -1) {
+        fprintf(stderr, "[ERRORE] pcap_findalldevs: %s\n", errbuf);
+        return 1;
+    }
+
+    if (alldevs == NULL) {
+        fprintf(stderr, "[ERRORE] Nessuna interfaccia trovata.\n");
+        return 1;
+    }
+
+    int i = 0;
+    int choice = -1;
+
+    printf("[INFO] Interfacce disponibili:\n");    
+    for (dev = alldevs; dev != NULL; dev = dev->next) {
+        printf("%d) %s\n", i, dev->name);
+        i++;
+    }
+
+    printf("Inserisci il numero dell'interfaccia da usare: ");
+    while (1) {
+        int ret = scanf("%d", &choice);
+        if (ret == EOF) {
+            if (!keep_running) {
+                // Cleanup finale
+                fclose(logfile);
+                pcap_freealldevs(alldevs);
+                printf("[INFO] Monitoraggio terminato correttamente.\n");
+                return 0;
+            }
+            else {
+                perror("[ERRORE] Scanf.\n");
+                break;
+            }
+        }
+        if (ret != 1 || choice < 0 || choice >= i) {
+            printf("Input non valido. Riprova: ");
+        } else {
+            break;
+        }
+    }
+
+    // Prende l'interfaccia scelta
+    dev = alldevs;
+    for (i = 0; i < choice; i++) {
+        dev = dev->next;
+    }
+
+    printf("[INFO] interfaccia selezionata: %s\n", dev->name);
+
+    // Apre l'interfaccia
+    handle = pcap_open_live(dev->name, BUFSIZ, 1, 0, errbuf);
+    if (handle == NULL) {
+        fprintf(stderr, "[ERRORE] Impossibile aprire interfaccia: %s\n", errbuf);
+        pcap_freealldevs(alldevs);
+        return 1;
+    }
+
+    // Libera la lista delle interfacce
+    pcap_freealldevs(alldevs);
+
+    // Compila e applica filtro BPF
+    if (pcap_compile(handle, &filter, filter_exp, 0, PCAP_NETMASK_UNKNOWN) == -1) {
+        fprintf(stderr, "[ERRORE] Errore nella compilazione del filtro: %s\n", pcap_geterr(handle));
+        return 1;
+    }
+    if (pcap_setfilter(handle, &filter) == -1) {
+        fprintf(stderr, "[ERRORE] Errore nell'impostazione del filtro: %s\n", pcap_geterr(handle));
+        return 1;
+    }
+
+    printf("[INFO] Monitoraggio in corso. Premi CTRL+C per terminare...\n");
+
+    start_time = time(NULL);
+    time_t last_cleanup = 0;
+
+    // Loop 
+    while (keep_running) {
+
+        pcap_dispatch(handle, 0, packet_handler, NULL);     // Elabora tutti i pacchetti disponibili 
+    
+        time_t now = time(NULL);
+        char *time_str = ctime(&now);
+
+        // Esegue pulizia   
+        if (now - last_cleanup >= CLEANUP_INTERVAL) {
+            cleanup_old_ports();
+            last_cleanup = now;
+        }
+
+        if (now - start_time >= INTERVAL) {
+            if (keep_running) {
+                printf("[INFO] %s Pacchetti SYN: %d\n", time_str, syn_count);
+            }
+
+            // Aggiorna DB RRD
+            char cmd[256];
+            snprintf(cmd, sizeof(cmd), "rrdtool update portscan.rrd N:%d", syn_count);
+            system(cmd);
+            
+            char graph_cmd[512];
+            snprintf(graph_cmd, sizeof(graph_cmd),
+                "rrdtool graph portscan.png --start now-600 --end now "
+                "--title='Connessioni SYN (ultim1 10 minuti)' --vertical-label='SYN/sec' "
+                "DEF:syn=portscan.rrd:syn:AVERAGE "
+                "LINE3:syn#FF0000:'SYN/sec' > /dev/null");
+            system(graph_cmd);
+            
+            // Reset contatore
+            syn_count = 0;
+            start_time = now;
+        }
+       
+    }
+
+    // Cleanup finale
+    pcap_close(handle);
+    //print_ip_table(); // Per debug
+    pcap_freecode(&filter);
+    free_ip_table();
+    fclose(logfile);
+    printf("[INFO] Monitoraggio terminato correttamente.\n");
+    return 0;
+}
 

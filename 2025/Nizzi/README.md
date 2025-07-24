@@ -1,3 +1,6 @@
+per compilare: make 
+per eseguire: sudo ./RilevatorePortScan
+
 librerie:
 std.h, stdlib.h, string.h 
 pcap.h per lo sniffing dei pacchetti

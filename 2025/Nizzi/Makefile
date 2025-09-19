@@ -1,25 +1,33 @@
-#Nome del compilatore
+# Nome del compilatore
 CC = gcc
 
-# Librerie da linkare			
+# Opzione di compilazione
+CFLAGS = -g
+
+# Libreria da linkare			
 LDFLAGS = -lpcap 
 
-#File sorgente
-PCOUNT_SRC = RilevatorePortScan.c
+# File sorgente
+SCOUNT_SRC = RilevatoreSynScan.c
+PCOUNT_SRC = PortScan.c
 
-#Nomi dell’eseguibile
-PCOUNT_EXEC = RilevatorePortScan
+# Nomi degli eseguibili
+SCOUNT_EXEC = RilevatoreSynScan
+PCOUNT_EXEC = PortScan
 
 # Target predefinito
-all: $(PCOUNT_EXEC)
+all: $(SCOUNT_EXEC) $(PCOUNT_EXEC)
 
-# Compilazione dell’eseguibile
+# Compilazione degli eseguibili
+$(SCOUNT_EXEC): $(SCOUNT_SRC) 
+	$(CC) $(CFLAGS) -o $(SCOUNT_EXEC) $(SCOUNT_SRC) $(LDFLAGS)
+
 $(PCOUNT_EXEC): $(PCOUNT_SRC) 
-	$(CC) -g -o $(PCOUNT_EXEC) $(PCOUNT_SRC) $(LDFLAGS)
+	$(CC) -o $(PCOUNT_EXEC) $(PCOUNT_SRC)
 
 # Pulizia dei file generati
 clean:
-	rm $(PCOUNT_EXEC)
+	rm -f $(SCOUNT_EXEC) $(PCOUNT_EXEC)
 
 # Dichiarazione di target fittizi (non-file)
 .PHONY: all clean

@@ -39,5 +39,16 @@ Sul terminale vedrai un messaggio di allarme con l’IP sospetto.
 L’evento viene scritto in scan_alert.log.
 I SYN raccolti nell’ultimo minuto vengono aggiornati in scan.rrd e viene rigenerato scan.png.
 Ogni minuto vengono aggiornati il file scan.rrd ed il grafico scan.png che mostra l’andamento dei SYN ricevuti negli ultimi 10 minuti
-Per visualizzare il grafico si può utilizzare:
+Per visualizzare i grafici si può utilizzare:
 	xdg-open scan.png
+
+Il file .rrd tiene traccia anche dei dati dell'ultima ora e dell'ultimo giorno. Possiamo generare manualmente file .png per questi con:
+
+rrdtool graph scan-1h.png --start end-3600 --end now \
+  DEF:syn=scan.rrd:syn:MAX \
+  LINE:syn#00FF00:"SYN ultima ora"
+
+rrdtool graph scan-1g.png --start end-86400 --end now \
+  DEF:syn=scan.rrd:syn:MAX \
+  LINE:syn#0000FF:"SYN ultimo giorno"
+

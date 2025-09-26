@@ -9,11 +9,11 @@ LDFLAGS = -lpcap
 
 # File sorgente
 SCOUNT_SRC = RilevatoreSynScan.c
-PCOUNT_SRC = PortScan.c
+PCOUNT_SRC = Scan.c
 
 # Nomi degli eseguibili
 SCOUNT_EXEC = RilevatoreSynScan
-PCOUNT_EXEC = PortScan
+PCOUNT_EXEC = Scan
 
 # Target predefinito
 all: $(SCOUNT_EXEC) $(PCOUNT_EXEC)

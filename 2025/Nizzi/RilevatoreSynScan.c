@@ -476,8 +476,8 @@ int main(int argc, char *argv[]) {
                 snprintf(graph_cmd, sizeof(graph_cmd),
                     "rrdtool graph scan.png --start now-600 --end now "
                     "--title='Connessioni SYN (ultim1 10 minuti)' --vertical-label='SYN' "
-                    "DEF:syn_max=scan.rrd:syn:MAX "
-                    "LINE:syn_max#FF0000:'picco' > /dev/null");
+                    "DEF:syn=scan.rrd:syn:MAX "
+                    "LINE:syn#FF0000:'picco' > /dev/null");
                 ret = system(graph_cmd);
                 if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
                     perror("[ERRORE] Graph RRD fallito.");

@@ -11,10 +11,12 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
-#define INTERVAL 1      // Intervallo di aggiornamento (in secondi)
+#include <sys/wait.h>       // Per controllo su risultato di rrdtool
+#include <errno.h>       
+
+#define INTERVAL 60      // Intervallo di aggiornamento (in secondi) p.s.se si modifica bisogna allineare --step del db rrd
 #define HASH_SIZE 64        // Dimensione ridotta visti i test in locale
-#define SOGLIA 3      // Per generare un allert (molto bassa visti i test in locale)
-#define CLEANUP_INTERVAL 60
+#define SOGLIA 3      // Per generare un alert (molto bassa visti i test in locale)
 
 // Strutture dati per IP e porte
 struct PortNode {
@@ -35,12 +37,14 @@ struct IPEntry *ip_table[HASH_SIZE];
 
 int syn_count = 0;      
 int keep_running = 1;
+int debug = 0;
 
 pcap_t *handle = NULL;
 
 time_t start_time;
 
 FILE *logfile;
+struct bpf_program filter;      // Berkeley Packet Filter
 
 // Handler per CTRL+C
 void int_handler(int sig) {
@@ -77,6 +81,16 @@ void free_ip_table() {
     }
 }
 
+// cleanup finale
+void cleanup() {
+    if (handle) pcap_close(handle);
+    if (logfile) fclose(logfile);
+    pcap_freecode(&filter);
+    free_ip_table();
+    printf("[INFO] Monitoraggio terminato correttamente.\n");
+    return;
+}
+
 // Inserisce IP e porta nella struttura
 void insert_ip_port(uint32_t ip, uint16_t port) {
     time_t now = time(NULL);
@@ -102,7 +116,7 @@ void insert_ip_port(uint32_t ip, uint16_t port) {
             // Porta non presente, la aggiunge
             struct PortNode *new_port = malloc(sizeof(struct PortNode));
             if (!new_port) {
-                fprintf(stderr, "[ERRORE] malloc fallita.\n");
+                perror("[ERRORE] malloc fallita.");
                 return;
             }
             new_port->port = port;
@@ -117,13 +131,14 @@ void insert_ip_port(uint32_t ip, uint16_t port) {
                 entry->alert_sent = 1;      // Invia un solo allert per IP
                 struct in_addr ip_addr; 
                 ip_addr.s_addr = ip;
-                printf("\a[ALLERTA] %s Possibile port scan da %s\n", time_str, inet_ntoa(ip_addr));
+                printf("\a[ALLARME] %s Possibile port scan da %s\n", time_str, inet_ntoa(ip_addr));
                 // Scrive anche sul file di log
                 if (logfile != NULL) {
                     fprintf(logfile, " %s Possibile port scan da %s\n\n", time_str, inet_ntoa(ip_addr));
+                    fflush(logfile); 
                 } 
                 else {
-                    fprintf(stderr, "[ERRORE] impossibile aprire il file di log.\n");
+                    perror("[ERRORE] impossibile aprire il file di log.");
                 }
             }
             return;
@@ -134,7 +149,7 @@ void insert_ip_port(uint32_t ip, uint16_t port) {
     // Nuovo IP, crea nuovo nodo
     struct IPEntry *new_entry = malloc(sizeof(struct IPEntry));
     if (!new_entry) {
-        fprintf(stderr, "[ERRORE] malloc fallita\n");
+        perror("[ERRORE] malloc fallita.");
         return;
     }
 
@@ -146,7 +161,7 @@ void insert_ip_port(uint32_t ip, uint16_t port) {
 
     struct PortNode *new_port = malloc(sizeof(struct PortNode));
     if (!new_port) {
-        fprintf(stderr, "[ERRORE] malloc fallita.\n");
+        perror("[ERRORE] malloc fallita");
         free(new_entry);    
         return;
     }
@@ -172,7 +187,7 @@ void cleanup_old_ports() {
             struct PortNode *curr = entry->ports;
 
             while (curr != NULL) {
-                if ((now - curr->last_seen) > CLEANUP_INTERVAL) {
+                if ((now - curr->last_seen) > INTERVAL) {
                     // Porta vecchia, rimuove
                     if (prev == NULL) {
                         entry->ports = curr->next;
@@ -208,6 +223,9 @@ void cleanup_old_ports() {
             }
         }
     }
+    if (debug) {
+        printf("[DEBUG] Pulizia porte vecchie eseguita\n");
+    } 
 }
 
 // Stampa IP -> porte (per debug)
@@ -216,7 +234,7 @@ void print_ip_table() {
         struct IPEntry *entry = ip_table[i];
         while (entry != NULL) {
             struct in_addr ip_addr = { .s_addr = entry->ip };
-            printf("IP %s -> Porte: ", inet_ntoa(ip_addr));
+            printf("[DEBUG] IP %s -> Porte: ", inet_ntoa(ip_addr));
             struct PortNode *p = entry->ports;
             while (p != NULL) {
                 printf("%d ", p->port);
@@ -249,19 +267,7 @@ void packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char
     }
 }
 
-int main() {
-
-    char errbuf[PCAP_ERRBUF_SIZE];
-
-    struct bpf_program filter;      // Berkeley Packet Filter
-    char filter_exp[] = "tcp[tcpflags] & tcp-syn != 0 and tcp[tcpflags] & tcp-ack == 0 and dst portrange 1-1024";    // Controlla solo le porte tra 1 e 1024 
-
-    // Apre il file in modalità append
-    logfile = fopen("portscan_alert.log", "a");
-    if (logfile == NULL) {
-        fprintf(stderr, "[ERRORE] Nell'apertura del file di log.\n");
-        return 1;
-    }
+int main(int argc, char *argv[]) {
 
     // Imposta handler CTRL+C
     struct sigaction sa;
@@ -270,31 +276,24 @@ int main() {
     sa.sa_flags = 0;  
     sigaction(SIGINT, &sa, NULL);
 
-    // Controlla se il file RRD esiste, altrimenti lo crea
-    if (access("portscan.rrd", F_OK) != 0) {
-        printf("[INFO] Database RRD non trovato. Creazione...\n");
-
-        int ret = system("rrdtool create portscan.rrd --step 1 "
-                         "DS:syn:COUNTER:10:0:U "   
-                         "RRA:AVERAGE:0.5:1:600 "
-                        ); //10 minuti (dati ogni 1 sec)
-
-        if (ret != 0) {
-            fprintf(stderr, "[ERRORE] Impossibile creare il database RRD.\n");
-            return 1;
-        }
+    if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+        debug = 1;
     }
 
+    char errbuf[PCAP_ERRBUF_SIZE];
+    
     // Ricerca e scelta dell'interfaccia per lo sniffing                
     pcap_if_t *alldevs, *dev;
 
     if (pcap_findalldevs(&alldevs, errbuf) == -1) {
         fprintf(stderr, "[ERRORE] pcap_findalldevs: %s\n", errbuf);
+        cleanup();
         return 1;
     }
 
     if (alldevs == NULL) {
         fprintf(stderr, "[ERRORE] Nessuna interfaccia trovata.\n");
+        cleanup();
         return 1;
     }
 
@@ -310,22 +309,24 @@ int main() {
     printf("Inserisci il numero dell'interfaccia da usare: ");
     while (1) {
         int ret = scanf("%d", &choice);
-        if (ret == EOF) {
-            if (!keep_running) {
-                // Cleanup finale
-                fclose(logfile);
-                pcap_freealldevs(alldevs);
-                printf("[INFO] Monitoraggio terminato correttamente.\n");
-                return 0;
-            }
-            else {
-                perror("[ERRORE] Scanf.\n");
-                break;
-            }
+        if (keep_running==0) {
+            if (debug) {
+                print_ip_table(); 
+            } 
+            pcap_freealldevs(alldevs);
+            cleanup();
+            return 0;
+        } 
+        if (ret == EOF || ret != 1) {
+            perror("[ERRORE] Scanf.");
+            pcap_freealldevs(alldevs);
+            cleanup();
+            return 1;
         }
-        if (ret != 1 || choice < 0 || choice >= i) {
+        if ( choice < 0 || choice >= i) {
             printf("Input non valido. Riprova: ");
         } else {
+            // Input corretto, esci dal ciclo
             break;
         }
     }
@@ -343,73 +344,152 @@ int main() {
     if (handle == NULL) {
         fprintf(stderr, "[ERRORE] Impossibile aprire interfaccia: %s\n", errbuf);
         pcap_freealldevs(alldevs);
+        cleanup();
         return 1;
     }
 
     // Libera la lista delle interfacce
     pcap_freealldevs(alldevs);
 
+    // Controlla se il file RRD esiste, altrimenti lo crea
+    if (access("scan.rrd", F_OK) != 0) {
+        printf("[INFO] Database RRD non trovato. Creazione...\n");
+
+        int ret = system("rrdtool create scan.rrd --step 60 "
+                         "DS:syn:GAUGE:120:0:U "   
+                         "RRA:MAX:0.5:1:600 "
+                        ); //10 minuti (dati ogni 1 min)
+
+        if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {       
+            fprintf(stderr, "[ERRORE] rrdtool ha fallito nella creazione del database RRD");
+            if (WIFEXITED(ret)) {
+                fprintf(stderr, " con codice %d", WEXITSTATUS(ret));
+            }
+            fprintf(stderr, ".\n");
+            cleanup();
+            return 1;
+        }
+
+    }
+
+    // Apre il file in modalità append
+    logfile = fopen("scan_alert.log", "a");
+    if (logfile == NULL) {
+        fprintf(stderr, "[ERRORE] Nell'apertura del file di log.\n");
+        cleanup();
+        return 1;
+    }
+
+    char filter_exp[] = "tcp[tcpflags] & tcp-syn != 0 and tcp[tcpflags] & tcp-ack == 0 and dst portrange 1-1024";    // Controlla solo le porte tra 1 e 1024 
+
     // Compila e applica filtro BPF
     if (pcap_compile(handle, &filter, filter_exp, 0, PCAP_NETMASK_UNKNOWN) == -1) {
         fprintf(stderr, "[ERRORE] Errore nella compilazione del filtro: %s\n", pcap_geterr(handle));
+        cleanup();
         return 1;
     }
     if (pcap_setfilter(handle, &filter) == -1) {
         fprintf(stderr, "[ERRORE] Errore nell'impostazione del filtro: %s\n", pcap_geterr(handle));
+        cleanup();
         return 1;
     }
 
-    printf("[INFO] Monitoraggio in corso. Premi CTRL+C per terminare...\n");
-
+    int pcap_fd = pcap_get_selectable_fd(handle);
+    if (pcap_fd == -1) {
+        fprintf(stderr, "[ERRORE] pcap_get_selectable_fd non supportato su questa piattaforma.\n");
+        cleanup();
+        return 1;
+    }
+    
     start_time = time(NULL);
     time_t last_cleanup = 0;
 
+    printf("[INFO] Monitoraggio in corso. Premi CTRL+C per terminare...\n");
+
+
     // Loop 
     while (keep_running) {
+        
+        fd_set fdset;
+        struct timeval timeout;
 
-        pcap_dispatch(handle, 0, packet_handler, NULL);     // Elabora tutti i pacchetti disponibili 
-    
-        time_t now = time(NULL);
-        char *time_str = ctime(&now);
+        FD_ZERO(&fdset);
+        FD_SET(pcap_fd, &fdset);
 
-        // Esegue pulizia   
-        if (now - last_cleanup >= CLEANUP_INTERVAL) {
-            cleanup_old_ports();
-            last_cleanup = now;
-        }
+        // Aspetta al massimo 1 secondo se non ci sono pacchetti
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
 
-        if (now - start_time >= INTERVAL) {
-            if (keep_running) {
-                printf("[INFO] %s Pacchetti SYN: %d\n", time_str, syn_count);
+        int num = select(pcap_fd + 1, &fdset, NULL, NULL, &timeout);
+
+        if (num == -1) {
+            if (errno == EINTR) continue; // Interruzione da segnale
+            perror("[ERRORE] Select.");
+            break;
+        } else if (num == 0) {
+            // Nessun pacchetto
+            sleep(1);
+        } else {
+            // Pacchetti pronti
+            pcap_dispatch(handle, -1, packet_handler, NULL);    // Elabora tutti i pacchetti disponibili 
+            if (debug) {
+                printf("[DEBUG] Pacchetti SYN: %d\n", syn_count);
+            } 
+        } 
+        
+        //if (ret != 0){
+            time_t now = time(NULL);
+            char *time_str = ctime(&now);
+
+            // Esegue pulizia   
+            if (now - last_cleanup >= INTERVAL) {
+                cleanup_old_ports();
+                last_cleanup = now;
+                if (debug) {
+                    print_ip_table(); 
+                } 
             }
 
-            // Aggiorna DB RRD
-            char cmd[256];
-            snprintf(cmd, sizeof(cmd), "rrdtool update portscan.rrd N:%d", syn_count);
-            system(cmd);
-            
-            char graph_cmd[512];
-            snprintf(graph_cmd, sizeof(graph_cmd),
-                "rrdtool graph portscan.png --start now-600 --end now "
-                "--title='Connessioni SYN (ultim1 10 minuti)' --vertical-label='SYN/sec' "
-                "DEF:syn=portscan.rrd:syn:AVERAGE "
-                "LINE3:syn#FF0000:'SYN/sec' > /dev/null");
-            system(graph_cmd);
-            
-            // Reset contatore
-            syn_count = 0;
-            start_time = now;
-        }
+            if (now - start_time >= INTERVAL) {
+                if (keep_running) {
+                    printf("[INFO] %s Pacchetti SYN: %d\n", time_str, syn_count);
+                }
+
+                // Aggiorna DB RRD
+                char cmd[256];
+                snprintf(cmd, sizeof(cmd), "rrdtool update scan.rrd %ld:%d", (long)now, syn_count);
+                int ret = system(cmd);
+                if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
+                    perror("[ERRORE] Update RRD fallito.");
+                    if (WIFEXITED(ret)) {
+                            fprintf(stderr, " con codice %d", WEXITSTATUS(ret));
+                    }
+                    fprintf(stderr, "\n");
+                }
+
+                // Reset contatore (GAUGE)
+                syn_count = 0;
+                
+                char graph_cmd[512];
+                snprintf(graph_cmd, sizeof(graph_cmd),
+                    "rrdtool graph scan.png --start now-600 --end now "
+                    "--title='Connessioni SYN (ultim1 10 minuti)' --vertical-label='SYN' "
+                    "DEF:syn_max=scan.rrd:syn:MAX "
+                    "LINE:syn_max#FF0000:'picco' > /dev/null");
+                ret = system(graph_cmd);
+                if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
+                    perror("[ERRORE] Graph RRD fallito.");
+                }
+                
+                
+                start_time = now;
+            }
        
     }
 
-    // Cleanup finale
-    pcap_close(handle);
-    //print_ip_table(); // Per debug
-    pcap_freecode(&filter);
-    free_ip_table();
-    fclose(logfile);
-    printf("[INFO] Monitoraggio terminato correttamente.\n");
+    if (debug) {
+        print_ip_table(); 
+    } 
+    cleanup();
     return 0;
 }
-

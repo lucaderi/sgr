@@ -1,0 +1,4 @@
+Il progetto in questione è basato su ciò che è stato richiesto in una nuova feature di nDPI.
+
+Feature richiesta: https://github.com/ntop/nDPI/issues/2906
+Pull Request associata (progetto): https://github.com/ntop/nDPI/pull/2940

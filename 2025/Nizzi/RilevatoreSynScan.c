@@ -358,7 +358,9 @@ int main(int argc, char *argv[]) {
         int ret = system("rrdtool create scan.rrd --step 60 "
                          "DS:syn:GAUGE:120:0:U "   
                          "RRA:MAX:0.5:1:600 "
-                        ); //10 minuti (dati ogni 1 min)
+                         "RRA:MAX:0.5:5:720 "
+                         "RRA:MAX:0.5:60:720 "
+                        ); // 10 minuti (dati ogni 1 min), 1h (ogni 5 min), 1g (ogni 1h)
 
         if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {       
             fprintf(stderr, "[ERRORE] rrdtool ha fallito nella creazione del database RRD");
@@ -480,7 +482,6 @@ int main(int argc, char *argv[]) {
                 if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
                     perror("[ERRORE] Graph RRD fallito.");
                 }
-                
                 
                 start_time = now;
             }

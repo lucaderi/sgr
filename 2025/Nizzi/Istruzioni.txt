@@ -21,6 +21,7 @@ Avvio
 Facoltativo: per modalità debug, che stampa la tabella hash (con gli IP sospetti e le relative porte contattate) e info aggiuntive sui syn in tempo reale, avvia:
 	sudo ./RilevatoreSynScan -d
 2. Scegli l’interfaccia da monitorare (verranno elencate e numerate).
+Nota: l’interfaccia any non è supportata in questo programma, perché non fornisce un header Ethernet standard
 3. Una volta attivato il monitoraggio in condizioni normali il codice non dovrebbe rilevare nessuno scan, quindi ne dobbimo simulare uno noi
 4. Il programma si arresta con Ctrl+C. 
 

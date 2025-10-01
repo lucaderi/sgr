@@ -7,6 +7,9 @@
 #include <time.h>
 #include <signal.h>
 
+#include <pwd.h>    // struct passwd, getpwnam()
+#include <sys/stat.h> // unmask
+
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -44,6 +47,7 @@ pcap_t *handle = NULL;
 time_t start_time;
 
 FILE *logfile;
+
 struct bpf_program filter;      // Berkeley Packet Filter
 
 // Handler per CTRL+C
@@ -267,6 +271,34 @@ void packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char
     }
 }
 
+
+// Funzione per lasciai privilegi di root
+int drop_privileges(const char *username) {
+    
+    struct passwd *pw = NULL;
+    pw = getpwnam(username);     // cerca l'utente sul sistema
+    if (pw == NULL) {
+        username = "nobody";
+        pw = getpwnam(username);
+    }
+    
+    if (pw != NULL) {
+        if (setgid(pw->pw_gid) != 0 || setuid(pw->pw_uid) != 0) {
+            fprintf(stderr, "[ERRORE] Impossibile abbassare i privilegi: %s\n", strerror(errno));
+            return -1;
+        } else {
+            if (debug) {
+                fprintf(stdout, "[INFO] Privilegi abbassati, utente = %s\n", username);
+            } 
+        }
+    } else {
+        fprintf(stderr, "[ERRORE] Utente %s non trovato\n", username);
+        return -1;
+    }
+    umask(0);
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
 
     // Imposta handler CTRL+C
@@ -351,6 +383,29 @@ int main(int argc, char *argv[]) {
     // Libera la lista delle interfacce
     pcap_freealldevs(alldevs);
 
+    // Da i piermessi a nobody sulla cartella corrente
+    const char *dir = ".";
+    // Imposta gruppo su nobody (gruppo nogroup, GID = 65534)
+    if (chown(dir, -1, 65534) != 0) { // -1 significa: non cambiare owner, cambia solo gruppo
+        perror("chown fallito");
+    }
+
+    // Aggiungi permessi di scrittura anche al gruppo
+    struct stat st;
+    if (stat(dir, &st) == 0) {
+        mode_t new_mode = st.st_mode | S_IWGRP | S_IXGRP| S_IWOTH | S_IXOTH; // Aggiungi write + exec al gruppo + scrittura ed esecuzione anche agli altri utenti
+        if (chmod(dir, new_mode) != 0) {
+            perror("chmod fallito");
+        }
+    }
+    
+    // Lasciai privilegi di root
+    if (drop_privileges("nobody") != 0) {
+        fprintf(stderr, "[ERRORE] Impossibile abbassare i privilegi\n");
+        cleanup();
+        return 1;
+    }
+
     // Controlla se il file RRD esiste, altrimenti lo crea
     if (access("scan.rrd", F_OK) != 0) {
         printf("[INFO] Database RRD non trovato. Creazione...\n");
@@ -370,17 +425,16 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, ".\n");
             cleanup();
             return 1;
-        }
-
+        }   
     }
-
+    
     // Apre il file in modalità append
     logfile = fopen("scan_alert.log", "a");
     if (logfile == NULL) {
         fprintf(stderr, "[ERRORE] Nell'apertura del file di log.\n");
         cleanup();
         return 1;
-    }
+    } 
 
     char filter_exp[] = "tcp[tcpflags] & tcp-syn != 0 and tcp[tcpflags] & tcp-ack == 0 and dst portrange 1-1024";    // Controlla solo le porte tra 1 e 1024 
 
@@ -482,6 +536,8 @@ int main(int argc, char *argv[]) {
                 if (ret == -1 || !WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
                     perror("[ERRORE] Graph RRD fallito.");
                 }
+
+                // drop ???
                 
                 start_time = now;
             }

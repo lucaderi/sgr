@@ -10,7 +10,7 @@
 int main() {
     char target_ip[64];
     char choice;
-    struct in_addr addr;
+    struct in_addr addr; // per inet_pton
 
     printf("[INFO] Vuoi fare il port scan su localhost (127.0.0.1)? (s/n): ");
     if (scanf(" %c", &choice) != 1) {
@@ -30,7 +30,7 @@ int main() {
                 continue;
             }
     
-            // Rimuovo newline finale
+            // rimuove newline finale
             target_ip[strcspn(target_ip, "\n")] = '\0';
     
             if (target_ip[0] == '\0') {
@@ -52,7 +52,7 @@ int main() {
 
     printf("[INFO] Avvio scansioni su %s (porte 1-1024) per %d secondi...\n", target_ip, SCAN_DURATION);
 
-    srand(time(NULL));  // Inizializzo il generatore di numeri casuali
+    srand(time(NULL));  // Inizializza il generatore di numeri casuali
 
     while (1) {
         current_time = time(NULL);
@@ -63,9 +63,9 @@ int main() {
 
         printf("%s [INFO] Avvio nuova scansione...\n", ctime(&current_time));
 
-        // Eseguo la scansione con nmap
+        // Esegue la scansione con nmap
         char cmd[128];
-        snprintf(cmd, sizeof(cmd), "sudo nmap -p 1-1024 %s > /dev/null", target_ip);
+        snprintf(cmd, sizeof(cmd), "sudo nmap -sS -p 1-1024 %s > /dev/null", target_ip);
         int ret = system(cmd);
         
         if (ret == -1) {

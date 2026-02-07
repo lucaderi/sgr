@@ -1,4 +1,4 @@
-Brotli==1.0.9
+Brotli==1.2.0
 click==8.0.1
 dash==2.15.0
 dash-core-components==2.0.0

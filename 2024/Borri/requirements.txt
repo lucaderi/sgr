@@ -16,7 +16,7 @@ numpy==2.0.0
 packaging==24.1
 pandas==2.2.2
 patsy==0.5.6
-pillow==10.4.0
+pillow==12.1.1
 pyarrow==16.1.0
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0

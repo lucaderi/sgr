@@ -1,0 +1,115 @@
+1.	TCP 192.168.1.90:46358 <-> 149.154.167.92:443 
+[proto: 185/Telegram]
+[IP: 185/Telegram]
+[Encrypted]
+[Confidence: Match by IP]
+[FPC: 185/Telegram, Confidence: IP address]
+[DPI packets: 4]
+[cat: Chat/9]
+[218 pkts/48450 bytes <-> 403 pkts/395930 bytes]
+[Goodput ratio: 70/93]
+[16.72 sec]
+[bytes ratio: -0.782 (Download)]
+[IAT c2s/s2c min/avg/max/stddev: 0/0 91/40 6689/6754 617/428]
+[Pkt Len c2s/s2c min/avg/max/stddev: 66/66 222/982 1294/1294 358/495]
+[Risk: ** Susp Entropy **]
+[Risk Score: 10]
+[Risk Info: Entropy: 7.841 (Encrypted or Random?)]
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+[PLAIN TEXT (IP@QrvX)]
+[Plen Bins: 8,0,5,3,2,4,2,2,3,1,0,0,1,0,0,0,1,0,0,0,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,0,0,0,0,0,0,0,0,0]
+
+2.	TCP 192.168.1.90:40305 <-> 17.242.218.132:5223 
+[proto: 238/ApplePush]
+[IP: 140/Apple]
+[Encrypted]
+[Confidence: DPI]
+[FPC: 238/ApplePush, Confidence: DPI]
+[DPI packets: 1]
+[cat: Cloud/13]
+[18 pkts/16794 bytes <-> 12 pkts/1018 bytes]
+[Goodput ratio: 93/22]
+[19.25 sec]
+[bytes ratio: 0.886 (Upload)]
+[IAT c2s/s2c min/avg/max/stddev: 0/0 1277/462 14964/2059 3720/853]
+[Pkt Len c2s/s2c min/avg/max/stddev: 66/66 933/85 1506/129 660/23]
+[PLAIN TEXT (TM// u)]
+[Plen Bins: 20,20,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50,0,0]
+
+3.	TCP 192.168.1.90:40819 <-> 149.154.167.222:443 
+[proto: 185/Telegram]
+[IP: 185/Telegram]
+[Encrypted]
+[Confidence: Match by IP]
+[FPC: 185/Telegram, Confidence: IP address]
+[DPI packets: 4]
+[cat: Chat/9]
+[13 pkts/2363 bytes <-> 14 pkts/7631 bytes]
+[Goodput ratio: 63/88]
+[11.97 sec]
+[bytes ratio: -0.527 (Download)]
+[IAT c2s/s2c min/avg/max/stddev: 0/0 695/498 6802/4901 2036/1468]
+[Pkt Len c2s/s2c min/avg/max/stddev: 66/66 182/545 1294/1294 325/561]
+[Risk: ** Susp Entropy **]
+[Risk Score: 10]
+[Risk Info: Entropy: 7.833 (Encrypted or Random?)]
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+[Plen Bins: 7,0,0,23,15,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,46,0,0,0,0,0,0,0,0,0]
+
+4.	TCP 192.168.1.90:42776 <-> 149.154.167.222:443 
+[proto: 185/Telegram]
+[IP: 185/Telegram]
+[Encrypted]
+[Confidence: Match by IP]
+[FPC: 185/Telegram, Confidence: IP address]
+[DPI packets: 4]
+[cat: Chat/9]
+[10 pkts/2197 bytes <-> 7 pkts/1006 bytes]
+[Goodput ratio: 69/53]
+[11.96 sec]
+[bytes ratio: 0.372 (Upload)]
+[IAT c2s/s2c min/avg/max/stddev: 0/0 1488/1236 6802/4897 2585/2114]
+[Pkt Len c2s/s2c min/avg/max/stddev: 66/66 220/144 1294/381 363/122]
+[Risk: ** Susp Entropy **]
+[Risk Score: 10]
+[Risk Info: Entropy: 7.858 (Encrypted or Random?)]
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+[Plen Bins: 16,0,0,16,0,16,16,0,0,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,0,0,0,0,0]
+
+5.	TCP 192.168.1.90:38777 <-> 149.154.167.92:443 
+[proto: 185/Telegram]
+[IP: 185/Telegram]
+[Encrypted]
+[Confidence: Match by IP]
+[FPC: 185/Telegram, Confidence: IP address]
+[DPI packets: 4]
+[cat: Chat/9]
+[7 pkts/979 bytes <-> 4 pkts/614 bytes]
+[Goodput ratio: 52/56]
+[16.72 sec]
+[bytes ratio: 0.229 (Upload)]
+[IAT c2s/s2c min/avg/max/stddev: 0/1 3337/17 16622/33 6642/16]
+[Pkt Len c2s/s2c min/avg/max/stddev: 66/66 140/154 571/404 176/145]
+[Risk: ** Susp Entropy **]
+[Risk Score: 10]
+[Risk Info: Entropy: 7.600 (Encrypted or Random?)]
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+[Plen Bins: 33,0,0,0,0,0,0,0,0,0,33,0,0,0,0,33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+6.	UDP 192.168.1.90:65374 <-> 192.168.1.1:53 
+[proto: 5/DNS][IP: 0/Unknown][ClearText][Confidence: DPI][FPC: 5/DNS, Confidence: DPI][DPI packets: 3][cat: Network/14][5 pkts/530 bytes <-> 5 pkts/664 bytes][Goodput ratio: 60/68][2.02 sec][Hostname/SNI: 3.1.168.192.in-addr.arpa][0.0.0.0][DNS Id: 0x7e05][DNS Ptr: marco.homenet.telecomitalia.it][bytes ratio: -0.112 (Mixed)][IAT c2s/s2c min/avg/max/stddev: 0/0 500/503 1000/1013 500/503][Pkt Len c2s/s2c min/avg/max/stddev: 99/97 106/133 109/148 4/18][Risk: ** Minor Issues **][Risk Score: 10][Risk Info: DNS Record with zero TTL][PLAIN TEXT (homenet)][Plen Bins: 0,20,40,40,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+
+Ci sono 17 conversazioni, di cui dalla 6 in poi non è presente telegram.
+
+
+ Resoconto:
+1.	TCP, Telegram, 
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+3.	TCP, Telegram, 
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+4.	TCP, Telegram,
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+5.	TCP, Telegram,
+[TCP Fingerprint: 194_64_65535_09b18f059744/Unknown]
+

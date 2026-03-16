@@ -294,7 +294,7 @@ Resoconto:
 4.	TCP, TLS.Amazon, unagi.amazon.it,
 [TCP Fingerprint: 194_64_65535_d29295416479/macOS]
 [TLSv1.3]
-[JA4: t13d1313ht_f57a46bbacb6_7f0f34a4126d]
+[JA4: t13d1313h2_f57a46bbacb6_7f0f34a4126d]
 [JA3S: f4febc55ea12b31ae17cfb7e614afda8]
 5.	TCP, TLS.Amazon, msh.amazon.co.uk,
 [TCP Fingerprint: 194_64_65535_d29295416479/macOS]

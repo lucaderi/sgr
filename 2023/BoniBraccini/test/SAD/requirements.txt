@@ -1,7 +1,0 @@
-pandas
-prophet
-requests
-schedule
-scipy
-datetime
-prometheus-client

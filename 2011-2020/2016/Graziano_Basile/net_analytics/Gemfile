@@ -1,5 +1,0 @@
-
-source 'http://rubygems.org'
-gem 'json'
-gem 'sqlite3'
-gem 'telegram-bot-ruby'

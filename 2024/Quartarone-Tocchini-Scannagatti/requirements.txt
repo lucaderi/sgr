@@ -1,7 +1,0 @@
-numpy
-pandas
-matplotlib
-scipy
-adjustText
-argparse
-itertools

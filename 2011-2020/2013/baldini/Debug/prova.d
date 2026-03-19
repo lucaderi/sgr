@@ -1,1 +1,0 @@
-prova.d: ../prova.cpp

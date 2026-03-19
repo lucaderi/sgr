@@ -1,2 +1,0 @@
-daniele_sartiano: daniele_sartiano.c
-	gcc -Wall -g  daniele_sartiano.c mongoose.c flow_export.c flow_queue.c manage_rrd.c flow.c hashtable.c -o daniele_sartiano -ldl -lpcap -levent -L /usr/local/lib/ -lGeoIP  -lpthread

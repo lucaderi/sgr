@@ -1,2 +1,0 @@
-cd bin
-java detects_attacks.Main_Detects_Attacks

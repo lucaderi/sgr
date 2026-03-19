@@ -1,6 +1,0 @@
-*
-!README.md
-!hostsconf
-!hostsconf/example.yaml
-!default.jinja
-!*.py

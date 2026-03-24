@@ -571,11 +571,6 @@ int main(int argc, char* argv[]) {
 
   /*
    * LOOP PRINCIPALE --> sniffing vero e proprio
-   *
-   * Ho dovuto tirare su due thread per riuscire a strutturare il parallelismo
-   * di comunicazione tra le due interfacce. Senza il primo pcap_loop avrebbe
-   * bloccato l'esecuzione del secondo finche carico di disponibilita di pacchetti da inviare
-   * In questo modo il bridge funziona correttamente
    */
   // ottengo i file descriptor
   // OSS: pd1 e pd2 non sono file descriptor ma puntatori a una struttura pcap_t

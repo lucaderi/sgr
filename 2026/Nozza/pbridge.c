@@ -594,7 +594,7 @@ int main(int argc, char* argv[]) {
           pcap_sendpacket(pd_out, packet_data, header->caplen);
           dummyProcessPacket(NULL, header, packet_data);
         } else if(res_a < 0) {
-          fprintf(stderr, "Error reading from input device: %s\n", pcap_geterr(pd));\
+          fprintf(stderr, "Error reading from input device: %s\n", pcap_geterr(pd));
           break;
         }
       }

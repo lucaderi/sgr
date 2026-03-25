@@ -4,13 +4,6 @@ Se riuscite, invece di gestire la consegna di pbridge.c in modo aritgianale, sar
 */
 
 
-/*
-Modifiche rispetto a pcount.c:
-- parametro -o
-- riferimento al device di output pd_out
-- apertura di tale device 
-- iniezione dei pacchetti all'interno della funzione 'dummyProcessPacket'
-*/
 
 #include <pcap/pcap.h>
 #include <sys/stat.h>
@@ -23,10 +16,11 @@ Modifiche rispetto a pcount.c:
 
 
 #define ALARM_SLEEP       1
-#define DEFAULT_SNAPLEN 65535 /* Evita di troncare frame */
-pcap_t  *pd, *pd_out;
-int verbose = 0;
-struct pcap_stat pcapStats;
+#define DEFAULT_SNAPLEN 65535
+pcap_t  *pdA, *pdB;
+volatile sig_atomic_t stop_bridge = 0;
+unsigned long long pktsAtoB = 0;
+unsigned long long pktsBtoA = 0;
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,73 +37,8 @@ struct pcap_stat pcapStats;
 #include <netinet/ip6.h>
 #include <net/ethernet.h>     /* the L2 protocols */
 
-static struct timeval startTime;
-unsigned long long numPkts = 0, numBytes = 0;
-unsigned long long numInjectedPkts = 0, numInjectedBytes = 0;
-unsigned long long numInjectErrors = 0;
-pcap_dumper_t *dumper = NULL;
+#include <pthread.h>
 
-/* *************************************** */
-
-int32_t gmt_to_local(time_t t) {
-    int dt, dir;
-    struct tm *gmt, *loc;
-    struct tm sgmt;
-
-    if (t == 0)
-        t = time(NULL);
-    gmt = &sgmt;
-    *gmt = *gmtime(&t);
-    loc = localtime(&t);
-    dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
-        (loc->tm_min - gmt->tm_min) * 60;
-
-    /*
-     * If the year or julian day is different, we span 00:00 GMT
-     * and must add or subtract a day. Check the year first to
-     * avoid problems when the julian day wraps.
-     */
-    dir = loc->tm_year - gmt->tm_year;
-    if (dir == 0)
-        dir = loc->tm_yday - gmt->tm_yday;
-    dt += dir * 24 * 60 * 60;
-
-    return (dt);
-}
-
-char* format_numbers(double val, char *buf, u_int buf_len, u_int8_t add_decimals) {
-    u_int a1 = ((u_long)val / 1000000000) % 1000;
-    u_int a = ((u_long)val / 1000000) % 1000;
-    u_int b = ((u_long)val / 1000) % 1000;
-    u_int c = (u_long)val % 1000;
-    u_int d = (u_int)((val - (u_long)val)*100) % 100;
-
-    if (add_decimals) {
-        if (val >= 1000000000) {
-            snprintf(buf, buf_len, "%u'%03u'%03u'%03u.%02d", a1, a, b, c, d);
-        } else if (val >= 1000000) {
-            snprintf(buf, buf_len, "%u'%03u'%03u.%02d", a, b, c, d);
-        } else if (val >= 100000) {
-            snprintf(buf, buf_len, "%u'%03u.%02d", b, c, d);
-        } else if (val >= 1000) {
-            snprintf(buf, buf_len, "%u'%03u.%02d", b, c, d);
-        } else
-            snprintf(buf, buf_len, "%.2f", val);
-    } else {
-        if (val >= 1000000000) {
-            snprintf(buf, buf_len, "%u'%03u'%03u'%03u", a1, a, b, c);
-        } else if (val >= 1000000) {
-            snprintf(buf, buf_len, "%u'%03u'%03u", a, b, c);
-        } else if (val >= 100000) {
-            snprintf(buf, buf_len, "%u'%03u", b, c);
-        } else if (val >= 1000) {
-            snprintf(buf, buf_len, "%u'%03u", b, c);
-        } else
-            snprintf(buf, buf_len, "%u", (unsigned int)val);
-    }
-
-    return(buf);
-}
 
 /* *************************************** */
 
@@ -144,363 +73,29 @@ int drop_privileges(const char *username) {
     return 0;
 }
 
-/* *************************************** */
-/*
- * The time difference in microseconds
- */
-long delta_time (struct timeval * now,
-                 struct timeval * before) {
-    time_t delta_seconds;
-    time_t delta_microseconds;
-
-    /*
-     * compute delta in second, 1/10's and 1/1000's second units
-     */
-    delta_seconds      = now -> tv_sec  - before -> tv_sec;
-    delta_microseconds = now -> tv_usec - before -> tv_usec;
-
-    if (delta_microseconds < 0) {
-        /* manually carry a one from the seconds field */
-        delta_microseconds += 1000000;  /* 1e6 */
-        -- delta_seconds;
-    }
-    return((delta_seconds * 1000000) + delta_microseconds);
-}
-
-/* ******************************** */
-
-void print_stats() {
-    struct pcap_stat pcapStat;
-    struct timeval endTime;
-    float deltaSec;
-
-    static u_int64_t lastPkts = 0;
-    static u_int64_t lastInjectedPkts = 0;
-    static u_int64_t lastInjectedBytes = 0;
-    static u_int64_t lastInjectErrors = 0;
-
-    u_int64_t diff;
-    u_int64_t diffInjectedPkts, diffInjectedBytes, diffInjectErrors;
-
-    static struct timeval lastTime;
-    char buf1[64], buf2[64], buf3[64], buf4[64], buf5[64];
-
-    if (startTime.tv_sec == 0) {
-        lastTime.tv_sec = 0;
-        gettimeofday(&startTime, NULL);
-        return;
-    }
-
-    gettimeofday(&endTime, NULL);
-    deltaSec = (double)delta_time(&endTime, &startTime)/1000000;
-
-    fprintf(stderr, "=========================\n");
-
-    /* ---- CAPTURE STATS ---- */
-    if (pcap_stats(pd, &pcapStat) >= 0) {
-        fprintf(stderr,
-          "Capture Absolute Stats: [%u pkts rcvd][%u pkts dropped]\n"
-          "Capture Total Pkts=%u/Dropped=%.1f %%\n",
-          pcapStat.ps_recv, pcapStat.ps_drop,
-          pcapStat.ps_recv - pcapStat.ps_drop,
-          pcapStat.ps_recv == 0 ? 0 : (double)(pcapStat.ps_drop * 100) / (double)pcapStat.ps_recv);
-
-        fprintf(stderr,
-          "Capture App Totals: %llu pkts [%.1f pkt/sec] - %llu bytes [%.2f Mbit/sec]\n",
-          numPkts, (double)numPkts / deltaSec,
-          numBytes, (double)8 * numBytes / (double)(deltaSec * 1000000));
-    } else {
-        fprintf(stderr,
-          "Capture Absolute Stats: unavailable [%s]\n",
-          pcap_geterr(pd));
-        fprintf(stderr,
-          "Capture App Totals: %llu pkts [%.1f pkt/sec] - %llu bytes [%.2f Mbit/sec]\n",
-          numPkts, (double)numPkts / deltaSec,
-          numBytes, (double)8 * numBytes / (double)(deltaSec * 1000000));
-    }
-
-    /* ---- INJECTION STATS ---- */
-    fprintf(stderr,
-        "-------------------------\n"
-        "Inject Absolute Stats: [%llu pkts injected][%llu inject errors]\n"
-        "Inject Total Pkts=%llu/Errors=%.1f %%\n",
-        numInjectedPkts, numInjectErrors,
-        numInjectedPkts,
-        (numInjectedPkts + numInjectErrors) == 0 ? 0 :
-          (double)(numInjectErrors * 100) / (double)(numInjectedPkts + numInjectErrors));
-
-    fprintf(stderr,
-        "Inject Totals: %llu pkts [%.1f pkt/sec] - %llu bytes [%.2f Mbit/sec]\n",
-        numInjectedPkts, (double)numInjectedPkts / deltaSec,
-        numInjectedBytes, (double)8 * numInjectedBytes / (double)(deltaSec * 1000000));
-
-    if (lastTime.tv_sec > 0) {
-        deltaSec = (double)delta_time(&endTime, &lastTime)/1000000;
-
-        /* capture actual */
-        diff = numPkts - lastPkts;
-        fprintf(stderr,
-          "=========================\n"
-          "Capture Actual Stats: %s pkts [%.1f ms][%s pkt/sec]\n",
-          format_numbers(diff, buf1, sizeof(buf1), 0),
-          deltaSec * 1000,
-          format_numbers(((double)diff / (double)(deltaSec)), buf2, sizeof(buf2), 1));
-
-        /* injection actual */
-        diffInjectedPkts = numInjectedPkts - lastInjectedPkts;
-        diffInjectedBytes = numInjectedBytes - lastInjectedBytes;
-        diffInjectErrors = numInjectErrors - lastInjectErrors;
-
-        fprintf(stderr,
-          "Inject Actual Stats: %s pkts [%.1f ms][%s pkt/sec] - %s bytes [%.2f Mbit/sec] - %s errors\n",
-          format_numbers(diffInjectedPkts, buf3, sizeof(buf3), 0),
-          deltaSec * 1000,
-          format_numbers(((double)diffInjectedPkts / (double)(deltaSec)), buf4, sizeof(buf4), 1),
-          format_numbers(diffInjectedBytes, buf5, sizeof(buf5), 0),
-          (double)8 * diffInjectedBytes / (double)(deltaSec * 1000000),
-          format_numbers(diffInjectErrors, buf1, sizeof(buf1), 0));
-
-        lastPkts = numPkts;
-        lastInjectedPkts = numInjectedPkts;
-        lastInjectedBytes = numInjectedBytes;
-        lastInjectErrors = numInjectErrors;
-    }
-
-    fprintf(stderr, "=========================\n");
-
-    lastTime.tv_sec = endTime.tv_sec;
-    lastTime.tv_usec = endTime.tv_usec;
-}
-
-/* ******************************** */
-
-void sigproc(int sig) {
-    static int called = 0;
-
-    fprintf(stderr, "Leaving...\n");
-    if (called) return; else called = 1;
-
-    pcap_breakloop(pd);
-}
-
-/* ******************************** */
-
-void my_sigalarm(int sig) {
-    print_stats();
-    alarm(ALARM_SLEEP);
-    signal(SIGALRM, my_sigalarm);
-}
-
-/* ****************************************************** */
-
-static char hex[] = "0123456789ABCDEF";
-
-char* etheraddr_string(const u_char *ep, char *buf) {
-    u_int i, j;
-    char *cp;
-
-    cp = buf;
-    if ((j = *ep >> 4) != 0)
-        *cp++ = hex[j];
-    else
-        *cp++ = '0';
-
-    *cp++ = hex[*ep++ & 0xf];
-
-    for(i = 5; (int)--i >= 0;) {
-        *cp++ = ':';
-        if ((j = *ep >> 4) != 0)
-            *cp++ = hex[j];
-        else
-            *cp++ = '0';
-
-        *cp++ = hex[*ep++ & 0xf];
-    }
-
-    *cp = '\0';
-    return (buf);
-}
-
-/* ****************************************************** */
-
-/*
- * A faster replacement for inet_ntoa().
- */
-char* __intoa(unsigned int addr, char* buf, u_short bufLen) {
-    char *cp, *retStr;
-    u_int byte;
-    int n;
-
-    cp = &buf[bufLen];
-    *--cp = '\0';
-
-    n = 4;
-    do {
-        byte = addr & 0xff;
-        *--cp = byte % 10 + '0';
-        byte /= 10;
-        if (byte > 0) {
-            *--cp = byte % 10 + '0';
-            byte /= 10;
-            if (byte > 0)
-                *--cp = byte + '0';
-        }
-        *--cp = '.';
-        addr >>= 8;
-    } while (--n > 0);
-
-    /* Convert the string to lowercase */
-    retStr = (char*)(cp+1);
-
-    return(retStr);
-}
-
-/* ************************************ */
-
-static char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
-
-char* intoa(unsigned int addr) {
-    return(__intoa(addr, buf, sizeof(buf)));
-}
-
-/* ************************************ */
-
-static inline char* in6toa(struct in6_addr addr6) {
-    snprintf(buf, sizeof(buf),
-           "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-           addr6.s6_addr[0], addr6.s6_addr[1], addr6.s6_addr[2],
-           addr6.s6_addr[3], addr6.s6_addr[4], addr6.s6_addr[5], addr6.s6_addr[6],
-           addr6.s6_addr[7], addr6.s6_addr[8], addr6.s6_addr[9], addr6.s6_addr[10],
-           addr6.s6_addr[11], addr6.s6_addr[12], addr6.s6_addr[13], addr6.s6_addr[14],
-           addr6.s6_addr[15]);
-
-    return(buf);
-}
-
-/* ****************************************************** */
-
-char* proto2str(u_short proto) {
-    static char protoName[8];
-
-    switch(proto) {
-    case IPPROTO_TCP:  return("TCP");
-    case IPPROTO_UDP:  return("UDP");
-    case IPPROTO_ICMP: return("ICMP");
-    default:
-        snprintf(protoName, sizeof(protoName), "%d", proto);
-        return(protoName);
-    }
-}
-
-/* ****************************************************** */
-
-static int32_t thiszone;
 
 /* *************************************** */
 
 int send_packet(pcap_t *handle, const unsigned char *packet, int len) {
-    int rc = pcap_inject(handle, packet, len);
-
-    if (rc == -1) {
-        numInjectErrors++;
+    if (pcap_inject(handle, packet, len) == -1) {
         fprintf(stderr, "Failed to send packet: %s\n", pcap_geterr(handle));
         return -1;
     }
-
-    numInjectedPkts++;
-    numInjectedBytes += len;
     return 0;
 }
 
 /* *************************************** */
 
-void dummyProcesssPacket(u_char *_deviceId,
+void forwardPacket(u_char *_deviceId,
                          const struct pcap_pkthdr *h,
                          const u_char *p) {
+    
 
-    // printf("pcap_sendpacket returned %d\n", pcap_sendpacket(pd, p, h->caplen));
-
-    if (dumper)
-        pcap_dump((u_char*)dumper, (struct pcap_pkthdr*)h, p);
-
-    if (verbose) {
-        struct ether_header ehdr;
-        u_short eth_type;
-        char buf1[32], buf2[32];
-        struct ip ip;
-        struct ip6_hdr ip6;
-
-        int s = (h->ts.tv_sec + thiszone) % 86400;
-
-        printf("%02d:%02d:%02d.%06u ",
-           s / 3600, (s % 3600) / 60, s % 60,
-           (unsigned)h->ts.tv_usec);
-
-        memcpy(&ehdr, p, sizeof(struct ether_header));
-        eth_type = ntohs(ehdr.ether_type);
-        printf("[%s -> %s] ",
-           etheraddr_string(ehdr.ether_shost, buf1),
-           etheraddr_string(ehdr.ether_dhost, buf2));
-
-        /* Si ignorano i pacchetti VLAN perchè si dovrebbe modificare 'p' */
-        /*
-        if(eth_type == 0x8100) {
-          vlan_id = (p[14] & 15)*256 + p[15];
-          eth_type = (p[16])*256 + p[17];
-          printf("[vlan %u] ", vlan_id);
-          p+=4;
-        }
-        */
-        if (eth_type == 0x0800) {
-            memcpy(&ip, p+sizeof(ehdr), sizeof(struct ip));
-            printf("[%s]", proto2str(ip.ip_p));
-            printf("[%s ", intoa(ntohl(ip.ip_src.s_addr)));
-            printf("-> %s] ", intoa(ntohl(ip.ip_dst.s_addr)));
-        } else if (eth_type == 0x86DD) {
-            memcpy(&ip6, p+sizeof(ehdr), sizeof(struct ip6_hdr));
-            printf("[%s ", in6toa(ip6.ip6_src));
-            printf("-> %s] ", in6toa(ip6.ip6_dst));
-        } else if (eth_type == 0x0806)
-            printf("[ARP]");
-        else
-            printf("[eth_type=0x%04X]", eth_type);
-
-        printf("[caplen=%u][len=%u]\n", h->caplen, h->len);
+    if ((pcap_t*)_deviceId == pdA) {
+        if (send_packet(pdB, p, h->caplen) == 0) pktsAtoB++;
+    } else {
+        if (send_packet(pdA, p, h->caplen) == 0) pktsBtoA++;
     }
-
-    if (numPkts == 0) gettimeofday(&startTime, NULL);
-    numPkts++, numBytes += h->len;
-
-    if (verbose == 2) {
-        int i;
-
-        for(i = 0; i < h->caplen; i++)
-            printf("%02X ", p[i]);
-        printf("\n");
-    }
-
-    if (pd_out != NULL) {
-        struct ether_header *eth = (struct ether_header*)p;
-
-        /* Blocco per non iniettare tutti i pacchetti catturati provenienti da 192.168.1.1 */
-        /*
-        if(ntohs(eth->ether_type) == 0x0800) {
-            struct ip *ip_hdr = (struct ip*)(p + sizeof(struct ether_header));
-
-            unsigned int blocked_ip = inet_addr("192.168.1.1");
-
-            if(ip_hdr->ip_src.s_addr == blocked_ip) {
-                if(verbose) printf("Packet from blocked IP skipped\n");
-                return; 
-            }
-        }
-        */
-
-        if (send_packet(pd_out, p, h->caplen) == 0) {
-            if (verbose) printf("Injecting a received packet...\n");
-        }
-    }
-
 }
 
 /* *************************************** */
@@ -509,13 +104,11 @@ void printHelp(void) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *devpointer;
 
-    printf("Usage: pbridge [-h] -i <device|path> -o <output device|path> [-w <path>] [-f <filter>] [-l <len>] [-v <1|2>]\n");
-    printf("-h               [Print help]\n");
-    printf("-i <device|path> [Device name or file path]\n");
-    printf("-f <filter>      [pcap filter]\n");
-    printf("-w <path>        [pcap write file]\n");
-    printf("-l <len>         [Capture length]\n");
-    printf("-v <mode>        [Verbose [1: verbose, 2: very verbose (print payload)]]\n");
+    printf("Usage: pbridge [-h] -i <deviceA> -o <deviceB> [-f <filter>]\n");
+    printf("-h            Print help\n");
+    printf("-i <deviceA>  Input interface A\n");
+    printf("-o <deviceB>  Output interface B\n");
+    printf("-f <filter>   BPF filter applied on both interfaces\n");
 
     if (pcap_findalldevs(&devpointer, errbuf) == 0) {
         int i = 0;
@@ -536,18 +129,37 @@ void printHelp(void) {
 
 /* *************************************** */
 
+void *bridge (void *arg) {
+    pcap_t *device = (pcap_t*) arg;
+    pcap_loop(device, -1, forwardPacket, (u_char *)device);
+    return 0;
+}
+
+/* *************************************** */
+
+void handle_sigint(int sig) {
+    stop_bridge = 1;
+
+    if (pdA != NULL) pcap_breakloop(pdA);
+    if (pdB != NULL) pcap_breakloop(pdB);
+}
+
+/* *************************************** */
+
+
 int main(int argc, char* argv[]) {
-    char *device = NULL, *odevice = NULL, *bpfFilter = NULL;
+    char *deviceA = NULL, *deviceB = NULL, *bpfFilter = NULL;
     u_char c;
     char errbuf[PCAP_ERRBUF_SIZE];
     int promisc, snaplen = DEFAULT_SNAPLEN;
-    struct bpf_program fcode;
-    struct stat s;
+    struct bpf_program fcodeA, fcodeB;
+    pthread_t tA, tB;
+    
+    signal(SIGINT, handle_sigint);
+    signal(SIGTERM, handle_sigint);
 
-    startTime.tv_sec = 0;
-    thiszone = gmt_to_local(0);
 
-    while((c = getopt(argc, argv, "hi:l:v:f:w:o:")) != '?') {
+    while((c = getopt(argc, argv, "hi:f:o:")) != '?') {
         if ((c == 255) || (c == (u_char)-1)) break;
 
         switch(c) {
@@ -557,31 +169,14 @@ int main(int argc, char* argv[]) {
             break;
 
         case 'i':
-            device = strdup(optarg);
+            deviceA = strdup(optarg);
             break;
-
-        case 'l':
-            snaplen = atoi(optarg);
-            break;
-
-        case 'v':
-            verbose = atoi(optarg);
-            break;
-
-        case 'w':
-            dumper = pcap_dump_open(pcap_open_dead(DLT_EN10MB, 16384 /* MTU */), optarg);
-            if (dumper == NULL) {
-                printf("Unable to open dump file %s\n", optarg);
-                return(-1);
-            }
-            break;
-
         case 'f':
             bpfFilter = strdup(optarg);
             break;
 
         case 'o':
-            odevice = strdup(optarg);
+            deviceB = strdup(optarg);
             break;
         }
     }
@@ -591,53 +186,52 @@ int main(int argc, char* argv[]) {
         return(-1);
     }
 
-    if (device == NULL) {
+    if (deviceA == NULL) {
         printf("ERROR: Missing -i\n");
         printHelp();
         return(-1);
     }
 
-    if (odevice == NULL) {
+    if (deviceB == NULL) {
         printf("ERROR: Missing -o\n");
         printHelp();
         return(-1);
     }
 
-    if (strcmp(device, odevice) == 0) {
+    if (strcmp(deviceA, deviceB) == 0) {
         printf("ERROR: '-o' device must be different than '-i' device\n");
         return -1;
     }
 
-    printf("Capturing from %s and injecting to %s\n", device, odevice);
+    printf("Bridging %s and %s\n", deviceA, deviceB);
 
-    if (stat(device, &s) == 0) {
-        /* Device is a file on filesystem */
-        /* Da aggiungere: bridge da file a rete: pcap_open_live su `odevice` */
-        if ((pd = pcap_open_offline(device, errbuf)) == NULL) {
-            printf("pcap_open_offline: %s\n", errbuf);
-            return(-1);
-        }
-    } else {
-        /* hardcode: promisc=1, to_ms=500 */
-        promisc = 1;
-        pd = pcap_open_live(device, snaplen, promisc, 500, errbuf);
-        if (pd == NULL) {
-            printf("pcap_open_live (input): %s\n", errbuf);
-            return -1;
-        }
-
-        pd_out = pcap_open_live(odevice, snaplen, promisc, 500, errbuf);
-        if (pd_out == NULL) {
-            printf("pcap_open_live (output): %s\n", errbuf);
-            return -1;
-        }
+    /* hardcode: promisc=1, to_ms=500 */
+    promisc = 1;
+    pdA = pcap_open_live(deviceA, snaplen, promisc, 500, errbuf);
+    if (pdA == NULL) {
+        printf("pcap_open_live (input): %s\n", errbuf);
+        return -1;
     }
+
+    pdB = pcap_open_live(deviceB, snaplen, promisc, 500, errbuf);
+    if (pdB == NULL) {
+        printf("pcap_open_live (output): %s\n", errbuf);
+        return -1;
+    }
+
+    if (pcap_setdirection(pdA, PCAP_D_IN) != 0) fprintf(stderr, "pcap_setdirection error on device: %s\n", deviceA);
+    if (pcap_setdirection(pdB, PCAP_D_IN) != 0) fprintf(stderr, "pcap_setdirection error on device: %s\n", deviceB);
+
     if (bpfFilter != NULL) {
-        if (pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) {
-            printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
+        if (pcap_compile(pdA, &fcodeA, bpfFilter, 1, 0xFFFFFF00) < 0 ||
+            pcap_compile(pdB, &fcodeB, bpfFilter, 1, 0xFFFFFF00) < 0
+           ) {
+            printf("pcap_compile error: '%s'\n", pcap_geterr(pdA));
         } else {
-            if (pcap_setfilter(pd, &fcode) < 0) {
-                printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
+            if (pcap_setfilter(pdA, &fcodeA) < 0 ||
+                pcap_setfilter(pdB, &fcodeB) < 0
+            ) {
+                printf("pcap_setfilter error: '%s'\n", pcap_geterr(pdA));
             }
         }
     }
@@ -645,24 +239,21 @@ int main(int argc, char* argv[]) {
     if (drop_privileges("nobody") < 0)
         return(-1);
 
-    signal(SIGINT, sigproc);
-    signal(SIGTERM, sigproc);
-
-    if (!verbose) {
-        signal(SIGALRM, my_sigalarm);
-        alarm(ALARM_SLEEP);
+    if (pthread_create(&tA, NULL, bridge, pdA) != 0 ||
+        pthread_create(&tB, NULL, bridge, pdB) != 0) {
+        printf("pthread_create error.\n");
+        return 1;
     }
 
-    pcap_loop(pd, -1, dummyProcesssPacket, NULL);
+    pthread_join(tA, NULL);
+    pthread_join(tB, NULL);
 
-    print_stats();
+    printf("\nBridge stopped\n");
+    printf("Packets A -> B: %llu\n", pktsAtoB);
+    printf("Packets B -> A: %llu\n", pktsBtoA);
 
-    pcap_close(pd);
-
-    if (pd_out) pcap_close(pd_out);
-
-    if (dumper)
-        pcap_dump_close(dumper);
+    pcap_close(pdA);
+    pcap_close(pdB);
 
     return(0);
 }

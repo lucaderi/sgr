@@ -572,19 +572,41 @@ int main(int argc, char* argv[]) {
     while (running_flag) {
       int poll_retval = poll(fds, 2, 1000);
       
-      if(poll_retval <= 0) continue;
+      if(poll_retval < 0) {
+        int errfound = errno;
+        /* Il ciclo continua solo se l'errore 
+         * dipende da un segnale arrivato 
+         * prima di un evento richiesto */
+        if(errfound == EINTR) continue;
+        else {
+          fprintf(stderr, "Polling failed: %s\n", strerror(errfound));
+          break;
+        } 
+      }
+
+      if(poll_retval == 0) continue;
       
+      /* Aggiunta gestione errori durante lettura pacchetti */
+
       if(fds[0].revents & POLLIN) {
-        if(pcap_next_ex(pd, &header, &packet_data) == 1) {
+        int res_a = pcap_next_ex(pd, &header, &packet_data);
+        if(res_a == 1) {
           pcap_sendpacket(pd_out, packet_data, header->caplen);
           dummyProcessPacket(NULL, header, packet_data);
+        } else if(res_a < 0) {
+          fprintf(stderr, "Error reading from input device: %s\n", pcap_geterr(pd));\
+          break;
         }
       }
 
       if(fds[1].revents & POLLIN) {
-        if(pcap_next_ex(pd_out, &header, &packet_data) == 1) {
+        int res_b = pcap_next_ex(pd_out, &header, &packet_data);
+        if(res_b == 1) {
           pcap_sendpacket(pd, packet_data, header->caplen);
           dummyProcessPacket(NULL, header, packet_data);
+        } else if(res_b < 0) {
+          fprintf(stderr, "Error reading from output device: %s\n", pcap_geterr(pd_out));
+          break;
         }
       }
     }

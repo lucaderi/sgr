@@ -10,69 +10,27 @@
 #include <pcap/pcap.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <sched.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <pwd.h>
 
 
-#define ALARM_SLEEP       1
 #define DEFAULT_SNAPLEN 256
 pcap_t* pd;
 pcap_t* pd2;
-int verbose = 0;
-struct pcap_stat pcapStats;
 
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include <errno.h>
 #include <poll.h>
-#include <time.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
-#include <net/ethernet.h>     /* the L2 protocols */
 
 
 static struct timeval startTime;
 unsigned long long numPkts = 0, numBytes = 0;
-pcap_dumper_t* dumper = NULL;
 volatile int running = 1;
 
 /* *************************************** */
-
-int32_t gmt_to_local(time_t t)
-{
-    int dt, dir;
-    struct tm *gmt, *loc;
-    struct tm sgmt;
-
-    if (t == 0)
-        t = time(NULL);
-    gmt = &sgmt;
-    *gmt = *gmtime(&t);
-    loc = localtime(&t);
-    dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
-        (loc->tm_min - gmt->tm_min) * 60;
-
-    /*
-     * If the year or julian day is different, we span 00:00 GMT
-     * and must add or subtract a day. Check the year first to
-     * avoid problems when the julian day wraps.
-     */
-    dir = loc->tm_year - gmt->tm_year;
-    if (dir == 0)
-        dir = loc->tm_yday - gmt->tm_yday;
-    dt += dir * 24 * 60 * 60;
-
-    return (dt);
-}
 
 char* format_numbers(double val, char* buf, u_int buf_len, u_int8_t add_decimals)
 {
@@ -261,199 +219,23 @@ void sigproc(int sig)
     if (pd2 != NULL) pcap_breakloop(pd2);
 }
 
-/* ******************************** */
-
-void my_sigalarm(int sig)
-{
-    print_stats();
-    alarm(ALARM_SLEEP);
-    signal(SIGALRM, my_sigalarm);
-}
 
 /* ****************************************************** */
 
-static char hex[] = "0123456789ABCDEF";
 
-char* etheraddr_string(const u_char* ep, char* buf)
-{
-    u_int i, j;
-    char* cp;
-
-    cp = buf;
-    if ((j = *ep >> 4) != 0)
-        *cp++ = hex[j];
-    else
-        *cp++ = '0';
-
-    *cp++ = hex[*ep++ & 0xf];
-
-    for (i = 5; (int)--i >= 0;)
-    {
-        *cp++ = ':';
-        if ((j = *ep >> 4) != 0)
-            *cp++ = hex[j];
-        else
-            *cp++ = '0';
-
-        *cp++ = hex[*ep++ & 0xf];
-    }
-
-    *cp = '\0';
-    return (buf);
-}
-
-/* ****************************************************** */
-
-/*
- * A faster replacement for inet_ntoa().
- */
-char* __intoa(unsigned int addr, char* buf, u_short bufLen)
-{
-    char *cp, *retStr;
-    u_int byte;
-    int n;
-
-    cp = &buf[bufLen];
-    *--cp = '\0';
-
-    n = 4;
-    do
-    {
-        byte = addr & 0xff;
-        *--cp = byte % 10 + '0';
-        byte /= 10;
-        if (byte > 0)
-        {
-            *--cp = byte % 10 + '0';
-            byte /= 10;
-            if (byte > 0)
-                *--cp = byte + '0';
-        }
-        *--cp = '.';
-        addr >>= 8;
-    }
-    while (--n > 0);
-
-    /* Convert the string to lowercase */
-    retStr = (char*)(cp + 1);
-
-    return (retStr);
-}
-
-/* ************************************ */
-
-static char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
-
-char* intoa(unsigned int addr)
-{
-    return (__intoa(addr, buf, sizeof(buf)));
-}
-
-/* ************************************ */
-
-static inline char* in6toa(struct in6_addr addr6)
-{
-    snprintf(buf, sizeof(buf),
-             "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-             addr6.s6_addr[0], addr6.s6_addr[1], addr6.s6_addr[2],
-             addr6.s6_addr[3], addr6.s6_addr[4], addr6.s6_addr[5], addr6.s6_addr[6],
-             addr6.s6_addr[7], addr6.s6_addr[8], addr6.s6_addr[9], addr6.s6_addr[10],
-             addr6.s6_addr[11], addr6.s6_addr[12], addr6.s6_addr[13], addr6.s6_addr[14],
-             addr6.s6_addr[15]);
-
-    return (buf);
-}
-
-/* ****************************************************** */
-
-char* proto2str(u_short proto)
-{
-    static char protoName[8];
-
-    switch (proto)
-    {
-    case IPPROTO_TCP: return ("TCP");
-    case IPPROTO_UDP: return ("UDP");
-    case IPPROTO_ICMP: return ("ICMP");
-    default:
-        snprintf(protoName, sizeof(protoName), "%d", proto);
-        return (protoName);
-    }
-}
-
-/* ****************************************************** */
-
-static int32_t thiszone;
-
-void dummyProcesssPacket(u_char* _deviceId,
+void ProcessPacket(u_char* dest,
                          const struct pcap_pkthdr* h,
                          const u_char* p)
 {
-    // printf("pcap_sendpacket returned %d\n", pcap_sendpacket(pd, p, h->caplen));
-
-    if (dumper)
-        pcap_dump((u_char*)dumper, (struct pcap_pkthdr*)h, p);
-
-    if (verbose)
-    {
-        struct ether_header ehdr;
-        u_short eth_type, vlan_id;
-        char buf1[32], buf2[32];
-        struct ip ip;
-        struct ip6_hdr ip6;
-
-        int s = (h->ts.tv_sec + thiszone) % 86400;
-
-        printf("%02d:%02d:%02d.%06u ",
-               s / 3600, (s % 3600) / 60, s % 60,
-               (unsigned)h->ts.tv_usec);
-
-        memcpy(&ehdr, p, sizeof(struct ether_header));
-        eth_type = ntohs(ehdr.ether_type);
-        printf("[%s -> %s] ",
-               etheraddr_string(ehdr.ether_shost, buf1),
-               etheraddr_string(ehdr.ether_dhost, buf2));
-
-        if (eth_type == 0x8100)
-        {
-            vlan_id = (p[14] & 15) * 256 + p[15];
-            eth_type = (p[16]) * 256 + p[17];
-            printf("[vlan %u] ", vlan_id);
-            p += 4;
-        }
-        if (eth_type == 0x0800)
-        {
-            memcpy(&ip, p + sizeof(ehdr), sizeof(struct ip));
-            printf("[%s]", proto2str(ip.ip_p));
-            printf("[%s ", intoa(ntohl(ip.ip_src.s_addr)));
-            printf("-> %s] ", intoa(ntohl(ip.ip_dst.s_addr)));
-        }
-        else if (eth_type == 0x86DD)
-        {
-            memcpy(&ip6, p + sizeof(ehdr), sizeof(struct ip6_hdr));
-            printf("[%s ", in6toa(ip6.ip6_src));
-            printf("-> %s] ", in6toa(ip6.ip6_dst));
-        }
-        else if (eth_type == 0x0806)
-            printf("[ARP]");
-        else
-            printf("[eth_type=0x%04X]", eth_type);
-
-        printf("[caplen=%u][len=%u]\n", h->caplen, h->len);
-    }
-
-    if (numPkts == 0) gettimeofday(&startTime, NULL);
+    if (numPkts == 0) gettimeofday(&startTime, NULL);       // inizio a registrare timestamp dal primo pacchetto
     numPkts++, numBytes += h->len;
 
-    if (verbose == 2)
-    {
-        int i;
-
-        for (i = 0; i < h->caplen; i++)
-            printf("%02X ", p[i]);
-        printf("\n");
+    int retries = 3;
+    while (retries-- > 0) {
+        if ( pcap_sendpacket((pcap_t *) dest, p, (int) h->caplen) == 0) break;       // forwarding all'altra interfaccia
+        if (retries >0) usleep(1000);   // sleep di 1ms in caso di errori di invio
+        else fprintf(stderr, "pcap_sendpacket() failed after retries: %s\n", pcap_geterr((pcap_t *) dest));
     }
-    if (pd2 != NULL) pcap_sendpacket((pcap_t*)_deviceId, p, (int) h->caplen);       // forwarding all'altra interfaccia
 }
 
 /* *************************************** */
@@ -464,14 +246,10 @@ void printHelp(void)
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t* devpointer;
 
-    printf("Usage: pcount [-h] -i <device|path> [-w <path>] [-f <filter>] [-l <len>] [-v <1|2>]\n");
+    printf("Usage: pbridge [-h] -i <device|path> -o <device|path>\n");
     printf("-h               [Print help]\n");
     printf("-i <device|path> [Device name or file path]\n");
-    printf("-f <filter>      [pcap filter]\n");
     printf("-o <device>      [Output device name]\n");
-    printf("-w <path>        [pcap write file]\n");
-    printf("-l <len>         [Capture length]\n");
-    printf("-v <mode>        [Verbose [1: verbose, 2: very verbose (print payload)]]\n");
 
     if (pcap_findalldevs(&devpointer, errbuf) == 0)
     {
@@ -496,56 +274,33 @@ void printHelp(void)
 
 int main(int argc, char* argv[])
 {
-    char *device = NULL, *bpfFilter = NULL, *device2 = NULL;
+    char *device = NULL, *device2 = NULL;
     u_char c;
     char errbuf[PCAP_ERRBUF_SIZE], errbuf2[PCAP_ERRBUF_SIZE];
-    int promisc, snaplen = DEFAULT_SNAPLEN;
-    struct bpf_program fcode;
-    struct stat s;
+    const int snaplen = DEFAULT_SNAPLEN;
 
     startTime.tv_sec = 0;
-    thiszone = gmt_to_local(0);
 
-    while ((c = getopt(argc, argv, "hi:l:o:v:f:w:")) != '?')
+    while ((c = getopt(argc, argv, "hi:o:")) != '?')
     {
         if ((c == 255) || (c == (u_char)-1)) break;
+        switch (c) {
+            case 'h':
+                printHelp();
+                exit(0);
 
-        switch (c)
-        {
-        case 'h':
-            printHelp();
-            exit(0);
-            break;
+            case 'i':
+                device = strdup(optarg);
+                break;
 
-        case 'i':
-            device = strdup(optarg);
-            break;
-
-        case 'l':
-            snaplen = atoi(optarg);
-            break;
-
-        case 'o':
-            device2 = strdup(optarg);
-            break;
-
-        case 'v':
-            verbose = atoi(optarg);
-            break;
-
-        case 'w':
-            dumper = pcap_dump_open(pcap_open_dead(DLT_EN10MB, 16384 /* MTU */), optarg);
-            if (dumper == NULL)
-            {
-                printf("Unable to open dump file %s\n", optarg);
-                return (-1);
-            }
-            break;
-
-        case 'f':
-            bpfFilter = strdup(optarg);
-            break;
+            case 'o':
+                device2 = strdup(optarg);
+                break;
+            default:
+                printHelp();
+                exit(0);;
         }
+
     }
 
     if (geteuid() != 0)
@@ -560,62 +315,28 @@ int main(int argc, char* argv[])
         printHelp();
         return (-1);
     }
+	if (device2 == NULL) {
+	    printf("ERROR: Missing -o\n");
+	    printHelp();
+	    return (-1);
+	}
 
-    printf("Capturing from %s\n", device);
 
-    if (stat(device, &s) == 0)
-    {
-        /* Device is a file on filesystem */
-        if ((pd = pcap_open_offline(device, errbuf)) == NULL)
-        {
-            printf("pcap_open_offline: %s\n", errbuf);
-            return (-1);
-        }
-    }
-    else
-    {
-        /* hardcode: promisc=1, to_ms=500 */
-        promisc = 1;
-        if (device2 != NULL)
-        {
-            if ((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL)
-            {
-                printf("pcap_open_live: %s\n", errbuf);
-                return (-1);
-            }
-            if ((pd2 = pcap_open_live(device2, snaplen, promisc, 500, errbuf2)) == NULL)
-            {
-                printf("pcap_open_live: %s\n", errbuf2);
-                pcap_close(pd);
-                return (-1);
-            }
+    printf("Bridging: %s and %s\n", device, device2);
 
-            pcap_setdirection(pd, PCAP_D_IN);
-            pcap_setdirection(pd2, PCAP_D_IN);
-        }
-        else
-        {
-            if ((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL)
-            {
-                printf("pcap_open_live: %s\n", errbuf);
-                return (-1);
-            }
-        }
-    }
-    if (bpfFilter != NULL)
+    const int promisc = 1;
+    if ((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL)
     {
-        if (pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0)
-        {
-            printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
-        }
-        else
-        {
-            if (pcap_setfilter(pd, &fcode) < 0)
-            {
-                printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
-            }
-        }
+        printf("pcap_open_live: %s\n", errbuf);
+        return (-1);
     }
+    if ((pd2 = pcap_open_live(device2, snaplen, promisc, 500, errbuf2)) == NULL)
+    {
+        printf("pcap_open_live: %s\n", errbuf2);
+        pcap_close(pd);
+        return (-1);
+    }
+
 
     if (drop_privileges("nobody") < 0)
         return (-1);
@@ -623,41 +344,35 @@ int main(int argc, char* argv[])
     signal(SIGINT, sigproc);
     signal(SIGTERM, sigproc);
 
-    if (!verbose)
-    {
-        signal(SIGALRM, my_sigalarm);
-        alarm(ALARM_SLEEP);
+    if (pcap_setdirection(pd,  PCAP_D_IN)<0) fprintf(stderr,"pcap_setdirection: %s\n",pcap_geterr(pd));
+    if (pcap_setdirection(pd2, PCAP_D_IN)<0) fprintf(stderr,"pcap_setdirection: %s\n",pcap_geterr(pd2));
+
+
+    // poll
+    const int nfds = 2;
+    struct pollfd fds[nfds];
+    fds[0].fd = pcap_get_selectable_fd(pd);
+    fds[1].fd = pcap_get_selectable_fd(pd2);
+    fds[0].events = POLLIN;
+    fds[1].events = POLLIN;
+    while (running) {
+        const int ret = poll(fds, nfds, 1000);
+        if (ret < 0)
+        {
+            if (errno == EINTR) continue;
+            fprintf(stderr, "poll error: %s\n", strerror(errno));
+            break;
+        }
+        if (fds[0].revents & POLLIN)
+            pcap_dispatch(pd, -1, ProcessPacket, (u_char*)pd2);
+        if (fds[1].revents & POLLIN)
+            pcap_dispatch(pd2, -1, ProcessPacket, (u_char*)pd);
+
     }
 
-    if (device2==NULL) pcap_loop(pd, -1, dummyProcesssPacket, NULL);
-    else {
-        // poll
-        struct pollfd fds[2];
-        int nfds = 2;
-        fds[0].fd = pcap_get_selectable_fd(pd);
-        fds[1].fd = pcap_get_selectable_fd(pd2);
-        fds[0].events = POLLIN;
-        fds[1].events = POLLIN;
-        while (running) {
-            const int ret = poll(fds, nfds, 1000);
-            if (ret < 0)
-            {
-                if (errno == EINTR) continue;
-                fprintf(stderr, "poll error: %s\n", strerror(errno));
-                break;
-            }
-            if (fds[0].revents & POLLIN)
-                pcap_dispatch(pd, -1, dummyProcesssPacket, (u_char*)pd2);
-            if (fds[1].revents & POLLIN)
-                pcap_dispatch(pd2, -1, dummyProcesssPacket, (u_char*)pd);
-        }
-    }
     print_stats();
     pcap_close(pd);
-    if (pd2 != NULL) pcap_close(pd2);
-
-    if (dumper)
-        pcap_dump_close(dumper);
+    pcap_close(pd2);
 
     return (0);
 }

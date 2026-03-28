@@ -19,6 +19,7 @@
 
 #define ALARM_SLEEP       1
 #define DEFAULT_SNAPLEN 256
+volatile int keep_running = 1;
 pcap_t  *pd;
 pcap_t  *pd_out = NULL; //handle per l'interfaccia di output
 int verbose = 0;
@@ -215,7 +216,10 @@ void sigproc(int sig) {
   fprintf(stderr, "Leaving...\n");
   if (called) return; else called = 1;
 
-  pcap_breakloop(pd);
+  keep_running = 0;
+  if (pd != NULL) {
+    pcap_breakloop(pd);
+  }
 }
 
 /* ******************************** */
@@ -328,6 +332,28 @@ char* proto2str(u_short proto) {
 }
 
 /* ****************************************************** */
+
+// Helper function per il bridge bidirezionale
+void bridgeProcessPacket(u_char *user, const struct pcap_pkthdr *h, const u_char *p) {
+  pcap_t *dest_dev = (pcap_t *)user; // Recuperiamo il device di destinazione
+
+  if(dest_dev != NULL) {
+    if(pcap_sendpacket(dest_dev, p, h->caplen) != 0){
+      fprintf(stderr, "Warning: Impossibile inoltrare il pacchetto. Errore: %s", pcap_geterr(dest_dev));
+    }
+  }
+
+  // Aggiorniamo le statistiche globali (come faceva la vecchia funzione)
+  numPkts++;
+  numBytes += h->caplen;
+
+  // Se è attivo il salvataggio su file
+  if(dumper) {
+    pcap_dump((u_char*)dumper, h, p);
+  }
+}
+
+/* ******************************************************** */
 
 static int32_t thiszone;
 
@@ -528,7 +554,7 @@ int main(int argc, char* argv[]) {
       printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
     } else {
       if(pcap_setfilter(pd, &fcode) < 0) {
-	printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
+	      printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
       }
     }
   }
@@ -544,7 +570,50 @@ int main(int argc, char* argv[]) {
     alarm(ALARM_SLEEP);
   }
 
-  pcap_loop(pd, -1, dummyProcesssPacket, NULL);
+  if (pd_out != NULL) {
+    printf("Inizio bridge bidirezionale...\n");
+    
+    // fd per le due interfacce
+    int fd_in = pcap_get_selectable_fd(pd);
+    int fd_out = pcap_get_selectable_fd(pd_out);
+    
+    // Impostiamo le interfacce in modalità non bloccante
+    pcap_setnonblock(pd, 1, errbuf);
+    pcap_setnonblock(pd_out, 1, errbuf);
+
+    // array da passare alla funzione ppoll()
+    struct pollfd fds[2];
+    fds[0].fd = fd_in;
+    fds[0].events = POLLIN; // quando c'è qualcosa la leggiamo
+    fds[1].fd = fd_out;
+    fds[1].events = POLLIN;
+
+    while (keep_running) {
+      // poll() aspetta finché una delle due interfacce non ha un pacchetto
+      int ret = poll(fds, 2, 1000); //1000 ms di timeout
+      
+      if (ret < 0) {
+        if (errno == EINTR) continue; // Ignoriamo le interruzioni del timer delle statistiche
+        perror("Errore critico nella funzione poll()");
+        break; 
+      }
+      
+      if (ret > 0) {
+        // Se c'è un pacchetto su pd (interfaccia 1), inoltralo a pd_out
+        if (fds[0].revents & POLLIN) {
+          pcap_dispatch(pd, -1, bridgeProcessPacket, (u_char *)pd_out);
+        }
+        // Se c'è un pacchetto su pd (interfaccia 2), inoltralo a pd
+        if (fds[1].revents & POLLIN) {
+          pcap_dispatch(pd_out, -1, bridgeProcessPacket, (u_char *)pd);
+        }
+      }
+    }
+  } else {
+    // Se non c'è pd_out, facciamo solo lo sniffer unidirezionale classico
+    printf("Inizio bridge unidirezionale...\n");
+    pcap_loop(pd, -1, dummyProcesssPacket, (u_char*)dumper);
+  }
 
   print_stats();
 

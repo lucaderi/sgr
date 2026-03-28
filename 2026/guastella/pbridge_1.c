@@ -548,8 +548,24 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  char *active_filter = NULL;
+  char filter_exp[512] = "";
 
   if(bpfFilter != NULL) {
+      active_filter = bpfFilter;
+  }else{
+      for (int i = optind; i < argc; i++) {
+        strcat(filter_exp, argv[i]);
+        if(i < argc - 1) strcat(filter_exp, " ");
+      }
+      if (strlen(filter_exp) > 0) {
+          active_filter = filter_exp;
+      }
+  }
+
+  //applichiamo il filtro scelto
+  if(active_filter != NULL){
+    // Applico a pd
     if(pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) {
       printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
     } else {
@@ -557,6 +573,18 @@ int main(int argc, char* argv[]) {
 	      printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
       }
     }
+    //Applico a pd_out
+    if(pd_out != NULL){
+      if(pcap_compile(pd_out, &fcode, active_filter, 1, 0xFFFFFF00) < 0) {
+        printf("pcap_compile error (pd_out): '%s'\n", pcap_geterr(pd_out));
+      } else {
+        if(pcap_setfilter(pd_out, &fcode) < 0) {
+          printf("pcap_setfilter error (pd_out): '%s'\n", pcap_geterr(pd_out));
+        }
+      }
+    }
+  }else {
+    printf("Nessun filtro specificato. Catturo tutto il traffico.\n");
   }
 
   if(drop_privileges("nobody") < 0)

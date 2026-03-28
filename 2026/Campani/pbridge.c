@@ -388,7 +388,7 @@ int main(int argc, char* argv[]) {
   char *device_in = NULL, *device_out = NULL, *bpfFilter_in = NULL, *bpfFilter_out = NULL;
   u_char c;
   char errbuf[PCAP_ERRBUF_SIZE];
-  int promisc, snaplen = DEFAULT_SNAPLEN;
+  int snaplen = DEFAULT_SNAPLEN;
   struct bpf_program fcode_in, fcode_out;
 
   startTime.tv_sec = 0;

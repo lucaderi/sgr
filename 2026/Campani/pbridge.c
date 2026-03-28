@@ -17,7 +17,6 @@ struct pcap_stat pcapStats;
 volatile int running = 1; 
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
@@ -323,7 +322,7 @@ char* proto2str(u_short proto) {
 
 static int32_t thiszone;
 
- void fromAtoB(u_char *arg, const struct pcap_pkthdr *h, const  u_char *p){
+void fromAtoB(u_char *arg, const struct pcap_pkthdr *h, const  u_char *p){
   if(pcap_inject(pd_out, p, h->caplen) == -1){
     fprintf(stderr, "pcap_inject failed %s\n", pcap_geterr(pd_out));
     return;
@@ -334,9 +333,9 @@ static int32_t thiszone;
   if(numPkts == 0) gettimeofday(&startTime, NULL);
   numPkts++; 
   numBytes += h->len; 
- }
+}
 
- void fromBtoA(u_char *arg, const struct pcap_pkthdr *h, const  u_char *p){
+void fromBtoA(u_char *arg, const struct pcap_pkthdr *h, const  u_char *p){
   if(pcap_inject(pd, p, h->caplen) == -1){
     fprintf(stderr, "pcap_inject failed %s\n", pcap_geterr(pd));
     return; 
@@ -347,7 +346,7 @@ static int32_t thiszone;
   if(numPkts == 0) gettimeofday(&startTime, NULL);
   numPkts++; 
   numBytes += h->len; 
- }
+}
 
 /* *************************************** */
 
@@ -355,10 +354,12 @@ void printHelp(void) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_if_t *devpointer;
 
-  printf("Usage: pcount [-h] -i <device|path> [-w <path>] [-f <filter>] [-l <len>] [-v <1|2>]\n");
+  printf("Usage: pcount [-h] -i <device> -o <device> [-w <path>] [-I <filter>] [-O <filter>] [-l <len>] [-v <1|2>]\n");
   printf("-h               [Print help]\n");
-  printf("-i <device|path> [Device name or file path]\n");
-  printf("-f <filter>      [pcap filter]\n");
+  printf("-i <device>      [Input device name]\n");
+  printf("-o <device>      [Output device name]\n");
+  printf("-I <filter>      [pcap filter on -i]\n");
+  printf("-O <filter>      [pcap filter on -o]\n");
   printf("-w <path>        [pcap write file]\n");  
   printf("-l <len>         [Capture length]\n");
   printf("-v <mode>        [Verbose [1: verbose, 2: very verbose (print payload)]]\n");
@@ -371,9 +372,9 @@ void printHelp(void) {
       const char *descr = devpointer->description;
 
       if(descr)
-	printf(" %d. %s [%s]\n", i++, devpointer->name, descr);
+	      printf(" %d. %s [%s]\n", i++, devpointer->name, descr);
       else
-	printf(" %d. %s\n", i++, devpointer->name);
+	      printf(" %d. %s\n", i++, devpointer->name);
       
       devpointer = devpointer->next;
     }
@@ -384,17 +385,16 @@ void printHelp(void) {
 /* *************************************** */
 
 int main(int argc, char* argv[]) {
-  char *device = NULL, *device_out = NULL, *bpfFilter = NULL;
+  char *device_in = NULL, *device_out = NULL, *bpfFilter_in = NULL, *bpfFilter_out = NULL;
   u_char c;
   char errbuf[PCAP_ERRBUF_SIZE];
   int promisc, snaplen = DEFAULT_SNAPLEN;
-  struct bpf_program fcode;
-  struct stat s;
+  struct bpf_program fcode_in, fcode_out;
 
   startTime.tv_sec = 0;
   thiszone = gmt_to_local(0);
 
-  while((c = getopt(argc, argv, "hi:o:l:v:f:w:")) != '?') {
+  while((c = getopt(argc, argv, "hi:o:l:v:w:I:O:")) != '?') {
     if((c == 255) || (c == (u_char)-1)) break;
 
     switch(c) {
@@ -404,12 +404,12 @@ int main(int argc, char* argv[]) {
       break;
 
     case 'i':
-      device = strdup(optarg);
+      device_in = strdup(optarg);
       break;
     
     case 'o':
-        device_out = strdup(optarg);
-        break; 
+      device_out = strdup(optarg);
+      break; 
 
     case 'l':
       snaplen = atoi(optarg);
@@ -427,9 +427,13 @@ int main(int argc, char* argv[]) {
       }
       break;
 
-    case 'f':
-      bpfFilter = strdup(optarg);
+    case 'I':
+      bpfFilter_in = strdup(optarg);
       break;
+
+    case 'O':
+      bpfFilter_out = strdup(optarg);
+      break; 
     }
   }
   
@@ -438,7 +442,7 @@ int main(int argc, char* argv[]) {
     return(-1);
   }
   
-  if(device == NULL) {
+  if(device_in == NULL) {
     printf("ERROR: Missing -i\n");    
     printHelp();
     return(-1);  
@@ -446,34 +450,19 @@ int main(int argc, char* argv[]) {
 
   if(device_out == NULL){
     printf("ERROR: Missing -o\n");
+    printHelp(); 
     return(-1);
   }
 
-  printf("Capturing from %s\n", device);
 
-  if(stat(device, &s) == 0) {
-    /* Device is a file on filesystem */
-    if((pd = pcap_open_offline(device, errbuf)) == NULL) {
-      printf("pcap_open_offline: %s\n", errbuf);
+  // Apertura interfaccia di input
+  if(device_in != NULL){
+    pd = pcap_open_live(device_in, snaplen, 1, 1000, errbuf);
+    if(pd == NULL){
+      printf("pcap_open_live (input): %s\n", errbuf); 
       return(-1);
     }
-  } else {
-    // Apertura interfaccia input
-    /* hardcode: promisc=1, to_ms=500 */
-    promisc = 1; 
-    if((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL) {
-      printf("pcap_open_live: %s\n", errbuf);
-      return(-1);
-    }
-  }
-  if(bpfFilter != NULL) {
-    if(pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) {
-      printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
-    } else {
-      if(pcap_setfilter(pd, &fcode) < 0) {
-	printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
-      }
-    }
+    printf("Input interface %s opened successfully.\n", device_in);
   }
 
   // Apertura interfaccia di Output
@@ -486,12 +475,45 @@ int main(int argc, char* argv[]) {
     printf("Output interface %s opened successfully.\n", device_out);
   }
 
-  pcap_setdirection(pd, PCAP_D_IN);
-  pcap_setdirection(pd_out, PCAP_D_IN); 
+  // bpfFilter input
+  if(bpfFilter_in != NULL) {
+    if(pcap_compile(pd, &fcode_in, bpfFilter_in, 1, 0xFFFFFF00) < 0) {
+      printf("Input pcap_compile error: '%s'\n", pcap_geterr(pd));
+    } else {
+      if(pcap_setfilter(pd, &fcode_in) < 0) {
+	      printf("Input pcap_setfilter error: '%s'\n", pcap_geterr(pd));
+      }
+    }
+  }
+
+  //bpfFilter output
+  if(bpfFilter_out != NULL){
+    if(pcap_compile(pd_out, &fcode_out, bpfFilter_out, 1, 0xFFFFFF00) < 0){
+      printf("Output pcap_compile error: '%s'\n", pcap_geterr(pd_out)); 
+    }
+    else{
+      if(pcap_setfilter(pd_out, &fcode_out) < 0){
+        printf("Output pcap_setfilter error: '%s'\n", pcap_geterr(pd_out));
+      }
+    }
+  }
+
+  if(pcap_setdirection(pd, PCAP_D_IN) == -1){
+    fprintf(stderr, "input setdirection failed %s\n", pcap_geterr(pd));
+    return(-1);
+  }
+  if(pcap_setdirection(pd_out, PCAP_D_IN) == -1){
+    fprintf(stderr, "output setdirection failed %s\n", pcap_geterr(pd_out)); 
+    return(-1);
+  }
 
   //Modalità non bloccante
-  pcap_setnonblock(pd, 1, errbuf);
-  pcap_setnonblock(pd_out, 1, errbuf); 
+  if(pcap_setnonblock(pd, 1, errbuf) == -1){
+    fprintf(stderr, "input setnonblock error %s\n", errbuf);
+  }
+  if(pcap_setnonblock(pd_out, 1, errbuf) == -1){
+    fprintf(stderr, "output setnonblock error %s\n", errbuf); 
+  } 
 
   if(drop_privileges("nobody") < 0)
     return(-1);
@@ -507,7 +529,7 @@ int main(int argc, char* argv[]) {
   int fd_in = pcap_get_selectable_fd(pd);
   int fd_out = pcap_get_selectable_fd(pd_out); 
   if(fd_in < 0 || fd_out < 0){
-    fprintf(stderr, "select not supported\n");
+    fprintf(stderr, "pcap_get_selectable_fd failed\n");
     return -1; 
   }
 
@@ -520,7 +542,12 @@ int main(int argc, char* argv[]) {
     FD_SET(fd_out, &readfds);
 
     int ret = select(max_fd, &readfds, NULL, NULL, NULL);
-    if(ret < 0 && errno != EINTR) break; 
+    if(ret < 0){
+      if(errno == EINTR) continue; 
+
+      fprintf(stderr, "select() failed errno(=%d): %s\n", errno, strerror(errno)); 
+      break; 
+    }
 
     if(FD_ISSET(fd_in, &readfds)){
       pcap_dispatch(pd, -1, fromAtoB, (u_char*)pd_out);

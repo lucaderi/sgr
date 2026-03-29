@@ -3,7 +3,7 @@
  * Prerequisite
  * sudo apt-get install libpcap-dev
  *
- * gcc pcount.c -o pcount -lpcap
+ * gcc pbridge.c -o pbridge -lpcap
  *
  */
 
@@ -22,7 +22,7 @@
 pcap_t *pd;
 pcap_t *pd_out; /* AGGIUNTA: handle per l'invio dei pacchetti */
 int verbose = 0;
-int volatile finished = 0; /*AGGIUNTA variabile chiusura */
+volatile sig_atomic_t finished = 0; /*AGGIUNTA variabile chiusura */
 struct pcap_stat pcapStats;
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ struct bridge_info {
     pcap_t *pd_out;
 };
 
+void termina(void);
 /* *************************************** */
 
 int32_t gmt_to_local(time_t t)
@@ -481,22 +482,21 @@ void printHelp(void)
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *devpointer;
 
-    printf("Usage: pcount [-h] -i <device|path> [-w <path>] [-f <filter>] [-l <len>] [-v <1|2>]\n");
+    printf("Usage: pbridge [-h] -i <device> -o <device> [-w <path>] [-f <filter>] [-l <len>] [-v <1|2>]\n");
     printf("-h               [Print help]\n");
-    printf("-i <device|path> [Device name or file path]\n");
+    printf("-i <device>      [First device]\n");
+    printf("-o <device>      [Second device]\n");
     printf("-f <filter>      [pcap filter]\n");
     printf("-w <path>        [pcap write file]\n");
     printf("-l <len>         [Capture length]\n");
     printf("-v <mode>        [Verbose [1: verbose, 2: very verbose (print payload)]]\n");
-    /* AGGIUNTA */
-    printf("-o <device>     [Output device for pcap_sendpacket]\n");
 
 
     if (pcap_findalldevs(&devpointer, errbuf) == 0)
     {
         int i = 0;
 
-        printf("\nAvailable devices (-i):\n");
+        printf("\nAvailable devices (-i/-o):\n");
         while (devpointer)
         {
             const char *descr = devpointer->description;
@@ -523,7 +523,6 @@ int main(int argc, char *argv[])
     int promisc = 1, snaplen = DEFAULT_SNAPLEN; 
     struct bpf_program fcode;
     struct stat s1, s2;
-    int device1_is_file = 0, device2_is_file = 0; /*AGGIUNTA: flag per capire se device1/device2 sono file oppure interfacce live*/
 
     startTime.tv_sec = 0;
     thiszone = gmt_to_local(0);
@@ -557,7 +556,7 @@ int main(int argc, char *argv[])
             if (dumper == NULL)
             {
                 printf("Unable to open dump file %s\n", optarg);
-                return (-1);
+                return -1;
             }
             break;
 
@@ -575,81 +574,71 @@ int main(int argc, char *argv[])
     if (geteuid() != 0)
     {
         printf("Please run this tool as superuser\n");
-        return (-1);
+        return -1;
     }
 
     if (device1 == NULL)
     {
         printf("ERROR: Missing -i\n");
         printHelp();
-        return (-1);
+        return -1;
     }
-
-    printf("Capturing from %s\n", device1);
-
-    /*AGGIUNTA: controllo se device1 e device2 sono file esistenti oppure interfacce live*/
-    if (stat(device1, &s1) == 0)
-        device1_is_file = 1;
-
-    if (device2 != NULL && stat(device2, &s2) == 0)
-        device2_is_file = 1;
-
-    if (device2 != NULL && device1_is_file && device2_is_file) /*AGGIUNTA: se entrambi i dispositivi specificati sono file esistenti, non posso fare il bridge perché non ho un'interfaccia di output per inviare i pacchetti catturati, quindi esco con un errore*/
+    if (device2 == NULL)
     {
-        printf("Both device1 and device2 are files. Bridge cannot be established.\n");
+        printf("ERROR: Missing -o\n");
+        printHelp();
         return -1;
     }
 
+    printf("Capturing from %s and %s\n", device1, device2);
+
+    /*AGGIUNTA: controllo se device1 e device2 sono file esistenti oppure interfacce live*/
+    if (stat(device1, &s1) == 0 || stat(device2, &s2) == 0)
+    {
+        printf("pbridge support only live interfaces\n");
+        return -1;
+    }
     // definizione dei bridge tra le interfacce
-
-    if (device1_is_file)
+    
+    if ((pd = pcap_open_live(device1, snaplen, promisc, 500, errbuf)) == NULL ) //apertura dell'interfaccia di input del bridge con pcap_open_live
     {
-        if ((pd = pcap_open_offline(device1, errbuf)) == NULL)
-        {
-            printf("pcap_open_offline: %s\n", errbuf);
-            return -1;
-        }
-        bridge1.pd_in = pd; /*AGGIUNTA: setto l'handle di input del bridge1 con quello della cattura offline*/
+        printf("pcap_open_live: %s\n", errbuf);
+        termina();
+        return -1;
     }
-    else
+    if ((pd_out = pcap_open_live(device2, snaplen, promisc, 500, errbuf)) == NULL) // apertura dell'interfaccia di output del bridge con pcap_open_live
     {
-        if ((pd = pcap_open_live(device1, snaplen, promisc, 500, errbuf)) == NULL)
-        {
-            printf("pcap_open_live: %s\n", errbuf);
-            return -1;
-        }
-        bridge1.pd_in = pd; /*AGGIUNTA: setto l'handle di input del bridge1 con quello della cattura live*/
+        printf("pcap_open_live: %s\n", errbuf);
+        termina();
+        return -1;
     }
 
-    if (device2 != NULL) /*AGGIUNTA: se è stato specificato un secondo dispositivo, lo tratto come interfaccia di output live del bridge/replay*/
+    if (pcap_setdirection(pd, PCAP_D_IN) < 0) // setto la direzione di cattura in ingresso per la prima interfaccia del bridge
     {
-        if (device2_is_file) /*AGGIUNTA: device2 non può essere usato come output del bridge se è un file offline*/
-        {
-            printf("device2 is a file. Output for bridge/replay must be a live interface.\n");
-            return -1;
-        }
-
-        printf("Capturing from %s\n", device2);
-        printf("Starting bridge between %s and %s\n", device1, device2);
-
-        if ((pd_out = pcap_open_live(device2, snaplen, promisc, 500, errbuf)) == NULL)/*AGGIUNTA interfaccia di output per il bridge dei pacchetti*/
-        { 
-            printf("pcap_open_live: %s\n", errbuf);
-            return -1;
-        }
-
-        bridge1.pd_out = pd_out; //setto l'handle di output del bridge1 con quello della cattura live
-
-        if (!device1_is_file) /*AGGIUNTA: se anche device1 è live, abilito il bridge bidirezionale tra le due interfacce*/
-        {
-            bridge2.pd_in = pd_out; //setto l'handle di input del bridge2 con quello della cattura live
-            bridge2.pd_out = pd; //setto l'handle di output del bridge2 con quello della prima interfaccia live
-        }
+        fprintf(stderr, "pcap_setdirection(pd) failed: %s\n", pcap_geterr(pd));
+        termina();
+        return -1;
     }
+
+    if (pcap_setdirection(pd_out, PCAP_D_IN) < 0) // setto la direzione di cattura in ingresso per la seconda interfaccia del bridge
+    {
+        fprintf(stderr, "pcap_setdirection(pd_out) failed: %s\n", pcap_geterr(pd_out));
+        termina();
+        return -1;
+    }
+
+    printf("Starting bridge between %s and %s\n", device1, device2);
+
+    bridge1.pd_in = pd; /*AGGIUNTA: setto l'handle di input del bridge1 con quello della cattura live*/
+    bridge1.pd_out = pd_out; //setto l'handle di output del bridge1 con quello della cattura live
+
+    bridge2.pd_in = pd_out; //setto l'handle di input del bridge2 con quello della cattura live
+    bridge2.pd_out = pd; //setto l'handle di output del bridge2 con quello della prima interfaccia live
+
 
     if (bpfFilter != NULL)
     {
-        if (pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0)
+        if (pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) // compilazione filtro per la prima interfaccia
         {
             printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
         }
@@ -659,12 +648,9 @@ int main(int argc, char *argv[])
             { // applicazione del filtro se la compilazione è andata bene
                 printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
             }
+            pcap_freecode(&fcode); // libero la memoria allocata da pcap compile per evitare memory leak
         }
-    }
-
-    if (bpfFilter != NULL && pd_out != NULL) /*AGGIUNTA: se è stato specificato un filtro e ho un'interfaccia di output per il bridge, applico lo stesso filtro anche su quella*/
-    {
-        if (pcap_compile(pd_out, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0)
+        if (pcap_compile(pd_out, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) // compilazione filtro per la seconda interfaccia
         {
             printf("pcap_compile error: '%s'\n", pcap_geterr(pd_out));
         }
@@ -674,11 +660,15 @@ int main(int argc, char *argv[])
             { // applicazione del filtro se la compilazione è andata bene
                 printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd_out));
             }
+            pcap_freecode(&fcode);
         }
     }
 
-    if (drop_privileges("nobody") < 0) 
-        return (-1);
+
+    if (drop_privileges("nobody") < 0) {
+        termina();
+        return -1;
+    }
 
     signal(SIGINT, sigproc);  // segnali di kill del processo
     signal(SIGTERM, sigproc); // interrompe il ciclo di cattura in modo pulito
@@ -691,93 +681,90 @@ int main(int argc, char *argv[])
 
     // implementazionde della logica di cattura dalle 2 interfacce e invio dei pacchetti catturati da una all'altra
 
-    if (device1_is_file) /*AGGIUNTA: se la sorgente è un file offline, non uso poll ma leggo tutti i pacchetti dal file e li invio eventualmente all'interfaccia live di output*/
-    {
-        int rc;
+    
+    int ret1, ret2, nfds = 2; //filedescriptor per la cattura delle interfacce di input e output del bridge
+    struct pollfd fds[2]; // array di struct pollfd per monitorare i filedescriptor delle interfacce di input e output del bridge
+    int count; // numero degli eventi di lettura disponibili sui filedescriptor monitorati
 
-        rc = pcap_dispatch(pd, -1, dummyProcesssPacket, (u_char *)&bridge1);
-        if (rc < 0)
-        {
-            fprintf(stderr, "pcap_dispatch error: %s\n", pcap_geterr(pd));
-        }
+    ret1 = pcap_get_selectable_fd(pd);
+
+    if (ret1 < 0)
+    {
+        fprintf(stderr, "pcap_get_selectable_fd() not supported on input interface\n");
+        termina();
+        return -1;
     }
-    else
+
+    fds[0].fd = ret1; // registro il filedescriptor
+    fds[0].events = POLLIN; // setto l'evento di interesse per la lettura dei pacchetti
+    fds[0].revents = 0; // azzero i revents per evitare problemi di lettura
+
+  
+    ret2 = pcap_get_selectable_fd(pd_out);
+    if (ret2 < 0)
     {
-        int ret1, ret2, nfds = 1; //filedescriptor per la cattura delle interfacce di input e output del bridge
-        struct pollfd fds[2]; // array di struct pollfd per monitorare i filedescriptor delle interfacce di input e output del bridge
-        int count; // numero degli eventi di lettura disponibili sui filedescriptor monitorati
+        fprintf(stderr, "pcap_get_selectable_fd() not supported on output interface\n");
+        termina();
+        return -1;
+    }
 
-        ret1 = pcap_get_selectable_fd(pd);
+    fds[1].fd = ret2;
+    fds[1].events = POLLIN;
+    fds[1].revents = 0;
 
-        if (ret1 < 0)
+
+    while (finished != 1)
+    {
+        count = poll(fds, nfds, -1); // attendo eventi di lettura su entrambi i filedescriptor
+        if (count < 0)
         {
-            fprintf(stderr, "pcap_get_selectable_fd() not supported on input interface\n");
-            return (-1);
+            if (errno == EINTR) // se il poll è interrotto da un segnale, continuo ad aspettare
+                continue;
+            perror("poll");
+            break;
         }
 
-        fds[0].fd = ret1; // registro il filedescriptor
-        fds[0].events = POLLIN; // setto l'evento di interesse per la lettura dei pacchetti
-        fds[0].revents = 0; // azzero i revents per evitare problemi di lettura
 
-        if (pd_out != NULL && !device1_is_file) //registro anche il filedescriptor della seconda interfaccia solo se sto facendo un bridge live-live
-        {   
-            ret2 = pcap_get_selectable_fd(pd_out);
-            if (ret2 < 0)
-            {
-                fprintf(stderr, "pcap_get_selectable_fd() not supported on output interface\n");
-                return (-1);
-            }
-
-            fds[1].fd = ret2;
-            fds[1].events = POLLIN;
-            fds[1].revents = 0;
-            nfds = 2; // setto il numero di filedescriptor da monitorare a 2 se ho aperto anche la seconda interfaccia live del bridge
-        }
-
-        while (finished != 1)
+        if (fds[0].revents & POLLIN) // se ci sono pacchetti da leggere sull'interfaccia di input del bridge, li leggo e li invio sull'interfaccia di output del bridge
         {
-            count = poll(fds, nfds, -1); // attendo eventi di lettura su entrambi i filedescriptor
+            count = pcap_dispatch(pd, -1, dummyProcesssPacket, (u_char *)&bridge1); // utilizzo la funzione di callback per processare i pacchetti catturati e inviarli sull'interfaccia di output del bridge
             if (count < 0)
             {
-                if (errno == EINTR) // se il poll è interrotto da un segnale, continuo ad aspettare
-                    continue;
-                fprintf(stderr, "poll error: %s\n", strerror(errno));
-                perror("poll");
+                fprintf(stderr, "pcap_dispatch error: %s\n", pcap_geterr(pd));
                 break;
             }
+        }
 
-            if (count == 0) // se il poll ritorna senza eventi, continuo ad aspettare
-                continue;
-
-            if (fds[0].revents & POLLIN) // se ci sono pacchetti da leggere sull'interfaccia di input del bridge, li leggo e li invio sull'interfaccia di output del bridge
+        if (fds[1].revents & POLLIN) // se sto facendo bridge bidirezionale live-live, processo anche i pacchetti catturati sulla seconda interfaccia
+        { 
+            count = pcap_dispatch(pd_out, -1, dummyProcesssPacket, (u_char *)&bridge2); 
+            if (count < 0)
             {
-                count = pcap_dispatch(pd, -1, dummyProcesssPacket, (u_char *)&bridge1); // utilizzo la funzione di callback per processare i pacchetti catturati e inviarli sull'interfaccia di output del bridge
-                if (count < 0)
-                {
-                    fprintf(stderr, "pcap_dispatch error: %s\n", pcap_geterr(pd));
-                    break;
-                }
-            }
-
-            if (nfds == 2 && (fds[1].revents & POLLIN)) // se sto facendo bridge bidirezionale live-live, processo anche i pacchetti catturati sulla seconda interfaccia
-            { 
-                count = pcap_dispatch(pd_out, -1, dummyProcesssPacket, (u_char *)&bridge2); 
-                if (count < 0)
-                {
-                    fprintf(stderr, "pcap_dispatch error: %s\n", pcap_geterr(pd_out));
-                    break;
-                }
+                fprintf(stderr, "pcap_dispatch error: %s\n", pcap_geterr(pd_out));
+                break;
             }
         }
     }
-
     print_stats(); // riprinto a chiusura le statistiche
 
-    pcap_close(pd); // chiudo la lettura e l'interfaccia di rete da cui stavo leggendo o chiudo il filedescriptor
-    if (pd_out)
-        pcap_close(pd_out); /*AGGIUNTA: chiudo anche l'handle di output del bridge se è stato aperto*/
-    if (dumper)
-        pcap_dump_close(dumper);
+    termina(); // chiudo gli handle di cattura e di output del bridge e il dumper se è stato aperto
 
-    return (0);
+    return 0;
+}
+
+
+void termina(void) // puntatori a null solo per sicurezza, non è strettamente necessario visto che il programma sta per terminare comunque
+{
+    if (pd) {
+        pcap_close(pd);
+        pd = NULL;
+    }
+    if (pd_out) {
+        pcap_close(pd_out);
+        pd_out = NULL;
+    }
+    if (dumper) {
+        pcap_dump_close(dumper);
+        dumper = NULL;
+    }
 }

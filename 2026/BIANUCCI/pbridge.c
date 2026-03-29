@@ -21,7 +21,6 @@
 #define DEFAULT_SNAPLEN 256
 pcap_t  *pd1;
 pcap_t  *pd2;
-int verbose = 0;
 struct pcap_stat pcapStats;
 
 #include <sys/types.h>
@@ -39,10 +38,9 @@ struct pcap_stat pcapStats;
 #include <netinet/ip6.h>
 #include <net/ethernet.h>     /* the L2 protocols */
 
-#include <pthread.h> // mi server per poter eseguire contemporaneamente i due pcap_loop sullo stesso processo
-
 static struct timeval startTime;
 unsigned long long numPkts = 0, numBytes = 0;
+static unsigned long long failedPkts = 0;
 pcap_dumper_t *dumper = NULL;
 
 void send_packet(pcap_t *handle, const unsigned char *packet, int len);
@@ -51,32 +49,6 @@ void send_packet(pcap_t *handle, const unsigned char *packet, int len);
 volatile sig_atomic_t stop = 0;
 
 /* *************************************** */
-
-int32_t gmt_to_local(time_t t) {
-  int dt, dir;
-  struct tm *gmt, *loc;
-  struct tm sgmt;
-
-  if (t == 0)
-    t = time(NULL);
-  gmt = &sgmt;
-  *gmt = *gmtime(&t);
-  loc = localtime(&t);
-  dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
-    (loc->tm_min - gmt->tm_min) * 60;
-
-  /*
-   * If the year or julian day is different, we span 00:00 GMT
-   * and must add or subtract a day. Check the year first to
-   * avoid problems when the julian day wraps.
-   */
-  dir = loc->tm_year - gmt->tm_year;
-  if (dir == 0)
-    dir = loc->tm_yday - gmt->tm_yday;
-  dt += dir * 24 * 60 * 60;
-
-  return (dt);
-}
 
 char* format_numbers(double val, char *buf, u_int buf_len, u_int8_t add_decimals)	{
   u_int a1 = ((u_long)val / 1000000000) % 1000;	
@@ -209,9 +181,10 @@ void print_stats() {
 	    "Total Pkts=%u/Dropped=%.1f %%\n",
 	    pcapStat.ps_recv, pcapStat.ps_drop, pcapStat.ps_recv-pcapStat.ps_drop,
 	    pcapStat.ps_recv == 0 ? 0 : (double)(pcapStat.ps_drop*100)/(double)pcapStat.ps_recv);
-    fprintf(stderr, "%llu pkts [%.1f pkt/sec] - %llu bytes [%.2f Mbit/sec]\n",
+    fprintf(stderr, "%llu pkts [%.1f pkt/sec] - %llu bytes [%.2f Mbit/sec] - %llu failed\n",
 	    numPkts, (double)numPkts/deltaSec,
-	    numBytes, (double)8*numBytes/(double)(deltaSec*1000000));
+	    numBytes, (double)8*numBytes/(double)(deltaSec*1000000),
+	    failedPkts);
 
     if(lastTime.tv_sec > 0) {
       deltaSec = (double)delta_time(&endTime, &lastTime)/1000000;
@@ -245,114 +218,12 @@ void my_sigalarm(int sig) {
   signal(SIGALRM, my_sigalarm);
 }
 
-/* ****************************************************** */
-
-static char hex[] = "0123456789ABCDEF";
-
-char* etheraddr_string(const u_char *ep, char *buf) {
-  u_int i, j;
-  char *cp;
-
-  cp = buf;
-  if ((j = *ep >> 4) != 0)
-    *cp++ = hex[j];
-  else
-    *cp++ = '0';
-
-  *cp++ = hex[*ep++ & 0xf];
-
-  for(i = 5; (int)--i >= 0;) {
-    *cp++ = ':';
-    if ((j = *ep >> 4) != 0)
-      *cp++ = hex[j];
-    else
-      *cp++ = '0';
-
-    *cp++ = hex[*ep++ & 0xf];
-  }
-
-  *cp = '\0';
-  return (buf);
-}
 
 /* ****************************************************** */
-
-/*
- * A faster replacement for inet_ntoa().
- */
-char* __intoa(unsigned int addr, char* buf, u_short bufLen) {
-  char *cp, *retStr;
-  u_int byte;
-  int n;
-
-  cp = &buf[bufLen];
-  *--cp = '\0';
-
-  n = 4;
-  do {
-    byte = addr & 0xff;
-    *--cp = byte % 10 + '0';
-    byte /= 10;
-    if (byte > 0) {
-      *--cp = byte % 10 + '0';
-      byte /= 10;
-      if (byte > 0)
-	*--cp = byte + '0';
-    }
-    *--cp = '.';
-    addr >>= 8;
-  } while (--n > 0);
-
-  /* Convert the string to lowercase */
-  retStr = (char*)(cp+1);
-
-  return(retStr);
-}
-
-/* ************************************ */
-
-static char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
-
-char* intoa(unsigned int addr) {
-  return(__intoa(addr, buf, sizeof(buf)));
-}
-
-/* ************************************ */
-
-static inline char* in6toa(struct in6_addr addr6) {
-  snprintf(buf, sizeof(buf),
-	   "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-	   addr6.s6_addr[0], addr6.s6_addr[1], addr6.s6_addr[2],
-	   addr6.s6_addr[3], addr6.s6_addr[4], addr6.s6_addr[5], addr6.s6_addr[6],
-	   addr6.s6_addr[7], addr6.s6_addr[8], addr6.s6_addr[9], addr6.s6_addr[10],
-	   addr6.s6_addr[11], addr6.s6_addr[12], addr6.s6_addr[13], addr6.s6_addr[14],
-	   addr6.s6_addr[15]);
-
-  return(buf);
-}
-
-/* ****************************************************** */
-
-char* proto2str(u_short proto) {
-  static char protoName[8];
-
-  switch(proto) {
-  case IPPROTO_TCP:  return("TCP");
-  case IPPROTO_UDP:  return("UDP");
-  case IPPROTO_ICMP: return("ICMP");
-  default:
-    snprintf(protoName, sizeof(protoName), "%d", proto);
-    return(protoName);
-  }
-}
-
-/* ****************************************************** */
-
-static int32_t thiszone;
 
 /*
  * Callback chiamata da pcap_loop per ogni pacchetto catturato
- * Qua mi limito solamente a stampare delle informazioni relative a esso, ma è qua che posso
+ * Qua mi limito solamente ad aggiornare delle informazioni per le statistiche, ma è qua che posso
  * fare eventualmente analisi (processing)
  */
 void dummyProcessPacket(u_char *_deviceId,
@@ -373,7 +244,8 @@ void send_packet(pcap_t *handle, const unsigned char *packet, int len) {
     // - packet --> puntatore ai dati del pacchetto da inviare (es: ARP, ICMP, ...)
     // - len --> lunghezza del pacchetto in byte
     fprintf(stderr, "Failed to send packet: %s\n", pcap_geterr(handle));
-    exit(1);
+    failedPkts++;
+    return;
   }
 }
 
@@ -383,14 +255,11 @@ void printHelp(void) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_if_t *devpointer;
 
-  printf("Usage: pcount [-h] -i <device|path> [-w <path>] [-f <filter>] [-l <len>] [-v <1|2>]\n");
+  printf("Usage: pcount [-h] -i <device> -o <device2> [-l <len>] \n");
   printf("-h               [Print help]\n");
-  printf("-i <device|path> [Device name or file path]\n");
-  printf("-o <device2|path> [Device2 name or file path]\n");
-  printf("-f <filter>      [pcap filter]\n");
-  printf("-w <path>        [pcap write file]\n");  
+  printf("-i <device>      [Device name]\n");
+  printf("-o <device2>     [Device2 name]\n");
   printf("-l <len>         [Capture length]\n");
-  printf("-v <mode>        [Verbose [1: verbose, 2: very verbose (print payload)]]\n");
 
   if(pcap_findalldevs(&devpointer, errbuf) == 0) {
     int i = 0;
@@ -411,66 +280,78 @@ void printHelp(void) {
 
 /* *************************************** */
 
-int main(int argc, char* argv[]) {
-  char *device = NULL, *device2 = NULL, *bpfFilter = NULL;
-  u_char c;
+// funzione che gestisce l'apertura in modalita live di un'interfaccia di rete
+pcap_t* open_live_interface(const char *device, int promisc, int snaplen) {
   char errbuf[PCAP_ERRBUF_SIZE];
+  pcap_t *pd;
+
+  if((pd = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL) {
+    // timeout di 500 ms server per evitare che il programma resti bloccato se non arrivano pacchetti per molto tempo
+    // --> per programmi che gestiscono anche l'interfaccia grafica
+    printf("pcap_open_live: %s\n", errbuf);
+    return NULL;
+  }
+
+  // serve per settarlo a non bloccnate di modo tale che riesca a lavorare
+  // in modo event-driven e non usare i thread
+  // OSS: questo in realta, che ho aggiunto per fine didattico, nel mio contesto è opzionale
+  // perche tanto gestisco gia con la poll, anzi forse meglio dato che evito il busy waiting che avrei altrimenti
+  // facendo un semplice ciclo while(1) con solo dispatch
+  pcap_setnonblock(pd, 1, errbuf);
+
+  // funzione di libpcap che consente di impostare la direzione dei
+  // pacchetti che la libreria libpcap catturerà sull’interfaccia di rete pd
+  // --> in questo modo evito il rischio di catturare accidentalmente
+  // i pacchetti che io stesso (interfaccia 1/2) ho inviato all'altra
+  // riducendo quindi il richio di loop e traffico duplicato
+  pcap_setdirection(pd, PCAP_D_IN);
+
+  return pd;
+}
+
+/* *************************************** */
+
+int main(int argc, char* argv[]) {
+  char *device = NULL, *device2 = NULL;
+  u_char c;
   int promisc, snaplen = DEFAULT_SNAPLEN;
-  struct bpf_program fcode; // struttura usata da libcap per rappresentare un filtro BPF compilato (il bytecode)
-  struct stat s; // struttura che memorizza informazioni riguardanti file/risorsa nel file system
 
   startTime.tv_sec = 0; // inizializzo il tempo di
-  thiszone = gmt_to_local(0);
 
   //ES. ./pcount -i eth0 -v 1 -f "tcp"
-  while((c = getopt(argc, argv, "hi:o:l:v:f:w:")) != '?') { // analizza le opzioni passate al programma per linea di comando
+  while((c = getopt(argc, argv, "hi:o:l:")) != '?') {
+    // analizza le opzioni passate al programma per linea di comando
     if((c == 255) || (c == (u_char)-1)) break;
 
     switch(c) {
-    case 'h':
-      printHelp();
-      exit(0);
-      break;
+      case 'h':
+        printHelp();
+        exit(0);
+        break;
 
-    case 'i':
-      device = strdup(optarg); // salva il nome dell'interfaccia di rete
-      break;
+      case 'i':
+        device = strdup(optarg); // salva il nome dell'interfaccia di rete
+        break;
 
-    case 'o':
-      device2 = strdup(optarg); // salva il nome della seconda interfaccia di rete
-      break;
+      case 'o':
+        device2 = strdup(optarg); // salva il nome della seconda interfaccia di rete
+        break;
 
-    case 'l':
-      snaplen = atoi(optarg); // numero massimo di byte da catturare per pacchetto
-      break;
-
-    case 'v':
-      verbose = atoi(optarg); // livello di dettaglio output --> 1: info base, 2: anche payload
-      break;
-
-    case 'w':
-      dumper = pcap_dump_open(pcap_open_dead(DLT_EN10MB, 16384 /* MTU */), optarg); // salva i pacchetti in un file .pcap
-      if(dumper == NULL) {
-        printf("Unable to open dump file %s\n", optarg);
-        return(-1);
-      }
-      break;
-
-    case 'f':
-      bpfFilter = strdup(optarg); // filtro BPF --> es: "tcp", "port 80"
-      break;
+      case 'l':
+        snaplen = atoi(optarg); // numero massimo di byte da catturare per pacchetto
+        break;
     }
   }
-  
+
   if(geteuid() != 0) {
     printf("Please run this tool as superuser\n");
     return(-1);
   }
-  
+
   if(device == NULL) {
-    printf("ERROR: Missing -i\n");    
+    printf("ERROR: Missing -i\n");
     printHelp();
-    return(-1);  
+    return(-1);
   }
 
   if(device2 == NULL) {
@@ -481,67 +362,13 @@ int main(int argc, char* argv[]) {
 
   printf("Capturing from %s\n", device);
 
-  if(stat(device, &s) == 0) { // stat() verifica se device esiste come file nel filesystem --> 0 == esiste; se non esiste lo trattiamo come nome di interfaccia (es: eth0)
-    /* Device is a file (probabilmente .pcap) on filesystem */
-    if((pd1 = pcap_open_offline(device, errbuf)) == NULL) { // non stiamo catturando traffico live --> leggiamo pacchetti gia salvati (file .pcap)
-      // Es: ./pcount -i traffico.pcap
-      // restituisce un hanlder(pd) per leggere i pacchetti
-      printf("pcap_open_offline: %s\n", errbuf);
-      return(-1);
-    }
-  } else {
-    /* hardcode: promisc=1, to_ms=500 */
-    promisc = 1; // mi server per poter vedere tutti i pacchetti che transitano --> la scheda di rete fa filtraggio ad hw, scarterebbe pacchetti non diretti al mio MAC Address
-    if((pd1 = pcap_open_live(device, snaplen, promisc, 500, errbuf)) == NULL) { // in questo caso invece facciamo sniffing live
-      // timeout di 500 ms server per evitare che il programma resti bloccato se non arrivano pacchetti per molto tempo
-      // --> per programmi che gestiscono anche l'interfaccia grafica
-
-      printf("pcap_open_live: %s\n", errbuf);
-      return(-1);
-    }
-    // serve per settarlo a non bloccnate di modo tale che riesca a lavorare
-    // in modo event-driven e non usare i thread
-    // OSS: questo in realta, che ho aggiunto per fine didattico, nel mio contesto è opzionale
-    // perche tanto gestisco gia con la poll, anzi forse meglio dato che evito il busy waiting che avrei altrimenti
-    // facendo un semplice ciclo while(1) con solo dispatch
-    pcap_setnonblock(pd1, 1, errbuf);
-  }
-
-  if(stat(device2, &s) == 0) { // stat() verifica se device esiste come file nel filesystem --> 0 == esiste; se non esiste lo trattiamo come nome di interfaccia (es: eth0)
-    /* Device is a file (probabilmente .pcap) on filesystem */
-    if((pd2 = pcap_open_offline(device2, errbuf)) == NULL) { // non stiamo catturando traffico live --> leggiamo pacchetti gia salvati (file .pcap)
-      // Es: ./pcount -i traffico.pcap
-      // restituisce un hanlder(pd) per leggere i pacchetti
-      printf("pcap_open_offline: %s\n", errbuf);
-      return(-1);
-    }
-  } else {
-    /* hardcode: promisc=1, to_ms=500 */
-    promisc = 1; // mi server per poter vedere tutti i pacchetti che transitano --> la scheda di rete fa filtraggio ad hw, scarterebbe pacchetti non diretti al mio MAC Address
-    if((pd2 = pcap_open_live(device2, snaplen, promisc, 500, errbuf)) == NULL) { // in questo caso invece facciamo sniffing live
-      // timeout di 500 ms server per evitare che il programma resti bloccato se non arrivano pacchetti per molto tempo
-      // --> per programmi che gestiscono anche l'interfaccia grafica
-
-      printf("pcap_open_live: %s\n", errbuf);
-      return(-1);
-    }
-    // serve per settarlo a non bloccnate di modo tale che riesca a lavorare
-    // in modo event-driven e non usare i thread
-    // OSS: questo in realta, che ho aggiunto per fine didattico, nel mio contesto è opzionale
-    // perche tanto gestisco gia con la poll, anzi forse meglio dato che evito il busy waiting che avrei altrimenti
-    // facendo un semplice ciclo while(1) con solo dispatch
-    pcap_setnonblock(pd2, 1, errbuf);
-  }
-
-  if(bpfFilter != NULL) {
-    if(pcap_compile(pd1, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) { // da "tcp port 80" a bytecode BPF eseguibile nel kernel
-      printf("pcap_compile error: '%s'\n", pcap_geterr(pd1));
-    } else {
-      if(pcap_setfilter(pd1, &fcode) < 0) { // --> dopo questo arrivano solo pacchetti che matchano col filtro
-	      printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd1));
-      }
-    }
-  }
+  // apro le interfacce di rete
+  /* hardcode: promisc=1, to_ms=500 */
+  promisc = 1; // mi server per poter vedere tutti i pacchetti che transitano --> la scheda di rete fa filtraggio ad hw, scarterebbe pacchetti non diretti al mio MAC Address
+  if((pd1 = open_live_interface(device, promisc, snaplen)) == NULL) // in questo caso invece facciamo sniffing live
+    return(-1);
+  if((pd2 = open_live_interface(device2, promisc, snaplen)) == NULL)
+    return(-1);
 
   /*
    * IMPORTANTISSIMO PER LA SICUREZZA
@@ -562,10 +389,9 @@ int main(int argc, char* argv[]) {
   signal(SIGINT, sigproc);
   signal(SIGTERM, sigproc);
 
-  if(!verbose) { // ogni secondo stampa statistiche (pacchetti, throughput, ...)
-    signal(SIGALRM, my_sigalarm);
-    alarm(ALARM_SLEEP);
-  }
+  // ogni secondo stampa statistiche (pacchetti, throughput, ...)
+  signal(SIGALRM, my_sigalarm);
+  alarm(ALARM_SLEEP);
 
   printf("Bridge in funzione: %s <-> %s\n", device, device2);
 
@@ -580,6 +406,7 @@ int main(int argc, char* argv[]) {
 
   if (fd1 < 0 || fd2 < 0) {
     fprintf(stderr, "fd not available\n");
+    return -1;
   }
 
   // questa struttura serve alla poll() per sapere cosa su cosa deve aspettare
@@ -600,15 +427,21 @@ int main(int argc, char* argv[]) {
     // 2 --> numero di interfacce (fd) da monitorare (in questo caso 2 per l'appunto)
     // -1 --> attesa infinita
 
-    if(ret < 0) {
-      if(errno == EINTR) continue; // interrotto da segnale
+    if(ret < 0) { // interrotto da segnale
+      if(errno == EINTR) continue;
+      perror("poll");
+      break;
     }
 
     if(fds[0].revents & POLLIN) {
-      pcap_dispatch(pd1, 1, dummyProcessPacket, (u_char*)pd2);
+      // pcap_dispatch(..., 1, ...) processa un pacchetto alla volta
+      // pcap_dispatch(..., -1, ...) prende tutto il buffer (+ efficiente, lavora a blocchi)
+      if(pcap_dispatch(pd1, -1, dummyProcessPacket, (u_char*)pd2) < 0)
+        fprintf(stderr, "pcap_dispatch pd1 -> pd2 error\n");
     }
     if(fds[1].revents & POLLIN) {
-      pcap_dispatch(pd2, 1, dummyProcessPacket, (u_char*)pd1);
+      if(pcap_dispatch(pd2, -1, dummyProcessPacket, (u_char*)pd1) < 0)
+        fprintf(stderr, "pcap_dispatch pd2 -> pd1 error\n");
     }
   }
 
@@ -616,9 +449,6 @@ int main(int argc, char* argv[]) {
 
   pcap_close(pd1);
   pcap_close(pd2);
-
-  if(dumper)
-    pcap_dump_close(dumper);
 
   return(0);
 }

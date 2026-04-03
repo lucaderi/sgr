@@ -1,6 +1,10 @@
 /*
-Come discusso ieri, lunedi prossimo non ci sara' lezione. Vi ho quindi chiesto se avete voglia di modificare il programma pcount.c (da rinominare in pbridge.c) e aggiungere un nuovo parametro (es. -o <interfaccia>) in modo che possa fare da bridge tra due interfacce di rete. Una volta che questa cosa e' stata fatta, potete anche aggiungere filtri sui pacchetti ricevuti in modo ad esempio di scartare certi pacchetti (es. su una certa porta o nome al dominio, o IP, quello che volete voi).
-Se riuscite, invece di gestire la consegna di pbridge.c in modo aritgianale, sarebbe bene che vi leggiate questo https://github.com/lucaderi/sgr/blob/master/README.md e sotto una cartella chiamata 2026 che creerete, create una cartella col vostro cognome e inserire dentro pbridge.c. Per poter fare questo dovete farmi una pull request come descritto nel README sopra. Se avete domande scrivete pure.
+ *
+ * Prerequisite
+ * sudo apt-get install libpcap-dev
+ *
+ * gcc pbridge.c -o pbridge -lpcap -pthread
+ *
 */
 
 
@@ -15,10 +19,9 @@ Se riuscite, invece di gestire la consegna di pbridge.c in modo aritgianale, sar
 #include <pwd.h>
 
 
-#define ALARM_SLEEP       1
+#define ALARM_SLEEP       3
 #define DEFAULT_SNAPLEN 65535
 pcap_t  *pdA, *pdB;
-volatile sig_atomic_t stop_bridge = 0;
 unsigned long long pktsAtoB = 0;
 unsigned long long pktsBtoA = 0;
 
@@ -38,7 +41,14 @@ unsigned long long pktsBtoA = 0;
 #include <net/ethernet.h>     /* the L2 protocols */
 
 #include <pthread.h>
+#include <bits/getopt_core.h>
 
+
+
+typedef unsigned int u_int;
+typedef unsigned short u_short;
+typedef unsigned long u_long;
+typedef unsigned char u_char;
 
 /* *************************************** */
 
@@ -76,26 +86,11 @@ int drop_privileges(const char *username) {
 
 /* *************************************** */
 
-int send_packet(pcap_t *handle, const unsigned char *packet, int len) {
-    if (pcap_inject(handle, packet, len) == -1) {
-        fprintf(stderr, "Failed to send packet: %s\n", pcap_geterr(handle));
-        return -1;
-    }
-    return 0;
-}
-
-/* *************************************** */
-
-void forwardPacket(u_char *_deviceId,
-                         const struct pcap_pkthdr *h,
-                         const u_char *p) {
+void print_stats() {
     
-
-    if ((pcap_t*)_deviceId == pdA) {
-        if (send_packet(pdB, p, h->caplen) == 0) pktsAtoB++;
-    } else {
-        if (send_packet(pdA, p, h->caplen) == 0) pktsBtoA++;
-    }
+    fprintf(stderr, "Actual Stats: %llu pkts from A to B.\n", pktsAtoB);
+    fprintf(stderr, "Actual Stats: %llu pkts from B to A.\n", pktsBtoA);
+    printf("\n");
 }
 
 /* *************************************** */
@@ -108,7 +103,7 @@ void printHelp(void) {
     printf("-h            Print help\n");
     printf("-i <deviceA>  Input interface A\n");
     printf("-o <deviceB>  Output interface B\n");
-    printf("-f <filter>   BPF filter applied on both interfaces\n");
+    printf("-f <filter>   BPF filter\n");
 
     if (pcap_findalldevs(&devpointer, errbuf) == 0) {
         int i = 0;
@@ -129,16 +124,74 @@ void printHelp(void) {
 
 /* *************************************** */
 
-void *bridge (void *arg) {
-    pcap_t *device = (pcap_t*) arg;
-    pcap_loop(device, -1, forwardPacket, (u_char *)device);
+int send_packet(pcap_t *handle, const unsigned char *packet, int len) {
+    if (pcap_inject(handle, packet, len) == -1) {
+        fprintf(stderr, "Failed to send packet: %s\n", pcap_geterr(handle));
+        return -1;
+    }
     return 0;
 }
 
 /* *************************************** */
 
-void handle_sigint(int sig) {
-    stop_bridge = 1;
+void forwardPacket(u_char *_deviceId,
+                         const struct pcap_pkthdr *h,
+                         const u_char *p) {
+    
+    if ((pcap_t*)_deviceId == pdA) {
+        if (send_packet(pdB, p, h->caplen) == 0) pktsAtoB++;
+    } else {
+        if (send_packet(pdA, p, h->caplen) == 0) pktsBtoA++;
+    }
+}
+
+/* *************************************** */
+
+void *bridge (void *arg) {
+
+    pcap_t *pd = (pcap_t*) arg;
+    pcap_loop(pd, -1, forwardPacket, (u_char *)pd);
+    return 0;
+}
+
+
+/* *************************************** */
+
+pcap_t *open_live_interface(char *device, int snaplen, char *errbuf) {
+
+    pcap_t *pd;
+    /* hardcode: promisc=1, to_ms=500 */
+    pd = pcap_open_live(device, snaplen, 1, 500, errbuf);
+    if (pd == NULL) return NULL;
+
+    /* Evita loop */
+    if (pcap_setdirection(pd, PCAP_D_IN) != 0) return NULL;
+
+    return pd;
+}
+
+/* *************************************** */
+
+int set_filter(pcap_t *pd, const char *filter) {
+
+    struct bpf_program fcode;
+
+    if (pcap_compile(pd, &fcode, filter, 1, 0xFFFFFF00) < 0) return -1;
+    else {
+        if (pcap_setfilter(pd, &fcode) < 0) return -1;
+    }
+
+    return 0;
+
+}
+
+/* *************************************** */
+
+void sigproc(int sig) {
+    
+    static int called = 0;
+    fprintf(stderr, "Leaving...\n");
+    if (called) return; else called = 1;
 
     if (pdA != NULL) pcap_breakloop(pdA);
     if (pdB != NULL) pcap_breakloop(pdB);
@@ -146,17 +199,25 @@ void handle_sigint(int sig) {
 
 /* *************************************** */
 
+void my_sigalarm(int sig) {
+    print_stats();
+    alarm(ALARM_SLEEP);
+    signal(SIGALRM, my_sigalarm);
+}
+
+/* *************************************** */
 
 int main(int argc, char* argv[]) {
     char *deviceA = NULL, *deviceB = NULL, *bpfFilter = NULL;
     u_char c;
     char errbuf[PCAP_ERRBUF_SIZE];
-    int promisc, snaplen = DEFAULT_SNAPLEN;
-    struct bpf_program fcodeA, fcodeB;
+    int snaplen = DEFAULT_SNAPLEN;
     pthread_t tA, tB;
     
-    signal(SIGINT, handle_sigint);
-    signal(SIGTERM, handle_sigint);
+    signal(SIGINT, sigproc);
+    signal(SIGTERM, sigproc);
+    signal(SIGALRM, my_sigalarm);
+    alarm(ALARM_SLEEP);
 
 
     while((c = getopt(argc, argv, "hi:f:o:")) != '?') {
@@ -199,43 +260,26 @@ int main(int argc, char* argv[]) {
     }
 
     if (strcmp(deviceA, deviceB) == 0) {
-        printf("ERROR: '-o' device must be different than '-i' device\n");
+        printf("ERROR: '-o' device must be different than '-i' device.\n");
         return -1;
     }
 
     printf("Bridging %s and %s\n", deviceA, deviceB);
 
-    /* hardcode: promisc=1, to_ms=500 */
-    promisc = 1;
-    pdA = pcap_open_live(deviceA, snaplen, promisc, 500, errbuf);
-    if (pdA == NULL) {
-        printf("pcap_open_live (input): %s\n", errbuf);
-        return -1;
+    /* Apre interfacce live e imposta direzione */
+    pdA = open_live_interface(deviceA, snaplen, errbuf);
+    pdB = open_live_interface(deviceB, snaplen, errbuf);
+    if (pdA == NULL || pdB == NULL) {
+        printf ("ERROR: open_live_interface %s\n", errbuf);
+        return(-1);
     }
 
-    pdB = pcap_open_live(deviceB, snaplen, promisc, 500, errbuf);
-    if (pdB == NULL) {
-        printf("pcap_open_live (output): %s\n", errbuf);
-        return -1;
-    }
-
-    if (pcap_setdirection(pdA, PCAP_D_IN) != 0) fprintf(stderr, "pcap_setdirection error on device: %s\n", deviceA);
-    if (pcap_setdirection(pdB, PCAP_D_IN) != 0) fprintf(stderr, "pcap_setdirection error on device: %s\n", deviceB);
-
+    /* Imposta filtri BPF */
     if (bpfFilter != NULL) {
-        if (pcap_compile(pdA, &fcodeA, bpfFilter, 1, 0xFFFFFF00) < 0 ||
-            pcap_compile(pdB, &fcodeB, bpfFilter, 1, 0xFFFFFF00) < 0
-           ) {
-            printf("pcap_compile error: '%s'\n", pcap_geterr(pdA));
-        } else {
-            if (pcap_setfilter(pdA, &fcodeA) < 0 ||
-                pcap_setfilter(pdB, &fcodeB) < 0
-            ) {
-                printf("pcap_setfilter error: '%s'\n", pcap_geterr(pdA));
-            }
-        }
+        if (set_filter(pdA, bpfFilter) < 0) printf ("ERROR: Could not set bpf filters");  
+        if (set_filter(pdB, bpfFilter) < 0)printf ("ERROR: Could not set bpf filters");
     }
-
+    
     if (drop_privileges("nobody") < 0)
         return(-1);
 
@@ -248,9 +292,10 @@ int main(int argc, char* argv[]) {
     pthread_join(tA, NULL);
     pthread_join(tB, NULL);
 
-    printf("\nBridge stopped\n");
-    printf("Packets A -> B: %llu\n", pktsAtoB);
-    printf("Packets B -> A: %llu\n", pktsBtoA);
+    printf("\nBridge stopped.\n");
+    printf("Absolute Stats:\n");
+    printf("Packets from A to B: %llu.\n", pktsAtoB);
+    printf("Packets from B to A: %llu.\n", pktsBtoA);
 
     pcap_close(pdA);
     pcap_close(pdB);

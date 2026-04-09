@@ -25,7 +25,7 @@
 
 
 #define ALARM_SLEEP       1
-#define DEFAULT_SNAPLEN 256
+#define DEFAULT_SNAPLEN 65535
 
 //Puntatori alle due interfacce
 pcap_t *pd_in;
@@ -50,6 +50,10 @@ struct pcap_stat pcapStats;
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <net/ethernet.h>     /* the L2 protocols */
+
+//Per poter leggere gli header
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
 static struct timeval startTime;
 unsigned long long numPkts = 0, numBytes = 0;
@@ -174,51 +178,7 @@ long delta_time (struct timeval * now,
 
 /* ******************************** */
 
-/*
-void print_stats() {
-	struct pcap_stat pcapStat;
-	struct timeval endTime;
-	float deltaSec;
-	static u_int64_t lastPkts = 0;
-	u_int64_t diff;
-	static struct timeval lastTime;
-	char buf1[64], buf2[64];
 
-	if(startTime.tv_sec == 0) {
-	  lastTime.tv_sec = 0;
-	  gettimeofday(&startTime, NULL);
-	  return;
-	}
-
-	gettimeofday(&endTime, NULL);
-	deltaSec = (double)delta_time(&endTime, &startTime)/1000000;
-
-	if(pcap_stats(pd, &pcapStat) >= 0) {
-	  fprintf(stderr, "=========================\n"
-	    "Absolute Stats: [%u pkts rcvd][%u pkts dropped]\n"
-	    "Total Pkts=%u/Dropped=%.1f %%\n",
-	    pcapStat.ps_recv, pcapStat.ps_drop, pcapStat.ps_recv-pcapStat.ps_drop,
-	    pcapStat.ps_recv == 0 ? 0 : (double)(pcapStat.ps_drop*100)/(double)pcapStat.ps_recv);
-	  fprintf(stderr, "%llu pkts [%.1f pkt/sec] - %llu bytes [%.2f Mbit/sec]\n",
-	    numPkts, (double)numPkts/deltaSec,
-	    numBytes, (double)8*numBytes/(double)(deltaSec*1000000));
-
-	  if(lastTime.tv_sec > 0) {
-	    deltaSec = (double)delta_time(&endTime, &lastTime)/1000000;
-	    diff = numPkts-lastPkts;
-	    fprintf(stderr, "=========================\n"
-	      "Actual Stats: %s pkts [%.1f ms][%s pkt/sec]\n",
-	      format_numbers(diff, buf1, sizeof(buf1), 0), deltaSec*1000,
-	      format_numbers(((double)diff/(double)(deltaSec)), buf2, sizeof(buf2), 1));
-	    lastPkts = numPkts;
-	  }
-
-	  fprintf(stderr, "=========================\n");
-	}
-
-	lastTime.tv_sec = endTime.tv_sec, lastTime.tv_usec = endTime.tv_usec;
-}
-*/
 
 /* ******************************** */
 
@@ -230,13 +190,7 @@ void sigproc(int sig) {
 
 /* ******************************** */
 
-/*
-void my_sigalarm(int sig) {
-	print_stats();
-	alarm(ALARM_SLEEP);
-	signal(SIGALRM, my_sigalarm);
-}
-*/
+
 
 /* ****************************************************** */
 
@@ -464,17 +418,7 @@ int main(int argc, char* argv[]) {
 	pcap_setdirection(pd_in, PCAP_D_IN);
 	pcap_setdirection(pd_out, PCAP_D_IN);
 	
-    /*
-	if(bpfFilter != NULL) {
-	  if(pcap_compile(pd, &fcode, bpfFilter, 1, 0xFFFFFF00) < 0) {
-	    printf("pcap_compile error: '%s'\n", pcap_geterr(pd));
-	  } else {
-	    if(pcap_setfilter(pd, &fcode) < 0) {
-	printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
-	    }
-	  }
-	}
-    */
+
 
     if(bpfFilter != NULL) {
     
@@ -514,12 +458,7 @@ int main(int argc, char* argv[]) {
 	signal(SIGINT, sigproc);
 	signal(SIGTERM, sigproc);
 
-    /*
-	if(!verbose) {
-	    signal(SIGALRM, my_sigalarm);
-	    alarm(ALARM_SLEEP);
-	}
-    */
+
 
     /**************************************************************** */
     
@@ -568,15 +507,60 @@ int main(int argc, char* argv[]) {
 
 				int scarta = 0;	//prima usavo continue, ma in quel caso mi avrebbe potuto scartare un pacchetto dall'altro latoì
                 //Filtro manuale
-                if(blocked_domain != NULL){
-                    //anche se inefficiente cerco la stringa all'interno dei byte del pacchetto
-                    if(memmem(pkt_data, header->caplen, blocked_domain, blocked_len) != NULL){
-						if(verbose == 1){
-                        	printf("Pacchetto scartato contentete '%s' da dal device %s\n", blocked_domain, device);
-                    	}
-						scarta = 1;
+
+				
+				if(blocked_domain != NULL){
+
+					//Strutture per gli header
+					struct ether_header* eth = (struct ether_header* ) pkt_data;
+					const unsigned char* payload = NULL;
+					int payload_len = 0;
+
+					//controllo sia un pacchetto ipv4
+					if(ntohs(eth->ether_type) == ETHERTYPE_IP){
+						struct ip* iph = (struct ip* )(pkt_data + sizeof(struct ether_header));
+						//ora sono all'header ip
+
+						int ip_hlen = iph->ip_hl * 4;	//lunghezza header ip
+
+						//ora guardo se è tcp/udp
+
+						if(iph->ip_p == IPPROTO_TCP){
+							struct tcphdr* tcph = (struct tcphdr* )((unsigned char* )iph + ip_hlen);
+							int tcp_hlen = tcph->th_off * 4;	//lungh header tcp
+
+							int tot_headers = sizeof(struct ether_header) + ip_hlen + tcp_hlen;	//offset dove inizia payload
+							
+							if(header->caplen > tot_headers){	//Controllo se cisono dati da leggere
+								payload = pkt_data + tot_headers;
+								payload_len = header->caplen - tot_headers;
+							}
+
+						}else if(iph->ip_p == IPPROTO_UDP){
+
+							//header udp è di 8 byte
+							int tot_headers = sizeof(struct ether_header) + ip_hlen + 8;
+							if(header->caplen > tot_headers){
+								payload = pkt_data + tot_headers;
+								payload_len = header->caplen - tot_headers;
+							}
+						}
 					}
-                }
+
+					//ora che ho tolto gli header faccio la ricerca solo nel payload
+					if((payload != NULL) && (payload_len > 0)){
+						if(memmem(payload, payload_len, blocked_domain, blocked_len) != NULL){
+							if(verbose == 1){
+								printf("Pacchetto scartato contentente '%s' dal device\n", blocked_domain);
+							}
+							scarta = 1;
+						}
+					}
+
+				}
+
+
+
 				if(!scarta){
 					if((pcap_sendpacket(pd_out, pkt_data, header->caplen)) != 0){
 						fprintf(stderr, "Errore invio su %s: %s", device_out, pcap_geterr(pd_out));
@@ -594,15 +578,55 @@ int main(int argc, char* argv[]) {
 
 				int scarta = 0;
                 //Filtro manuale
-                if(blocked_domain != NULL){
-                    //anche se inefficiente cerco la stringa all'interno dei byte del pacchetto
-                    if(memmem(pkt_data, header->caplen, blocked_domain, blocked_len) != NULL){
-						if(verbose == 1){
-                        	printf("Pacchetto scartato contentete '%s' da dal device %s\n", blocked_domain, device);
-                    	}
-                    	scarta = 1;
+				if(blocked_domain != NULL){
+
+					//Strutture per gli header
+					struct ether_header* eth = (struct ether_header* ) pkt_data;
+					const unsigned char* payload = NULL;
+					int payload_len = 0;
+
+					//controllo sia un pacchetto ipv4
+					if(ntohs(eth->ether_type) == ETHERTYPE_IP){
+						struct ip* iph = (struct ip* )(pkt_data + sizeof(struct ether_header));
+						//ora sono all'header ip
+
+						int ip_hlen = iph->ip_hl * 4;	//lunghezza header ip
+
+						//ora guardo se è tcp/udp
+
+						if(iph->ip_p == IPPROTO_TCP){
+							struct tcphdr* tcph = (struct tcphdr* )((unsigned char* )iph + ip_hlen);
+							int tcp_hlen = tcph->th_off * 4;	//lungh header tcp
+
+							int tot_headers = sizeof(struct ether_header) + ip_hlen + tcp_hlen;	//offset dove inizia payload
+							
+							if(header->caplen > tot_headers){	//Controllo se cisono dati da leggere
+								payload = pkt_data + tot_headers;
+								payload_len = header->caplen - tot_headers;
+							}
+
+						}else if(iph->ip_p == IPPROTO_UDP){
+
+							//header udp è di 8 byte
+							int tot_headers = sizeof(struct ether_header) + ip_hlen + 8;
+							if(header->caplen > tot_headers){
+								payload = pkt_data + tot_headers;
+								payload_len = header->caplen - tot_headers;
+							}
+						}
 					}
-                }
+
+					//ora che ho tolto gli header faccio la ricerca solo nel payload
+					if((payload != NULL) && (payload_len > 0)){
+						if(memmem(payload, payload_len, blocked_domain, blocked_len) != NULL){
+							if(verbose == 1){
+								printf("Pacchetto scartato contentente '%s' dal device\n", blocked_domain);
+							}
+							scarta = 1;
+						}
+					}
+
+				}
 				if(!scarta){
 					if((pcap_sendpacket(pd_in, pkt_data, header->caplen))!= 0){
 						fprintf(stderr, "Errore invio su %s: %s", device, pcap_geterr(pd_in));

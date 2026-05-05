@@ -447,11 +447,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (geteuid() != 0) {
-        printf("Please run this tool as superuser\n");
-        return(-1);
-    }
-
     if (device == NULL) {
         printf("ERROR: Missing -i\n");
         printHelp();
@@ -467,6 +462,10 @@ int main(int argc, char* argv[]) {
 	        return(-1);
 	    }
     } else {
+        if (geteuid() != 0) {
+            printf("Please run this tool as superuser when capturing from a live interface\n");
+            return(-1);
+        }
         if ((pd = pcap_open_live(device, snaplen, 1, 500, errbuf)) == NULL) {
             printf("pcap_open_live: %s\n", errbuf);
             return(-1);
@@ -480,7 +479,9 @@ int main(int argc, char* argv[]) {
         if(pcap_setfilter(pd, &fcode) < 0) printf("pcap_setfilter error: '%s'\n", pcap_geterr(pd));
     }
     
-    if (drop_privileges("nobody") < 0) return(-1);
+    if (geteuid() == 0) {
+        if (drop_privileges("nobody") < 0) return(-1);
+    }
 
     signal(SIGINT, sigproc);
     signal(SIGTERM, sigproc);

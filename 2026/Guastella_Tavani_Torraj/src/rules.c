@@ -149,7 +149,7 @@ int rules_init(const char *config_file){
     fp = fopen(config_file, "r");
 
     if (!fp) {
-        perror("fopen firewall.conf");
+        perror(config_file);
         return RULES_ERROR;
     }
 

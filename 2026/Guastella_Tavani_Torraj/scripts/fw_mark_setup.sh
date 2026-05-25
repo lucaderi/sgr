@@ -8,36 +8,95 @@ set -eu
 # 2. FW_OUTPUT recupera un eventuale CONNMARK gia' salvato sul flusso.
 # 3. Se il mark e' gia' PASS/DROP, decide subito nel kernel.
 # 4. Se non c'e' mark, manda il pacchetto in NFQUEUE.
-# 5. Il programma C assegna FW_MARK_PASS=0x1 o FW_MARK_DROP=0x2.
-# 6. POSTROUTING salva quel packet mark nel CONNMARK e applica ACCEPT/DROP.
+# 5. Il programma C restituisce NF_ACCEPT con FW_MARK_PASS=0x1 o FW_MARK_DROP=0x2.
+# 6. FW_POSTROUTING salva il packet mark nel CONNMARK e applica ACCEPT/DROP.
+#
+# Se si cambia protocollo, destinazione o insieme di porte tra due test,
+# eseguire prima fw_mark_cleanup.sh per rimuovere i vecchi jump da OUTPUT.
 
 # Permette di usare un binario iptables diverso, se serve:
-#   IPTABLES=iptables-legacy sudo ./scripts/fw_mark_setup.sh
+#   IPTABLES=iptables-legacy sudo ./scripts/fw_mark_setup.sh -p tcp 80 23
 IPTABLES=${IPTABLES:-iptables}
 
 # La coda deve coincidere con quella creata da nfq_create_queue(..., 0, ...).
 QUEUE_NUM=${QUEUE_NUM:-0}
 
-# Nei test locali intercettiamo solo loopback. Cambiabile con:
-#   DST_IP=192.168.1.10 sudo ./scripts/fw_mark_setup.sh 80 23
-DST_IP=${DST_IP:-127.0.0.1}
+# Protocollo e destinazione sono configurabili da CLI.
+PROTO=tcp
+DST_IP=""
 
-# Le porte passate come argomenti limitano il traffico mandato a NFQUEUE.
-# Senza argomenti usiamo le due porte utili per il progetto: HTTP e TELNET.
+usage() {
+    echo "Usage: sudo $0 [-p tcp|udp] [-d dst_ip] port [port...]" >&2
+    echo "Examples:" >&2
+    echo "  sudo $0 -p tcp -d 127.0.0.1 80 23" >&2
+}
+
+while getopts "p:d:h" opt; do
+    case "$opt" in
+        p)
+            PROTO="$OPTARG"
+            ;;
+        d)
+            DST_IP="$OPTARG"
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+shift $((OPTIND - 1))
 PORTS=("$@")
 
-if [ "${EUID}" -ne 0 ]; then
-    echo "Run as root: sudo ./scripts/fw_mark_setup.sh [ports...]" >&2
+# Le porte passate come argomenti limitano il traffico mandato a NFQUEUE.
+# Non installiamo porte di default: chi lancia lo script deve scegliere il test.
+if [ "$PROTO" != "tcp" ] && [ "$PROTO" != "udp" ]; then
+    echo "Invalid protocol: $PROTO. Use tcp or udp." >&2
     exit 1
 fi
 
 if [ "${#PORTS[@]}" -eq 0 ]; then
-    PORTS=(80 23)
+    usage
+    exit 1
 fi
 
-# Abilita accounting conntrack come richiesto dal prof.
+for port in "${PORTS[@]}"; do
+    case "$port" in
+        ''|*[!0-9]*)
+            echo "Invalid port: $port" >&2
+            exit 1
+            ;;
+    esac
+
+    if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+        echo "Invalid port: $port" >&2
+        exit 1
+    fi
+done
+
+DST_ARGS=()
+if [ -n "$DST_IP" ]; then
+    DST_ARGS=(-d "$DST_IP")
+fi
+
+if [ "${EUID}" -ne 0 ]; then
+    echo "Run as root: sudo $0 [-p tcp|udp] [-d dst_ip] port [port...]" >&2
+    exit 1
+fi
+
+# Abilita accounting conntrack se il kernel lo espone.
 # Non e' il meccanismo dei mark in se', ma rende le entry conntrack piu' osservabili.
-sysctl -w net.netfilter.nf_conntrack_acct=1 >/dev/null
+if [ -e /proc/sys/net/netfilter/nf_conntrack_acct ]; then
+    sysctl -w net.netfilter.nf_conntrack_acct=1 >/dev/null || \
+        echo "Warning: unable to enable nf_conntrack_acct; continuing." >&2
+else
+    echo "Warning: nf_conntrack_acct is not available; continuing without conntrack accounting." >&2
+fi
 
 # Creiamo chain custom nella tabella mangle.
 # Se esistono gia', non falliamo: le svuotiamo subito dopo per ripartire puliti.
@@ -46,17 +105,15 @@ sysctl -w net.netfilter.nf_conntrack_acct=1 >/dev/null
 "$IPTABLES" -t mangle -F FW_OUTPUT
 "$IPTABLES" -t mangle -F FW_POSTROUTING
 
-# Agganciamo OUTPUT alla nostra chain solo per le porte richieste.
-# Questa scelta evita il problema visto con VSCode/WSL: non mandiamo tutto
-# il traffico TCP loopback in NFQUEUE, ma solo quello che vogliamo testare.
+# Agganciamo OUTPUT alla nostra chain solo per protocollo/porte richiesti.
 for port in "${PORTS[@]}"; do
-    if ! "$IPTABLES" -t mangle -C OUTPUT -p tcp -d "$DST_IP" --dport "$port" -j FW_OUTPUT 2>/dev/null; then
-        "$IPTABLES" -t mangle -I OUTPUT 1 -p tcp -d "$DST_IP" --dport "$port" -j FW_OUTPUT
+    if ! "$IPTABLES" -t mangle -C OUTPUT -p "$PROTO" "${DST_ARGS[@]}" --dport "$port" -j FW_OUTPUT 2>/dev/null; then
+        "$IPTABLES" -t mangle -I OUTPUT 1 -p "$PROTO" "${DST_ARGS[@]}" --dport "$port" -j FW_OUTPUT
     fi
 done
 
 # POSTROUTING e' il punto in cui salviamo il packet mark impostato da NFQUEUE
-# nel CONNMARK della connessione/flusso.
+# nel CONNMARK e applichiamo il verdetto finale.
 if ! "$IPTABLES" -t mangle -C POSTROUTING -j FW_POSTROUTING 2>/dev/null; then
     "$IPTABLES" -t mangle -I POSTROUTING 1 -j FW_POSTROUTING
 fi
@@ -82,8 +139,8 @@ fi
 # stesso flusso possono essere gestiti in FW_OUTPUT senza tornare in userspace.
 "$IPTABLES" -t mangle -A FW_POSTROUTING -m mark ! --mark 0x0 -j CONNMARK --save-mark
 
-# Applichiamo il verdetto reale dopo aver salvato il mark.
-# Nel C anche i DROP tornano come NF_ACCEPT + MARK_DROP proprio per arrivare qui.
+# Gli ACCEPT tornano da NFQUEUE con mark 0x1.
+# I DROP tornano da NFQUEUE con mark 0x2: qui vengono salvati e poi scartati.
 "$IPTABLES" -t mangle -A FW_POSTROUTING -m mark --mark 0x2 -j DROP
 "$IPTABLES" -t mangle -A FW_POSTROUTING -m mark --mark 0x1 -j ACCEPT
 

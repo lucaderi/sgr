@@ -6,7 +6,7 @@ set -u
 # Fa tutto in automatico:
 # 1. pulisce vecchie regole del progetto;
 # 2. avvia ./firewall in background;
-# 3. installa regole iptables limitate a 127.0.0.1:80 e :23;
+# 3. installa regole iptables TCP limitate a 127.0.0.1:80 e :23;
 # 4. apre un server HTTP locale sulla porta 80;
 # 5. genera traffico vero verso 80 e 23;
 # 6. stampa log e contatori;
@@ -18,6 +18,7 @@ cd "$ROOT_DIR" || exit 1
 # Pid dei processi temporanei avviati dallo script.
 FW_PID=""
 HTTP_PID=""
+CLEANUP_DONE=0
 
 if [ "${EUID}" -ne 0 ]; then
     echo "Run as root: sudo ./scripts/fw_mark_smoke_test.sh" >&2
@@ -39,20 +40,56 @@ if ! command -v python3 >/dev/null 2>&1; then
     exit 1
 fi
 
+stop_process() {
+    pid="$1"
+    first_signal="$2"
+
+    if [ -z "$pid" ]; then
+        return 0
+    fi
+
+    if ! kill -0 "$pid" 2>/dev/null; then
+        wait "$pid" 2>/dev/null
+        return 0
+    fi
+
+    kill "-$first_signal" "$pid" 2>/dev/null
+
+    for _ in 1 2 3 4 5; do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            wait "$pid" 2>/dev/null
+            return 0
+        fi
+        sleep 0.1
+    done
+
+    kill -TERM "$pid" 2>/dev/null
+
+    for _ in 1 2 3 4 5; do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            wait "$pid" 2>/dev/null
+            return 0
+        fi
+        sleep 0.1
+    done
+
+    kill -KILL "$pid" 2>/dev/null
+}
+
 cleanup() {
     set +e
 
-    # Chiude prima il server HTTP di test, se e' partito.
-    if [ -n "$HTTP_PID" ]; then
-        kill "$HTTP_PID" 2>/dev/null
-        wait "$HTTP_PID" 2>/dev/null
+    if [ "$CLEANUP_DONE" -eq 1 ]; then
+        return
     fi
+    CLEANUP_DONE=1
+    trap - EXIT INT TERM
 
-    # Ferma il firewall con SIGINT per farlo uscire dal loop e chiamare cleanup.
-    if [ -n "$FW_PID" ]; then
-        kill -INT "$FW_PID" 2>/dev/null
-        wait "$FW_PID" 2>/dev/null
-    fi
+    # Chiude prima il server HTTP di test, se e' partito.
+    stop_process "$HTTP_PID" TERM
+
+    # Ferma il firewall con SIGINT; se resta bloccato in recv(), forza l'uscita.
+    stop_process "$FW_PID" INT
 
     # Rimuove sempre le chain iptables create per il test.
     ./scripts/fw_mark_cleanup.sh >/dev/null 2>&1
@@ -69,7 +106,7 @@ rm -f firewall.log build/mark_*.out build/mark_*.err
 ./scripts/fw_mark_cleanup.sh >/dev/null 2>&1
 
 # Avvia il firewall userspace. Deve restare vivo mentre installiamo NFQUEUE.
-./firewall > build/mark_firewall.out 2> build/mark_firewall.err &
+./firewall firewall.conf > build/mark_firewall.out 2> build/mark_firewall.err &
 FW_PID=$!
 sleep 1
 
@@ -80,8 +117,8 @@ if ! kill -0 "$FW_PID" 2>/dev/null; then
     exit 1
 fi
 
-# Installa le regole per mandare solo porta 80 e 23 alla queue 0.
-./scripts/fw_mark_setup.sh 80 23 > build/mark_setup.out
+# Installa le regole per mandare solo TCP/80 e TCP/23 alla queue 0.
+./scripts/fw_mark_setup.sh -p tcp -d 127.0.0.1 80 23 > build/mark_setup.out
 
 # Porta 80: apriamo un server reale, cosi' il flusso ACCEPT puo' completarsi.
 # Questo serve a vedere il riuso del CONNMARK sui pacchetti successivi.
@@ -99,7 +136,7 @@ fi
 # - HTTP verso 80 deve essere RULE_ALLOW;
 # - TCP connect verso 23 deve essere RULE_DROP.
 printf 'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n' | timeout 3 nc 127.0.0.1 80 >/dev/null 2>&1 || true
-timeout 3 nc -zv 127.0.0.1 23 >/dev/null 2>&1 || true
+timeout 1 nc -zv 127.0.0.1 23 >/dev/null 2>&1 || true
 
 # Lasciamo tempo a NFQUEUE/log/iptables counters di aggiornarsi.
 sleep 1

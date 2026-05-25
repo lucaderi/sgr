@@ -27,7 +27,7 @@ static void handle_sigint(int sig) {
 // CALLBACK INTERNA NFQUEUE
 
 static int nfqueue_callback(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nfa, void *data){
-    
+
     (void)nfmsg;
     (void)data;
 
@@ -63,9 +63,9 @@ static int nfqueue_callback(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, str
         if (res == 1) {
             verdict = NF_ACCEPT;
             mark = FW_MARK_PASS;
-        } 
+        }
         else {
-            // Il DROP reale viene applicato dalle regole iptables dopo il save-mark.
+            // Il DROP finale viene applicato in FW_POSTROUTING dopo il save-mark.
             verdict = NF_ACCEPT;
             mark = FW_MARK_DROP;
         }
@@ -78,7 +78,7 @@ static int nfqueue_callback(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, str
 //INIT
 
 int nfqueue_init(packet_handler_cb cb){
-    
+
     user_cb = cb;
 
     // Apri handler
@@ -155,7 +155,7 @@ void nfqueue_run(){
 
 //CleanUp
 void nfqueue_cleanup(){
-    
+
     if (qh)
         nfq_destroy_queue(qh);
 

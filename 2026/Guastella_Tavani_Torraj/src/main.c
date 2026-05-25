@@ -8,7 +8,7 @@
 // CALLBACK
 
 int handle_packet(unsigned char *data, int len){
-    
+
     packet_t pkt;
 
     if (parse_packet(data, len, &pkt) == 0) {
@@ -33,12 +33,17 @@ int handle_packet(unsigned char *data, int len){
 
 // MAIN
 
-int main()
+int main(int argc, char *argv[])
 {
     // Carica regole da file
-    if (rules_init("firewall.conf") != 0) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <config_file>\n", argv[0]);
+        return 1;
+    }
 
-        fprintf(stderr, "Errore caricamento firewall.conf\n");
+    if (rules_init(argv[1]) != 0) {
+
+        fprintf(stderr, "Errore caricamento %s\n", argv[1]);
 
         return 1;
     }

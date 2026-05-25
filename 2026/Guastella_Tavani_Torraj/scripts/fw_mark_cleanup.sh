@@ -32,7 +32,10 @@ delete_jumps_to() {
         for rule in "${rules[@]}"; do
             # Qui vogliamo volutamente espandere la regola in argomenti iptables.
             # shellcheck disable=SC2086
-            "$IPTABLES" -t mangle ${rule/-A /-D }
+            if ! "$IPTABLES" -t mangle ${rule/-A /-D }; then
+                echo "Warning: unable to delete rule: $rule" >&2
+                return 1
+            fi
         done
     done
 }

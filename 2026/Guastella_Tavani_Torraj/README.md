@@ -35,14 +35,14 @@ Flusso di elaborazione:
    * IP sorgente e destinazione;
    * protocollo;
    * porte TCP/UDP.
-   
+
 4. Il decision engine:
 
    * aggiorna le statistiche HyperLogLog;
    * verifica eventuali limiti di traffico;
    * applica le regole firewall;
    * produce il verdetto finale.
-   
+
 5. Il risultato viene restituito al kernel.
 
 Questa struttura rende il progetto più semplice da estendere e facilita la separazione delle responsabilità tra i moduli.
@@ -54,15 +54,15 @@ Questa struttura rende il progetto più semplice da estendere e facilita la sepa
 NFQUEUE è un componente di Netfilter che consente di trasferire pacchetti dal kernel allo spazio utente.
 In questo progetto viene utilizzato per delegare al firewall userspace la decisione finale sui pacchetti intercettati.
 
-Le regole `iptables` indirizzano verso la queue `0` solo il traffico di interesse.
+Le regole `iptables` indirizzano verso la queue `0` solo il traffico di interesse. Nel progetto non conviene aggiungerle a mano: lo script `fw_mark_setup.sh` installa anche le chain necessarie per packet mark e `CONNMARK`.
 
-Esempio:
+Esempio per intercettare traffico TCP locale verso porta 80:
 
 ```bash
-iptables -t mangle -A OUTPUT -p tcp --dport 80 -j NFQUEUE --queue-num 0
+sudo ./scripts/fw_mark_setup.sh -p tcp -d 127.0.0.1 80
 ```
 
-In questo modo soltanto il traffico TCP destinato alla porta 80 viene analizzato dal firewall.
+In questo modo soltanto il traffico selezionato viene analizzato dal firewall, mentre il resto continua a seguire il normale percorso del kernel.
 
 ---
 
@@ -150,7 +150,7 @@ Questo approccio consente di monitorare il traffico in modo efficiente anche con
 
 # Packet Mark e CONNMARK
 
-Il firewall utilizza i packet mark di Netfilter per associare una decisione ai flussi già analizzati.
+Il firewall utilizza i packet mark di Netfilter per associare una decisione ai pacchetti analizzati e, quando possibile, ai flussi già visti.
 
 Sono definiti due mark principali:
 
@@ -161,12 +161,16 @@ FW_MARK_DROP = 0x2
 
 Il funzionamento è il seguente:
 
-1. un pacchetto privo di mark entra in NFQUEUE;
-2. il firewall decide se consentire o bloccare il traffico;
-3. il mark viene salvato nel conntrack tramite `CONNMARK`;
-4. i pacchetti successivi dello stesso flusso vengono gestiti direttamente dal kernel.
+1. `FW_OUTPUT` prova a recuperare dal conntrack una decisione già salvata con `CONNMARK --restore-mark`;
+2. se il mark è `0x1`, il pacchetto viene accettato direttamente dal kernel;
+3. se il mark è `0x2`, il pacchetto viene scartato direttamente dal kernel;
+4. se non esiste ancora una decisione, il pacchetto entra in NFQUEUE;
+5. il firewall userspace decide `ALLOW` o `DROP` e restituisce il pacchetto al kernel con mark `0x1` o `0x2`;
+6. `FW_POSTROUTING` salva il mark con `CONNMARK --save-mark` e applica il verdetto finale.
 
-Questo meccanismo riduce il numero di pacchetti inviati in userspace e diminuisce l’overhead complessivo del firewall.
+Questo meccanismo riduce il numero di pacchetti inviati in userspace sui flussi che il conntrack riesce a riassociare, diminuendo l’overhead complessivo del firewall.
+
+Nel caso di traffico UDP bloccato(DROP), è normale vedere più righe di log anche se i pacchetti vengono respinti. Il client può generare ritrasmissioni o nuove query con porte sorgenti diverse; inoltre UDP non ha una connessione persistente come TCP. Per verificare il blocco bisogna quindi guardare sia l’esito del client, ad esempio timeout o assenza di risposta, sia i contatori `FW_POSTROUTING` sulla regola `mark 0x2 DROP`.
 
 ---
 ## Requisiti
@@ -188,19 +192,30 @@ Per compilare il progetto:
 make firewall
 ```
 
-Il programma deve essere eseguito con privilegi root:
+Dopo la compilazione servono due componenti: il processo userspace e le regole `iptables` che scelgono quali pacchetti inviare a NFQUEUE. Si consiglia di usare due terminali:
+
+Terminale 1, firewall userspace:
 
 ```bash
-sudo ./firewall
+sudo ./firewall firewall.conf
 ```
 
-Per intercettare il traffico è necessario installare le regole `iptables` fornite dagli script del progetto.
+Terminale 2, regole Netfilter per scegliere cosa mandare a NFQUEUE:
+
+```bash
+sudo ./scripts/fw_mark_cleanup.sh
+sudo ./scripts/fw_mark_setup.sh -p <protocol> -d <dst_ip> [ports...]
+```
+
+Lo script richiede esplicitamente almeno una porta da intercettare; non installa porte di default. Protocollo e destinazione possono essere scelti in base al test:
 
 Esempio:
-
 ```bash
-sudo ./scripts/fw_mark_setup.sh 80 23
+sudo ./scripts/fw_mark_setup.sh -p tcp -d 127.0.0.1 80 23 443
 ```
+
+Prima di cambiare protocollo, destinazione o insieme di porte, eseguire `fw_mark_cleanup.sh` per rimuovere eventuali jump precedenti.
+
 
 Lo script configura:
 
@@ -250,6 +265,74 @@ Al termine vengono mostrati:
 * contatori delle regole;
 * stato dei mark Netfilter.
 
+Lo smoke test può richiedere qualche secondo in più perché il controllo sulla porta 23 genera un tentativo TCP che viene droppato. In questo caso il kernel può ritrasmettere alcuni SYN prima di chiudere il tentativo; è normale vedere più righe `DROP` con la stessa porta sorgente nel log.
+
+## Test consigliati
+
+### Test TCP ACCEPT con riuso del mark
+
+Questo test verifica che il traffico TCP permesso venga analizzato in userspace solo all'inizio della connessione e che i pacchetti successivi vengano gestiti dal kernel tramite `CONNMARK`.
+
+Terminale 1:
+
+```bash
+make firewall
+sudo ./firewall firewall.conf
+```
+
+Terminale 2:
+
+```bash
+sudo ./scripts/fw_mark_cleanup.sh
+sudo ./scripts/fw_mark_setup.sh -p tcp -d 127.0.0.1 80
+sudo python3 -m http.server 80 --bind 127.0.0.1
+```
+
+Terminale 3:
+
+```bash
+curl http://127.0.0.1/
+curl http://127.0.0.1/
+curl http://127.0.0.1/
+sudo ./scripts/fw_mark_status.sh
+```
+
+Risultato atteso:
+
+* i tre `curl` devono ricevere una risposta HTTP;
+* nel log del firewall devono comparire decisioni `ACCEPT` per traffico TCP verso porta 80;
+* nei contatori, `FW_OUTPUT / NFQUEUE` deve aumentare per i primi pacchetti analizzati;
+* `FW_OUTPUT / mark 0x1 ACCEPT` deve aumentare, indicando che pacchetti successivi sono stati accettati direttamente dal kernel;
+* `FW_POSTROUTING / mark 0x1 ACCEPT` deve aumentare, indicando che il mark `PASS` e' stato applicato e salvato.
+
+### Test UDP DROP
+
+Questo test verifica che traffico UDP bloccato dalle regole venga marcato con `FW_MARK_DROP` e scartato in `FW_POSTROUTING`.
+
+Terminale 1:
+
+```bash
+make firewall
+sudo ./firewall firewall.conf
+```
+
+Terminale 2:
+
+```bash
+sudo ./scripts/fw_mark_cleanup.sh
+sudo ./scripts/fw_mark_setup.sh -p udp -d <dns_server_ip> 53
+host <domain> <dns_server_ip>
+sudo ./scripts/fw_mark_status.sh
+```
+
+Risultato atteso:
+
+* il comando `host` deve andare in timeout o non ricevere risposta;
+* nel log del firewall devono comparire decisioni `DROP` per pacchetti UDP verso porta 53;
+* `FW_POSTROUTING / mark 0x2 DROP` deve aumentare, indicando che il pacchetto marcato come DROP e' stato scartato dal kernel.
+
+Nel caso UDP e' normale vedere piu' righe nel log: il client puo' generare ritrasmissioni o nuove query con porte sorgenti diverse. Questo non indica che i pacchetti siano stati accettati; il controllo importante e' il timeout lato client insieme ai contatori `mark 0x2 DROP`.
+
 ---
 
 # Debug
@@ -273,4 +356,3 @@ sudo iptables -t mangle -L FW_POSTROUTING -v -n --line-numbers
 * Federico Guastella
 * Marco Tavani
 * Elio Torraj
-

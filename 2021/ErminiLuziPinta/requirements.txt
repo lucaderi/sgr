@@ -1,7 +1,7 @@
 certifi==2024.7.4
 chardet==4.0.0
 cycler==0.10.0
-idna==3.7
+idna==3.15
 influxdb==5.3.1
 influxdb-client==1.17.0
 kiwisolver==1.3.1
@@ -18,4 +18,4 @@ Rx==3.2.0
 scapy==2.4.5
 scipy==1.10.0
 six==1.16.0
-urllib3==2.6.3
+urllib3==2.7.0

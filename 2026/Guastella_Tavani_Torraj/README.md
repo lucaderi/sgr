@@ -2,13 +2,17 @@
 
 ## Introduzione
 
-Il progetto consiste nello sviluppo di un firewall userspace in linguaggio C per sistemi Linux, basato sul sottosistema NFQUEUE di Netfilter.
-L’obiettivo è intercettare pacchetti IP selezionati dal kernel, analizzarli in spazio utente e applicare politiche di filtraggio personalizzate.
+Il progetto consiste in un firewall userspace che integra sia il filtraggio classico tramite NFQUEUE sia alcune strutture dati viste durante il corso, in particolare Leaky Bucket e HyperLogLog.
 
-Oltre al filtraggio tradizionale, il firewall integra due meccanismi di analisi del traffico:
+L’obiettivo del Leaky Bucket è introdurre una forma semplice di rate limiting per limitare host che generano un numero elevato di connessioni in un breve intervallo temporale. Per ogni IP sorgente si mantiene infatti un bucket associato, che cresce all’arrivo dei pacchetti e si svuota progressivamente nel tempo. Quando il numero di token supera una soglia prefissata, il traffico viene considerato eccessivo e classificato come DROP dal decision engine.
+HyperLogLog viene invece utilizzato come struttura statistica per stimare il numero di IP sorgenti distinti osservati dal firewall. L’idea è avere un indicatore leggero di possibili fenomeni anomali distribuiti (ad esempio flood provenienti da molti host differenti) senza mantenere in memoria l’elenco completo degli IP osservati. L' HLL non influisce direttamente sulla decisione ACCEPT/DROP: essendo una struttura probabilistica, fornisce una stima della cardinalità ma non permette di identificare direttamente gli host coinvolti. Per questo motivo viene utilizzato a fini di monitoring e logging.
 
-* un sistema di rate limiting basato su algoritmo Leaky Bucket;
-* una stima del numero di IP sorgenti distinti tramite HyperLogLog.
+Mentre le tecnologie di packet mark e CONNMARK, hanno il seguente comportamento: il firewall userspace non applica direttamente NF_DROP; la callback NFQUEUE restituisce sempre NF_ACCEPT; il firewall assegna però un mark differente ai pacchetti classificati ACCEPT o DROP; successivamente le regole iptables/mangle utilizzano tali mark per decidere se accettare o scartare il traffico. Questa scelta è stata fatta per evitare reiniezioni ripetute dello stesso traffico nella NFQUEUE e ridurre il numero di pacchetti riesaminati dal firewall userspace.
+Nel caso dei flussi ACCEPT: il pacchetto prosegue normalmente nello stack di rete; conntrack conferma la connessione; il CONNMARK viene salvato correttamente; i pacchetti successivi dello stesso flusso possono quindi bypassare NFQUEUE; dove con il termine flusso si indica una quintupla <IpSorgente, IpDestinazione, PortaSorgente, PortaDestinazione, Protocollo>. 
+Nel caso dei flussi classificati DROP: il pacchetto riceve il mark corrispondente; il DROP effettivo viene eseguito successivamente da iptables; tuttavia il comportamento dipende dal lifecycle della conntrack entry. In particolare, se il primo pacchetto del flusso viene scartato prima che la connessione venga completamente confermata dal kernel, il relativo stato conntrack potrebbe non essere persistente. In questo caso il mark non viene necessariamente riutilizzato dai pacchetti successivi dello stesso flusso.
+
+Di conseguenza, la nostra implementazione garantisce in modo affidabile il caching dei flussi ACCEPT tramite CONNMARK, mentre per i flussi DROP il comportamento è più limitato e dipende dalla conferma della connessione nello stack Netfilter/conntrack.
+La meccanica relativa ai DROP potrebbe essere ulteriormente migliorata in una futura evoluzione del progetto, ad esempio introducendo blacklist temporanee lato userspace oppure una diversa gestione del verdict NFQUEUE. La soluzione adottata è volutamente più semplice e facilmente analizzabile, coerente con gli obiettivi del progetto. 
 
 ---
 
@@ -130,6 +134,8 @@ Quando il traffico supera la soglia configurata, il pacchetto può essere classi
 
 Questo approccio consente di limitare traffico anomalo senza bloccare immediatamente connessioni legittime.
 
+I valori di configurazione di questo meccanismo sono le costanti RATE_LIMIT_MAX_TOKENS e RATE_LIMIT_LEAK_RATE definite in include/rate_limit.h. 
+
 ---
 
 # Stima degli IP con HyperLogLog
@@ -145,6 +151,8 @@ Nel progetto:
 * la cardinalità stimata viene calcolata periodicamente dal decision engine.
 
 Questo approccio consente di monitorare il traffico in modo efficiente anche con un numero elevato di host.
+
+I valori di configurazione di questo meccanismo sono le costanti HLL_P e HLL_M, rispettivamente il numero di bit dedicati ai registri e il numero di registri, presenti nel file hyperloglog.h  
 
 ---
 

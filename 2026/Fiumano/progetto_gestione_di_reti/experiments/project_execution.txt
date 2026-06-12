@@ -1,0 +1,38 @@
+alessandrofiumano@MacBook-Air-7 progetto_gestione_di_reti % python3 start.py --prometheus-dir /Users/alessandrofiumano/Downloads/prometheus --node-exporter-dir /Users/alessandrofiumano/Downloads/node_exporter --alertmanager-dir /Users/alessandrofiumano/Downloads/alertmanager --dashboard ./dashboard.json --device en0
+Configuration completed for device en0.
+Prometheus is not running. Starting Prometheus...
+Node Exporter is not running. Starting Node Exporter...
+Alertmanager is not running. Starting Alertmanager...
+Prometheus datasource already exists.
+Dashboard uploaded successfully: http://localhost:3000/d/adpfllk/prometheus
+Dashboard configured and uploaded to Grafana which runs on http://localhost:3000.
+All services started, Prometheus runs on http://localhost:9090, Node Exporter on http://localhost:9100/metrics, Alertmanager on http://localhost:9093, and the alert receiver on http://localhost:5001.
+[2026-06-11 21:47:53] [firing] PacchettiUscitaElevati
+severity: warning
+summary: Picco anomalo pacchetti in uscita
+description: Il volume di pacchetti in uscita (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti.
+
+[2026-06-11 21:48:03] [firing] PacchettiIngressoElevati
+severity: warning
+summary: Picco anomalo pacchetti in ingresso
+description: Il volume di pacchetti in ingresso (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti.
+
+[2026-06-11 21:49:03] [resolved] PacchettiIngressoElevati
+severity: warning
+summary: Picco anomalo pacchetti in ingresso
+description: Il volume di pacchetti in ingresso (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti.
+
+[2026-06-11 21:49:28] [firing] PacchettiIngressoElevati
+severity: warning
+summary: Picco anomalo pacchetti in ingresso
+description: Il volume di pacchetti in ingresso (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti.
+
+[2026-06-11 21:49:53] [resolved] PacchettiUscitaElevati
+severity: warning
+summary: Picco anomalo pacchetti in uscita
+description: Il volume di pacchetti in uscita (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti.
+
+[2026-06-11 21:50:28] [resolved] PacchettiIngressoElevati
+severity: warning
+summary: Picco anomalo pacchetti in ingresso
+description: Il volume di pacchetti in ingresso (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti.

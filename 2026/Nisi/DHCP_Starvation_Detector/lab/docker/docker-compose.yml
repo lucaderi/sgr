@@ -1,0 +1,67 @@
+name: dhcp_starvation_detector_lab
+
+networks:
+  dhcp_lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+          gateway: 192.168.100.254
+
+services:
+
+  router:
+    build:
+      context: ../..
+      dockerfile: lab/docker/router/Dockerfile
+      args:
+        DHCP_TYPE: ${DHCP_TYPE:-dnsmasq}
+    environment:
+      DHCP_TYPE: ${DHCP_TYPE:-dnsmasq}
+    container_name: dhcp_router
+    hostname: router
+    networks:
+      dhcp_lab:
+        ipv4_address: 192.168.100.1
+    cap_add:
+      - NET_ADMIN
+
+  attacker:
+    build:
+      context: ../..
+      dockerfile: lab/docker/attacker/Dockerfile
+    container_name: dhcp_attacker
+    hostname: attacker
+    init: true
+    networks:
+      dhcp_lab:
+        ipv4_address: 192.168.100.2
+    depends_on:
+      - router
+    privileged: true
+
+  detector:
+    build:
+      context: ../..
+      dockerfile: lab/docker/detector/Dockerfile
+    container_name: dhcp_detector
+    hostname: detector
+    networks:
+      dhcp_lab:
+        ipv4_address: 192.168.100.3
+    depends_on:
+      - router
+    privileged: true
+
+  client:
+    build:
+      context: ../..
+      dockerfile: lab/docker/client/Dockerfile
+    container_name: dhcp_client
+    hostname: client
+    networks:
+      dhcp_lab:
+        ipv4_address: 192.168.100.4
+    depends_on:
+      - router
+    privileged: true

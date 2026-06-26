@@ -1,0 +1,240 @@
+# DHCP starvation detector configuration.
+#
+# The default values below have been tested and should be effective in most
+# network environments. Edit only if you need to adapt to a specific topology
+# (e.g. very small or very large DHCP pools, high-traffic networks, or
+# unusually aggressive legitimate DHCP clients).
+#
+# The C parser intentionally supports only a small YAML subset:
+#   section:
+#     key: value
+#     subsection:
+#       key: value
+#   flat.key: value
+# comments starting with # are ignored.
+#
+# File search priority (defense_config.c with cfg_load()):
+#   1. Path passed explicitly to cfg_load(path) from the calling code.
+#   2. Environment variable DHCP_DEFENSE_CONFIG, if set.
+#   3. config/config.yaml relative to the detector source directory.
+#   4. src/defense/dhcp_starvation_detector/config/config.yaml from project root.
+#
+# Per-key environment variable override:
+#   Any key can be overridden at runtime without editing this file.
+#   Convention: uppercase the key and replace '.' with '_'.
+#   Examples:  netconf.password  ->  NETCONF_PASSWORD
+#              netconf.username  ->  NETCONF_USERNAME
+#              dhcp.backend      ->  DHCP_BACKEND
+#              rrd.step_secs     ->  RRD_STEP_SECS
+#   Usage: NETCONF_PASSWORD=secret sudo -E ./bin/dhcp_starvation_detector
+#
+# For each key, the comment indicates the source file(s) where it is used, and a brief description of its purpose.
+
+# Where we capture and analyze DHCP traffic?
+runtime:
+  interface: ens160              # dhcp_starvation_detector.c — interface to monitor for DHCP traffic
+
+# Which DHCP server backend are we using?
+dhcp:
+  backend: dnsmasq               # dhcp_starvation_detector.c, tests/run_tests.py — DHCP backend type: dnsmasq or isc; the C detector validates/logs it, while backend-specific behavior is handled by the router NETCONF handler
+
+# Where we store our trusted MAC addresses and statistics?
+paths:
+  whitelist: db/whitelist.txt    # whitelist.c — path to the MAC whitelist file
+  rrd_file: db/dhcp_stats.rrd    # rrd_stats.c — path to the RRDtool round-robin database file
+
+# How do we capture DHCP traffic?
+pcap:
+  snaplen: 65535                 # dhcp_parser.c — max bytes captured per packet (65535 = full packet)
+  promiscuous: 1                 # dhcp_parser.c — enable promiscuous mode to see all traffic on the segment
+  timeout_ms: 100                # dhcp_parser.c — pcap read timeout in ms
+  dispatch_batch: 64             # dhcp_parser.c — max packets processed per dhcp_capture_dispatch call
+  loop_sleep_us: 100000          # dhcp_starvation_detector.c — microseconds to sleep between dispatch iterations (100 ms)
+  dhcp_filter: "udp and (port 67 or port 68)" # dhcp_parser.c — BPF filter applied to the capture handle; both ports needed to capture DISCOVERs, OFFERs and ACKs
+
+# How we communicate with the router (DHCP server)?
+netconf:
+  # These are used in the C detector, not to be confused with the analogue in the test_suite section below, which is used only by the Python test runner.
+  host: 192.168.42.4             # dhcp_starvation_detector.c — OpenWrt NETCONF router IP
+  port: 830                      # netconf_action.c — NETCONF-over-SSH port (RFC 6241 standard)
+  # Better using a SSH Key in real environment, but for testing is too complicated, maybe I will add support in future, for now env vars are enough to not write plain text :/
+  username: root                 # netconf_action.c — router SSH username (override with: NETCONF_USERNAME)
+  password: ""                   # netconf_action.c — router SSH password (override with: NETCONF_PASSWORD)
+  yang_dir: /usr/share/yang/modules/libnetconf2 # netconf_action.c — directory containing YANG schemas required by libnetconf2
+  send_timeout_ms: 1000          # netconf_action.c — timeout in ms to send a NETCONF RPC request
+  reply_timeout_ms: 15000        # netconf_action.c — timeout in ms to receive the NETCONF RPC reply
+
+# How do we respond when we detect an attack?
+defense:
+  lease_lookup_retry_secs: 5     # dhcp_starvation_detector.c — seconds between router lease-lookup retries while a provisional reputation entry is waiting for a lease/IP hint
+  mitigation_grace_secs: 120     # dhcp_starvation_detector.c — seconds to keep the whitelist-only mode active after the attack score drops below threshold
+
+# How does the attack detection logic work?
+detector:
+  window_secs: 60                # sliding_window.c — sliding window length in seconds (number of 1-second slots)
+  score_threshold: 2             # detector.c — minimum number of active features (out of 5) to declare an attack
+  alert_hold_secs: 5             # detector.c — seconds the score must stay below threshold before clearing the attack flag
+
+  unique_mac_threshold: 40       # detector.c — F2: max distinct MACs seen in the sliding window before triggering
+  unique_min_discovers: 40       # detector.c — F2: minimum DISCOVERs required in the window before F2 is evaluated
+
+  leaky_bucket:
+    capacity: 60.0               # leaky_bucket.c — F3: maximum burst tokens (total requests before the bucket empties)
+    refill_per_sec: 2.0          # leaky_bucket.c — F3: tokens refilled per second, representing the expected normal DISCOVER rate
+  
+  adaptive_score:
+    alpha: 0.10                  # adaptive_score.c — F4: EMA smoothing factor for the baseline mean (lower = slower adaptation)
+    gamma: 0.10                  # adaptive_score.c — F4: EMA smoothing factor for the deviation estimate
+    delta: 1.50                  # adaptive_score.c — F4: multiplier applied to the deviation; higher = less sensitive to spikes
+    warmup: 120                  # adaptive_score.c — F4: seconds of observations required before F4 starts producing scores
+
+  la_threshold: 0.80             # detector.c — F5: ratio of DISCOVERs with LA-bit set (mac[0]&0x02, randomly generated MACs) over total DISCOVERs in la_window_secs; 0.80 = trigger if 80% of traffic is spoofed
+  # Using another dedicated window.
+  la_window_secs: 5              # detector.c — F5: observation window in seconds for the LA-bit ratio
+  la_min_discovers: 3            # detector.c — F5: minimum DISCOVERs in the sliding window before F5 is evaluated
+
+  # Some dedicated parameters for slow-to-low attacks.
+  pool_history_secs: 60          # detector.c — F6: history window in seconds used to measure lease pool growth
+  pool_poll_secs: 5              # detector.c — F6: seconds between NETCONF calls to read the pool occupancy
+  pool_projected_usage: 0.10     # detector.c — F6: minimum pool fill fraction to start time-to-exhaustion projection
+  pool_pressure_usage: 0.70      # detector.c — F6: pool fill fraction that alone triggers immediate pool-pressure alert
+  pool_min_growth: 10            # detector.c — F6: minimum absolute lease growth (number of leases) to consider the pool growing
+  pool_tte_secs: 300             # detector.c — F6: if projected time-to-exhaustion is below this (seconds), fast attack is flagged
+  pool_slow_min_growth: 8        # detector.c — F6: slow path: lower lease-growth floor after usage/TTE and unique-MAC checks pass
+  pool_slow_usage: 0.18          # detector.c — F6: pool fill fraction threshold for slow-and-low detection path
+  pool_slow_tte_secs: 900        # detector.c — F6: max projected TTE (seconds) for slow-and-low attack detection
+  pool_slow_unique_macs: 10      # detector.c — F6: minimum unique MACs seen to confirm slow-and-low attack
+  pool_slow_discovers: 10        # detector.c — F6: minimum DISCOVERs seen to confirm slow-and-low attack
+  pool_alert_hold_secs: 30       # detector.c — F6: seconds to hold the pool-pressure alert after the condition clears
+
+# How do we store and manage historical data for analysis?
+rrd:
+  step_secs: 10                  # rrd_stats.c — seconds between RRD data points (sampling interval)
+  history_hours: 24              # rrd_stats.c — hours of history retained in the RRD database
+  heartbeat_multiplier: 2        # rrd_stats.c — heartbeat = step * multiplier; max seconds between updates before value is marked unknown
+  xfiles_factor: 0.5             # rrd_stats.c — fraction of unknown samples allowed per consolidation period (0.5 = up to 50%)
+
+# How do we evaluate and manage MAC address reputation for DHCP clients?
+reputation:
+  ### CANDIDATE / temporal gate ###
+  gate_slot_secs: 60             # mac_reputation.c — duration in seconds of each Bloom filter gate window
+  observation_window_secs: 300   # mac_reputation.c — max seconds to keep CANDIDATE/TRACKING evidence before resetting or evicting it
+
+  ### TRACKING / DHCP backoff validation ###
+  min_discovers: 4               # mac_reputation.c — minimum DISCOVER count for a MAC to reach READY state
+  max_discovers: 8               # mac_reputation.c — maximum DISCOVER count; above this the MAC is rejected as too aggressive
+  min_interval_secs: 4           # mac_reputation.c — minimum seconds between consecutive DISCOVERs (backoff lower bound)
+  max_interval_secs: 90          # mac_reputation.c — maximum seconds between consecutive DISCOVERs (backoff upper bound)
+  backoff_min_span_secs: 20      # mac_reputation.c — minimum total observation span (seconds) required to validate backoff pattern
+  backoff_growth_percent: 175    # mac_reputation.c — minimum inter-interval growth percentage to classify as exponential backoff (175 = ×1.75)
+  backoff_min_growth_steps: 1    # mac_reputation.c — minimum number of consecutive growing intervals required
+  max_tracking: 256              # mac_reputation.c — maximum MACs simultaneously in TRACKING state
+
+  ### TRACKING -> READY under pressure ###
+  pressure_entries: 96           # mac_reputation.c — TRACKING+READY pressure threshold; above this, stricter promotion requirements are used
+  pressure_min_discovers: 5      # mac_reputation.c — minimum DISCOVERs required when promoting under pool pressure
+  pressure_min_age_secs: 30      # mac_reputation.c — minimum age (seconds) of a tracking entry when promoting under pool pressure
+
+  ### READY / promotion queue ###
+  max_ready: 32                  # mac_reputation.c — maximum MACs simultaneously in READY state (quota for legitimate hosts)
+  promote_interval_secs: 20      # mac_reputation.c — seconds between batch promotion attempts (READY → PROVISIONAL)
+  ready_ttl_secs: 300            # mac_reputation.c — seconds a MAC stays in READY before being evicted if not promoted
+
+  ### PROVISIONAL / ARP_PENDING temporary whitelist ###
+  max_temp_whitelist: 2          # mac_reputation.c — maximum MACs simultaneously in PROVISIONAL or ARP_PENDING state
+  arp_retries: 3                 # mac_reputation.c — number of ARP probe attempts before giving up on a PROVISIONAL MAC
+  arp_retry_secs: 5              # mac_reputation.c — seconds between ARP retries
+  lease_hint_arp_delay_secs: 8   # mac_reputation.c — seconds to wait before sending ARP when a lease hint is already available
+  provisional_ttl_secs: 45       # mac_reputation.c — seconds a MAC stays in PROVISIONAL before ARP timeout eviction
+
+  ### REJECTED cooldown ###
+  rejected_ttl_secs: 300         # mac_reputation.c — seconds a rejected MAC must wait before being re-tracked
+
+  ### CONFIRMED runtime cache ###
+  confirmed_ttl_secs: 3600       # mac_reputation.c — seconds a CONFIRMED MAC stays in the whitelist before re-verification
+
+###############################################################################
+# WARNING
+#
+# Everything below belongs to tests/run_tests.py.
+# It WILL NOT affect the C detector runtime.
+###############################################################################
+test_suite:
+  # Shared between VMs and Docker lab topologies.
+  run_id: ""                                                      # tests/run_tests.py — result directory name; empty value generates a timestamp at startup
+  local_defense_dir: src/defense/dhcp_starvation_detector         # tests/run_tests.py — local detector source directory to sync/build remotely
+  local_attack_script: src/attack/dhcp_starvation_attack.py       # tests/run_tests.py — local custom Python DHCP attack script to sync to the attacker
+  local_legit_dhcp_client_script: tests/legit_dhcp_client.sh      # tests/run_tests.py — local legitimate DHCP client helper copied to the client host/container
+  suite_wl_remote: db/whitelist_ct.txt                            # tests/run_tests.py — temporary runtime whitelist path used by tests inside the detector workspace
+  remote_tmp_dir: /tmp                                            # tests/run_tests.py — remote temporary directory used for logs, generated scripts, and transient files
+
+  # VMs Lab Topology
+  # Debian VM (legit client)
+  local_debian_scripts: lab/vms/vms-scripts/debian-scripts        # tests/run_tests.py — local Debian VM utility scripts directory, including dhcpget.sh
+  legit_dhcp_client_path: /tmp/legit_dhcp_client.sh               # tests/run_tests.py — remote path where the legitimate DHCP client helper is installed on the Debian VM
+  debian_ip: 192.168.42.3                                         # tests/run_tests.py — Debian VM management IP used for SSH; may differ if the VM is temporarily reachable through another address
+  debian_static_ip: 192.168.42.3                                  # tests/run_tests.py — static lab IP restored on Debian after DHCP client tests; may differ from debian_ip if SSH uses a temporary/recovery address
+  debian_user: giulio                                             # tests/run_tests.py — Debian client VM SSH username
+  debian_pass: test123                                            # tests/run_tests.py — Debian client VM SSH password
+  debian_iface: ens160                                            # tests/run_tests.py — Debian interface used for legitimate DHCP attempts
+  debian_mac_hint: 00:50:56:2d:11:c4                              # tests/run_tests.py — expected Debian MAC used for whitelist and lease checks
+  debian_dhcpget: /home/giulio/progettogestionereti/lab/vms/vms-scripts/debian-scripts/dhcpget.sh # tests/run_tests.py — Debian helper used to request DHCP leases in VM mode
+  debian_log_dir: /home/giulio/ct-logs                            # tests/run_tests.py — remote Debian directory where client helper logs are written
+
+  # OpenWrt VM (router/DHCP server)
+  router_lease_file: /tmp/dhcp.leases                             # tests/run_tests.py — OpenWrt dnsmasq lease file path used by VM tests
+  openwrt_netconf_handler: /usr/bin/netconf-handler               # tests/run_tests.py — active NETCONF handler path installed on the OpenWrt VM router
+  dhcp_ipv4_prefix: 192.168.42.                                   # tests/run_tests.py — VM DHCP pool IPv4 prefix used to identify pool addresses
+  dhcp_pool_start_host: 100                                       # tests/run_tests.py — first VM DHCP pool host number, e.g. 192.168.42.100
+  dhcp_pool_total_default: 150                                    # tests/run_tests.py — fallback VM DHCP pool size if router query fails
+  openwrt_ip: 192.168.42.4                                        # tests/run_tests.py — VM router management IP used for SSH/NETCONF checks
+  openwrt_user: root                                              # tests/run_tests.py — OpenWrt VM SSH username
+  openwrt_pass: ""                                                # tests/run_tests.py — OpenWrt VM SSH password; empty string supports passwordless/root lab access
+
+  # Ubuntu VM (detector)
+  ubuntu_ip: 192.168.42.6                                         # tests/run_tests.py — Ubuntu detector VM management IP
+  ubuntu_user: giulio                                             # tests/run_tests.py — Ubuntu detector VM SSH username
+  ubuntu_pass: test123                                            # tests/run_tests.py — Ubuntu detector VM SSH password
+  ubuntu_iface: ens160                                            # tests/run_tests.py — Ubuntu interface monitored by the detector
+  ubuntu_def_dir: /home/giulio/progettogestionereti/src/defense/dhcp_starvation_detector # tests/run_tests.py — remote detector source directory on Ubuntu
+  ubuntu_bin_dir: /home/giulio/progettogestionereti/bin # tests/run_tests.py — remote directory where the detector binary is built/copied
+
+  # Kali VM (attacker)
+  kali_ip: 192.168.42.5                                           # tests/run_tests.py — Kali attacker VM management IP
+  kali_user: giulio                                               # tests/run_tests.py — Kali attacker VM SSH username
+  kali_pass: test123                                              # tests/run_tests.py — Kali attacker VM SSH password
+  kali_iface: eth0                                                # tests/run_tests.py — Kali interface used to send attack traffic
+  kali_attack_dir: /home/giulio/progettogestionereti/src/attack   # tests/run_tests.py — remote attack script directory on Kali
+
+  # Docker Lab Topology
+  docker_compose_file: lab/docker/docker-compose.yml              # tests/run_tests.py — Docker Compose file used to build/start the lab
+  docker_router_container: dhcp_router                            # tests/run_tests.py — router container name
+  docker_detector_container: dhcp_detector                        # tests/run_tests.py — detector container name
+  docker_attacker_container: dhcp_attacker                        # tests/run_tests.py — attacker container name
+  docker_client_container: dhcp_client                            # tests/run_tests.py — legitimate-client container name
+  docker_router_ip: 192.168.100.1                                 # tests/run_tests.py — Docker router IP used by detector NETCONF settings
+  docker_detector_iface: eth0                                     # tests/run_tests.py — detector container interface monitored for DHCP traffic
+  docker_attacker_iface: eth0                                     # tests/run_tests.py — attacker container interface used to send attack traffic
+  docker_client_iface: eth0                                       # tests/run_tests.py — client container interface used for legitimate DHCP attempts
+  docker_attack_script: /usr/local/bin/dhcp_starvation_attack.py  # tests/run_tests.py — attack script path inside the attacker container
+  docker_detector_dir: /app                                       # tests/run_tests.py — detector workspace directory inside the detector container
+  docker_detector_bin_dir: /app/bin                               # tests/run_tests.py — detector binary directory inside the detector container
+  docker_netconf_yang_dir: /usr/share/yuma/modules/ietf           # tests/run_tests.py — YANG module directory passed to detector config in Docker mode
+  docker_router_lease_file: /var/lib/misc/dnsmasq.leases          # tests/run_tests.py — normalized dnsmasq lease file used by Docker router checks
+  docker_isc_router_lease_file: /var/lib/dhcp/dhcpd.leases        # tests/run_tests.py — ISC DHCP lease file used when Docker backend is isc
+  docker_dhcp_ipv4_prefix: 192.168.100.                           # tests/run_tests.py — Docker DHCP pool IPv4 prefix used to identify pool addresses
+  docker_dhcp_pool_start_host: 10                                 # tests/run_tests.py — first Docker DHCP pool host number, e.g. 192.168.100.10
+  docker_dhcp_pool_total_default: 151                             # tests/run_tests.py — fallback Docker DHCP pool size if router query fails
+  docker_client_log_dir: /tmp/ct-logs                             # tests/run_tests.py — client container directory where DHCP helper logs are written
+  docker_legit_dhcp_client_path: /tmp/legit_dhcp_client.sh        # tests/run_tests.py — helper path inside the Docker client container
+
+  # Shared between VMs and Docker lab topologies.
+  detect_timeout_burst: 120                                       # tests/run_tests.py — seconds to wait for detection in burst-style scenarios
+  detect_timeout_slow: 480                                        # tests/run_tests.py — seconds to wait for detection in slow/pool-pressure scenarios
+  legit_timeout: 130                                              # tests/run_tests.py — seconds to wait for legitimate client lease/access confirmation
+  baseline_duration: 120                                          # tests/run_tests.py — seconds to run baseline/no-attack scenarios
+  post_detect_secs: 10                                            # tests/run_tests.py — seconds to keep collecting state after detection/control outcome
+  ssh_retries: 3                                                  # tests/run_tests.py — retry count for SSH and Docker exec style remote commands
+  legit_dhcp_client_attempts: 50                                  # tests/legit_dhcp_client.sh — max DHCP attempts made by the legitimate client helper
+  legit_dhcp_client_valid_sleep_secs: 30                          # tests/legit_dhcp_client.sh — sleep after a valid lease before the next helper attempt
+  legit_dhcp_client_retry_sleep_secs: 8                           # tests/legit_dhcp_client.sh — base retry sleep when no valid DHCP lease is obtained

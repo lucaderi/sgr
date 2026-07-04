@@ -1,0 +1,4 @@
+aa:bb:cc:dd:ee:ff   # example dummy trusted router
+11:22:33:44:55:66   # example dummy trusted printer
+55:66:77:88:99:00   # example dummy trusted server
+00:50:56:2d:11:c4   # debian vm (legit client) (the test suite should update it if different)

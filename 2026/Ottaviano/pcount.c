@@ -106,60 +106,23 @@ void dummyProcesssPacket(unsigned char *_deviceId,
 			 const struct pcap_pkthdr *h,
 			 const unsigned char *p) {
 
-  struct ip_header_* hrd = (struct ip_header_*)(p + sizeof(struct eth_header));
-
-  /*
-    verifico che sia un pacchetto udp e che abbia l'idenfificativo
-    indicato nellariga di comando       
-  */
-
-  if(hrd->protocol == 17 && hrd->identification == packet_id){
-    if(h->caplen < SIZE_PACKET){
-      printf("Errore nella cattura dei byte del pacchetto\n");
-      return;
+    if(h->caplen >= sizeof(struct ether_header)){
+        struct ether_header eth;
+        memcpy(&eth, p, sizeof(struct ether_header));
+        uint16_t type = ntohs(eth.ether_type);
+        if(type == ETHERTYPE_IP){
+        count++;
+        printf("===================\ncounter: %d\n",count);
+        printf("pacchetto arrivato!\n");
+        int send = pcap_sendpacket(pd, p, h->caplen);
+        if(send != 0){
+          fprintf(stderr, "Errore invio pacchetto: %s\n", pcap_geterr(pd));
+        } else {
+          printf("pacchetto inoltrato\n");
+        }
+        printf("===================\n\n");
+      }
     }
-
-    /*
-      vado a copiare il conteuto del pacchetto per incrementare l'hop
-    */
-    unsigned char* cpy = malloc(h->caplen);
-    memcpy(cpy, p, h->caplen);
-    struct payload* payload = (struct payload*)(cpy + sizeof(struct eth_header)+
-              sizeof(struct ip_header_) + sizeof(struct udp_header_));
-    printf("hop: %d\n", payload->hop);
-
-    payload->hop++;
-
-    count++;
-    printf("===================\ncounter: %d\n",count);
-    printf("pacchetto arrivato!\n");
-  
-    int send = pcap_sendpacket(pd, cpy, 
-          h->caplen);
-          if(send != 0){
-            fprintf(stderr, "Errore invio pacchetto: %s\n", pcap_geterr(pd));
-          } else {
-            printf("pacchetto inoltrato\n");
-          }
-          printf("===================\n\n");
-  } else {
-
-    /*
-      ricezione di un pacchetto del normale traffico di rete
-    */
-    count++;
-    printf("===================\ncounter: %d\n",count);
-    printf("pacchetto arrivato!\n");
-  
-    int send = pcap_sendpacket(pd, p, 
-          h->caplen);
-          if(send != 0){
-            fprintf(stderr, "Errore invio pacchetto: %s\n", pcap_geterr(pd));
-          } else {
-            printf("pacchetto inoltrato\n");
-          }
-          printf("===================\n\n");
-  }
    
   
 }

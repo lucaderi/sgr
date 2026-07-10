@@ -1,6 +1,11 @@
 #include "utils_leaky_bucket.h"
 #include "structure.h"
 #include <stdbool.h>
+#include <netinet/ether.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
 
 
 /*
@@ -222,13 +227,12 @@ void process_packet(unsigned char* user,
     struct Bucket** table, struct Address_node** blacklist,
     char* dev1, char* dev2){
 
-    struct ip_header_* header = (struct ip_header_*)(packet + sizeof(struct eth_header));
-
+    struct iphdr* ip_header = (struct iphdr*)(packet + 14);
     // CONTROLLO SE L'INDIRIZZO È PRESENTE NEL BUCKET
-
+    
     check_bucket(table, blacklist);
     
-    uint32_t ip = header->src_ip;
+    uint32_t ip = ip_header->saddr;
     struct in_addr addr;
     addr.s_addr = ip;
 
@@ -267,13 +271,11 @@ void process_packet(unsigned char* user,
             if(b->level > CAPACITY){
                 if(!ipInBlacklist(ip, hash(ip), blacklist)){
                     insert_ip_in_blacklist(ip, index, blacklist);
-                    printf("Pacchetto da %s inserito nella blacklist\n", inet_ntoa(addr));
-                    //fprintf(fp, "[%ld] pacchetto da %s inserito nella blacklist\n", time(NULL), inet_ntoa(addr));
-                    //fflush(fp);
+                    printf("L'IP %s è stato inserito nella blacklist\n", inet_ntoa(addr));
                 }
             } else {
                 // INVIO IL PACCHETTO ALLA SECONDA INTERFACCIA
-                if(pcap_sendpacket(out, packet, SIZE_PACKET) != 0){
+                if(pcap_sendpacket(out, packet, h->caplen) != 0){
                     printf("errore nell'invio del pacchetto: %s\n!",pcap_geterr(in));
                 } else {
                     printf("[%s] pacchetto inviato all'interfaccia [%s]!\n",
@@ -309,7 +311,7 @@ void process_packet(unsigned char* user,
             prev->next = newb;
         }
 
-        if(pcap_sendpacket(out, packet, SIZE_PACKET) != 0){
+        if(pcap_sendpacket(out, packet, h->caplen) != 0){
             printf("errore nell'invio del pacchetto: %s\n!",pcap_geterr(in));
         } else {
             printf("[%s] pacchetto inviato all'interfaccia [%s]!\n",

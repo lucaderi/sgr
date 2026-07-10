@@ -8,6 +8,7 @@
 #include <pwd.h>
 #include <stdbool.h>
 #include <getopt.h>
+#include <netinet/ether.h>
 #include "utils_leaky_bucket.h"
 
 
@@ -284,6 +285,13 @@ int main(int argc, char* argv[]) {
     alarm(ALARM_SLEEP);
   }*/
 
+  if(pcap_setdirection(pd, PCAP_D_IN) < 0){
+    fprintf(stderr, "error set direction: %s\n", pcap_geterr(pd));
+  }
+  if(pcap_setdirection(pd2, PCAP_D_IN) < 0){
+    fprintf(stderr, "error set direction: %s\n", pcap_geterr(pd2));
+  }
+
   int fd_in = pcap_get_selectable_fd(pd);
   int fd_out = pcap_get_selectable_fd(pd2);
 
@@ -301,139 +309,73 @@ int main(int argc, char* argv[]) {
         if(FD_ISSET(fd_in, &readsfd)){
             struct pcap_pkthdr* header;
             const unsigned char* packet;
-
-            // ricevo il pacchetto
             int res = pcap_next_ex(pd, &header, &packet);
-            struct ip_header_* hdr = (struct ip_header_*)(packet + sizeof(struct eth_header));
-            
-            /*
-              verifico che sia un pacchetto udp e che abbia l'idenfificativo
-              indicato nellariga di comando       
-            */
-     
-            if(res>0 && hdr->protocol == 17 && packet_id == hdr->identification){
-              
-              /* 
-                verifico se i byte del pacchetto ricevuto non siano meno della 
-                lunghezza della struttura pacchetto
-              */  
-              if(header->caplen < SIZE_PACKET){
-                  printf("Errore nella cattura dei byte del pacchetto\n");
-                  continue;
-                }
 
-                /*
-                  copio il contenuto del pacchetto per incrementare la variabile hop
-                */
-                unsigned char* copy = malloc(header->caplen);
-                memcpy(copy, packet, header->caplen);
-                struct payload* p = (struct payload*)(copy + sizeof(struct eth_header)+
-                sizeof(struct ip_header_) + sizeof(struct udp_header_));
-            
-                if(p->hop == 0){
-                  
-                  p->hop++;
-                  
-                  printf("\n[%s] pacchetto arrivato!\n", device);
+            // un pacchetto ethernet deve essere lungo almeno 14 byte
+            if(res > 0 && header->caplen >= sizeof(struct ether_header)){
+              struct ether_header eth;
+              memcpy(&eth, packet, sizeof(struct ether_header));
+              uint16_t type = ntohs(eth.ether_type);
+              printf("[%s] arrivato il pacchetto\n", device);
 
-                  // processamento del pacchetto e delle liste
+              if(type == ETHERTYPE_IP){
 
-                  process_packet(NULL, header, copy, pd, pd2,
-                  table, blacklist, device, dev2);
-                  counter_packets++;
-                  struct in_addr addr;
-                    addr.s_addr = hdr->src_ip;
-                  printf("\n==================\n");
-                  printf("Packet #%d\n", counter_packets);
-                  printf("IP: %s\n", inet_ntoa(addr));
-                  printf("==================\n\n");
+                struct iphdr* ip = (struct iphdr*)(packet + sizeof(struct ether_header));
 
-                  /*
-                    stampo il contenuto delle liste
-                  */
+                struct in_addr src;
+                src.s_addr = ip->saddr;
 
-                  print_bucket(table);
-                  printf("\n");
-                  print_blacklist(blacklist); 
+                printf("[%s] pacchetto arrivato da %s!\n", device, inet_ntoa(src));
                 
+                process_packet(NULL, header, packet, pd, pd2, table, blacklist,
+                device, dev2); 
+                counter_packets++;
+                printf("----------------------------------");
+                printf("\n=========STATS=========\n");
+                printf("Packet #%d\n", counter_packets);
+                printf("IP: %s\n", inet_ntoa(src));
+                printf("=======================\n\n");
+                printf("=========LINKED LISTS=========\n\n");
+                print_bucket(table);
+                printf("\n");
+                print_blacklist(blacklist);
+                printf("\n=============================\n\n");
+
               }
-          } else {
-
-            /*
-              ricezione di un pacchetto dal normale traffico di rete
-              e lo inoltro alla seconda interfaccia
-            */
-            printf("\n[%s] pacchetto arrivato!\n", device);
-
-
-            if(pcap_sendpacket(pd2, packet, header->caplen) != 0){
-                printf("errore nell'invio del pacchetto: %s\n!",pcap_geterr(pd));
-            } else {
-                printf("[%s] pacchetto inviato all'interfaccia [%s]!\n",
-                            device, dev2);
             }
-          }
         }
 
         if(FD_ISSET(fd_out, &readsfd)){
             struct pcap_pkthdr* header;
             const unsigned char* packet;
             int res = pcap_next_ex(pd2, &header, &packet);
-            struct ip_header_* hdr = (struct ip_header_*)(packet + sizeof(struct eth_header));
             
-            /*
-              verifico che sia un pacchetto udp e che abbia l'idenfificativo
-              indicato nellariga di comando       
-            */
-            
-            if(res > 0 && hdr->protocol == 17 && packet_id == hdr->identification){
-             
-              /* 
-                verifico se i byte del pacchetto ricevuto non siano meno della 
-                lunghezza della struttura pacchetto
-              */ 
-             
-              if(header->caplen < SIZE_PACKET){
-                printf("Errore nella cattura dei byte del pacchetto\n");
-                continue;
-              }
+            if(res > 0 && header->caplen >= sizeof(struct ether_header)){
+              struct ether_header eth;
+              memcpy(&eth, packet, sizeof(struct ether_header));
+              uint16_t type = ntohs(eth.ether_type);
+              printf("[%s] arrivato il pacchetto\n", dev2);
 
-              /*
-                  copio il contenuto del pacchetto per incrementare la variabile hop
-              */
+              if(type == ETHERTYPE_IP){
 
-              unsigned char* copy = malloc(header->caplen);
-              memcpy(copy, packet, header->caplen);
-              struct payload* p = (struct payload*)(copy + sizeof(struct eth_header)+
-              sizeof(struct ip_header_) + sizeof(struct udp_header_));
-              
-              p->hop++;
-              
-                printf("[%s] pacchetto arrivato!\n", dev2);
-                struct in_addr addr;
-                addr.s_addr = hdr->src_ip;
-                printf("[%s:%s] : %s\n",dev2, inet_ntoa(addr),p->message);
-                if(pcap_sendpacket(pd, copy, SIZE_PACKET) != 0){
-                    printf("[%s] errore nell'invio del pacchetto: %s\n!",dev2, pcap_geterr(pd));
-                }
-                printf("[%s] pacchetto inviato all'interfaccia [%s]!\n",
-                    dev2, device);
-              } else {
-                /*
-                  ricezione di un pacchetto dal normale traffico di rete
-                  e lo inoltro alla seconda interfaccia
-                */
-                printf("\n[%s] pacchetto arrivato!\n", dev2);
+                struct iphdr* ip = (struct iphdr*)(packet + sizeof(struct ether_header));
 
+                struct in_addr src;
+                src.s_addr = ip->saddr;
 
-                if(pcap_sendpacket(pd, packet, header->caplen) != 0){
-                    printf("errore nell'invio del pacchetto: %s\n!",pcap_geterr(pd));
+                printf("[%s] pacchetto arrivato da %s!\n", dev2, inet_ntoa(src));
+                
+                if(pcap_sendpacket(pd2, packet, header->caplen) != 0){
+                  printf("errore nell'invio del pacchetto: %s!\n",pcap_geterr(pd2));
                 } else {
-                    printf("[%s] pacchetto inviato all'interfaccia [%s]!\n",
-                                dev2, device);
+                  printf("[%s] inviato a [%s]\n", device, dev2);
                 }
+
               }
-          
+
+
+              
+            }
         }
     }
 

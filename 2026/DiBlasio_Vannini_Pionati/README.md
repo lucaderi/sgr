@@ -115,7 +115,7 @@ Per testare il programma senza disporre di apparati hardware fisici, si avviano 
 ```bash
 docker run -d --name snmp-agent-1 -p 1161:161/udp ubuntu:24.04 sh -c "apt-get update && apt-get install -y snmpd && echo 'agentAddress udp:161' > /etc/snmp/snmpd.conf && echo 'rocommunity public default' >> /etc/snmp/snmpd.conf && snmpd -f -Lo"
 
-docker run -d --name snmp-agent-2 -p 1163:161/udp ubuntu:24.04 sh -c "apt-get update && apt-get install -y snmpd && echo 'agentAddress udp:161' > /etc/snmp/snmpd.conf && echo 'rocommunity public default' >> /etc/snmp/snmpd.conf && snmpd -f -Lo"
+docker run -d --name docker-agent -p 1163:161/udp ubuntu:24.04 sh -c "apt-get update && apt-get install -y snmpd && echo 'agentAddress udp:161' > /etc/snmp/snmpd.conf && echo 'rocommunity public default' >> /etc/snmp/snmpd.conf && snmpd -f -Lo"
 ```
 
 > *Nota: assicurarsi che il file `config/agents.yml` sia configurato per puntare a `127.0.0.1` sulle rispettive porte 1161 e 1163.*

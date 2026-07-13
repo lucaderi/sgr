@@ -1,0 +1,10 @@
+agents:
+  - name: snmp-agent-1
+    host: 127.0.0.1
+    port: 1161
+    community: public
+
+  - name: snmp-agent-2
+    host: 127.0.0.1
+    port: 1163
+    community: public

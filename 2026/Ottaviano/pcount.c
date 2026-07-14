@@ -100,31 +100,117 @@ int drop_privileges(const char *username) {
   return 0;
 }
 
+static char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
+
+static inline char* in6toa(struct in6_addr addr6) {
+  snprintf(buf, sizeof(buf),
+	   "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+	   addr6.s6_addr[0], addr6.s6_addr[1], addr6.s6_addr[2],
+	   addr6.s6_addr[3], addr6.s6_addr[4], addr6.s6_addr[5], addr6.s6_addr[6],
+	   addr6.s6_addr[7], addr6.s6_addr[8], addr6.s6_addr[9], addr6.s6_addr[10],
+	   addr6.s6_addr[11], addr6.s6_addr[12], addr6.s6_addr[13], addr6.s6_addr[14],
+	   addr6.s6_addr[15]);
+
+  return(buf);
+}
+
+char* proto2str(unsigned short proto) {
+  static char protoName[8];
+
+  switch(proto) {
+  case IPPROTO_TCP:  return("TCP");
+  case IPPROTO_UDP:  return("UDP");
+  case IPPROTO_ICMP: return("ICMP");
+  default:
+    snprintf(protoName, sizeof(protoName), "%d", proto);
+    return(protoName);
+  }
+}
+
+
+static char hex[] = "0123456789ABCDEF";
+
+char* etheraddr_string(const unsigned char *ep, char *buf) {
+  unsigned int i, j;
+  char *cp;
+
+  cp = buf;
+  if ((j = *ep >> 4) != 0)
+    *cp++ = hex[j];
+  else
+    *cp++ = '0';
+
+  *cp++ = hex[*ep++ & 0xf];
+
+  for(i = 5; (int)--i >= 0;) {
+    *cp++ = ':';
+    if ((j = *ep >> 4) != 0)
+      *cp++ = hex[j];
+    else
+      *cp++ = '0';
+
+    *cp++ = hex[*ep++ & 0xf];
+  }
+
+  *cp = '\0';
+  return (buf);
+}
+
 static int32_t thiszone;
 int count = 0;
 void dummyProcesssPacket(unsigned char *_deviceId,
 			 const struct pcap_pkthdr *h,
 			 const unsigned char *p) {
 
-    if(h->caplen >= sizeof(struct ether_header)){
-        struct ether_header eth;
-        memcpy(&eth, p, sizeof(struct ether_header));
-        uint16_t type = ntohs(eth.ether_type);
-        if(type == ETHERTYPE_IP){
-        count++;
-        printf("===================\ncounter: %d\n",count);
-        printf("pacchetto arrivato!\n");
-        int send = pcap_sendpacket(pd, p, h->caplen);
-        if(send != 0){
-          fprintf(stderr, "Errore invio pacchetto: %s\n", pcap_geterr(pd));
-        } else {
-          printf("pacchetto inoltrato\n");
-        }
-        printf("===================\n\n");
-      }
+    count++;
+    struct ether_header ehdr;
+    unsigned short eth_type, vlan_id;
+    char buf1[32], buf2[32];
+    struct iphdr ip;
+    struct ip6_hdr ip6;
+
+    memcpy(&ehdr, p, sizeof(struct ether_header));
+    eth_type = ntohs(ehdr.ether_type);
+    printf("[%s -> %s] ",
+	   etheraddr_string(ehdr.ether_shost, buf1),
+	   etheraddr_string(ehdr.ether_dhost, buf2));
+
+     printf("\n\n==============================\n");
+     printf("NumPackets: %d\n", count);
+    if(eth_type == 0x8100) {
+      vlan_id = (p[14] & 15)*256 + p[15];
+      eth_type = (p[16])*256 + p[17];
+      printf("[vlan %u] ", vlan_id);
+      p+=4;
     }
-   
-  
+    if(eth_type == 0x0800) {
+      memcpy(&ip, p+sizeof(ehdr), sizeof(struct iphdr));
+      struct in_addr addr_src;
+      struct in_addr addr_dst;
+      addr_src.s_addr = ip.saddr;
+      addr_dst.s_addr = ip.daddr;
+      printf("[%s]", proto2str(ip.protocol));
+      printf("[%s] pacchetto arrivato da %s a %s!\n", device, inet_ntoa(addr_src), inet_ntoa(addr_dst));
+    } else if(eth_type == 0x86DD) {
+      memcpy(&ip6, p+sizeof(ehdr), sizeof(struct ip6_hdr));
+      printf("[%s ", in6toa(ip6.ip6_src));
+      printf("-> %s] ", in6toa(ip6.ip6_dst));
+    } else if(eth_type == 0x0806)
+      printf("[ARP]");
+    else
+      printf("[eth_type=0x%04X]", eth_type);
+
+    printf("[caplen=%u][len=%u]\n", h->caplen, h->len);
+
+    int send = pcap_sendpacket(pd, p, h->caplen);
+    if(send != 0){
+        fprintf(stderr, "Errore invio pacchetto: %s\n", pcap_geterr(pd));
+    } else {
+        printf("pacchetto inoltrato\n");
+    }
+
+     printf("\n\n==============================\n");
+
 }
 
 /* *************************************** */

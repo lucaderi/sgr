@@ -172,6 +172,35 @@ void printHelp(void) {
   }
 }
 
+static char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
+
+/* ************************************ */
+
+static inline char* in6toa(struct in6_addr addr6) {
+  snprintf(buf, sizeof(buf),
+	   "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+	   addr6.s6_addr[0], addr6.s6_addr[1], addr6.s6_addr[2],
+	   addr6.s6_addr[3], addr6.s6_addr[4], addr6.s6_addr[5], addr6.s6_addr[6],
+	   addr6.s6_addr[7], addr6.s6_addr[8], addr6.s6_addr[9], addr6.s6_addr[10],
+	   addr6.s6_addr[11], addr6.s6_addr[12], addr6.s6_addr[13], addr6.s6_addr[14],
+	   addr6.s6_addr[15]);
+
+  return(buf);
+}
+
+char* proto2str(unsigned short proto) {
+  static char protoName[8];
+
+  switch(proto) {
+  case IPPROTO_TCP:  return("TCP");
+  case IPPROTO_UDP:  return("UDP");
+  case IPPROTO_ICMP: return("ICMP");
+  default:
+    snprintf(protoName, sizeof(protoName), "%d", proto);
+    return(protoName);
+  }
+}
+
 /* *************************************** */
 
 int main(int argc, char* argv[]) {
@@ -311,13 +340,18 @@ int main(int argc, char* argv[]) {
             const unsigned char* packet;
             int res = pcap_next_ex(pd, &header, &packet);
 
-            // un pacchetto ethernet deve essere lungo almeno 14 byte
-            if(res > 0 && header->caplen >= sizeof(struct ether_header)){
+            if(res > 0){
               struct ether_header eth;
               memcpy(&eth, packet, sizeof(struct ether_header));
-              uint16_t type = ntohs(eth.ether_type);
-              printf("[%s] arrivato il pacchetto\n", device);
+              unsigned short type = ntohs(eth.ether_type);
 
+              if(type == ETHERTYPE_VLAN){
+                unsigned short vlan_id = (packet[14] & 15)*256 + packet[15];
+                type = (packet[16])*256 + packet[17];
+                printf("[vlan %u] ", vlan_id);
+                packet+=4;
+              } 
+              
               if(type == ETHERTYPE_IP){
 
                 struct iphdr* ip = (struct iphdr*)(packet + sizeof(struct ether_header));
@@ -334,6 +368,7 @@ int main(int argc, char* argv[]) {
                 printf("\n=========STATS=========\n");
                 printf("Packet #%d\n", counter_packets);
                 printf("IP: %s\n", inet_ntoa(src));
+                printf("PROTOCOLLO: %s\n", proto2str(ip->protocol));
                 printf("=======================\n\n");
                 printf("=========LINKED LISTS=========\n\n");
                 print_bucket(table);
@@ -341,6 +376,32 @@ int main(int argc, char* argv[]) {
                 print_blacklist(blacklist);
                 printf("\n=============================\n\n");
 
+              } else if(type == ETHERTYPE_IPV6){
+                struct ip6_hdr ip6;
+                memcpy(&ip6, packet + sizeof(struct ether_header), sizeof(struct ip6_hdr));
+
+                printf("[%s] pacchetto IPv6 da %s\n", device, in6toa(ip6.ip6_src));
+
+                if(pcap_sendpacket(pd2, packet, header->caplen) != 0){
+                  printf("errore invio del pacchetto IPv6: %s\n", pcap_geterr(pd2));
+                } else {
+                  printf("[%s] inviato a [%s]\n", device, dev2);
+                }
+              } else if(type == 0x0806){
+                printf("\n[%s]:[ARP PACKET]\n", device);
+                if(pcap_sendpacket(pd2, packet, header->caplen) != 0){
+                  printf("errore invio del pacchetto IPv6: %s\n", pcap_geterr(pd2));
+                } else {
+                  printf("[%s] inviato a [%s]\n", device, dev2);
+                }
+              } else {
+                printf("[%s]:[eth_type=0x%04X]\n",device, type);
+                if(pcap_sendpacket(pd2, packet, header->caplen) != 0){
+                  printf("errore invio del pacchetto IPv6: %s\n", pcap_geterr(pd2));
+                } else {
+                  printf("[%s] inviato a [%s]\n", device, dev2);
+                  pcap_sendpacket(pd2, packet, header->caplen);
+                }
               }
             }
         }
@@ -350,11 +411,19 @@ int main(int argc, char* argv[]) {
             const unsigned char* packet;
             int res = pcap_next_ex(pd2, &header, &packet);
             
-            if(res > 0 && header->caplen >= sizeof(struct ether_header)){
+            if(res > 0){
               struct ether_header eth;
               memcpy(&eth, packet, sizeof(struct ether_header));
-              uint16_t type = ntohs(eth.ether_type);
+              unsigned short type = ntohs(eth.ether_type);
               printf("[%s] arrivato il pacchetto\n", dev2);
+
+
+              if(type == ETHERTYPE_VLAN){
+                unsigned short vlan_id = (packet[14] & 15)*256 + packet[15];
+                type = (packet[16])*256 + packet[17];
+                printf("[vlan %u] ", vlan_id);
+                packet+=4;
+              } 
 
               if(type == ETHERTYPE_IP){
 
@@ -365,15 +434,39 @@ int main(int argc, char* argv[]) {
 
                 printf("[%s] pacchetto arrivato da %s!\n", dev2, inet_ntoa(src));
                 
-                if(pcap_sendpacket(pd2, packet, header->caplen) != 0){
+                if(pcap_sendpacket(pd, packet, header->caplen) != 0){
                   printf("errore nell'invio del pacchetto: %s!\n",pcap_geterr(pd2));
                 } else {
                   printf("[%s] inviato a [%s]\n", device, dev2);
                 }
 
+              } else if(type == ETHERTYPE_IPV6){
+                struct ip6_hdr ip6;
+                memcpy(&ip6, packet + sizeof(struct ether_header), sizeof(struct ip6_hdr));
+
+                printf("[%s] pacchetto IPv6 da %s\n", dev2, in6toa(ip6.ip6_src));
+
+                if(pcap_sendpacket(pd, packet, header->caplen) != 0){
+                  printf("errore invio del pacchetto IPv6: %s\n", pcap_geterr(pd));
+                } else {
+                  printf("[%s] inviato a [%s]\n", dev2, device);
+                }
+              } else if(type == ETHERTYPE_ARP){
+                printf("\n[%s]:[ARP PACKET]\n", dev2);
+                if(pcap_sendpacket(pd, packet, header->caplen) != 0){
+                  printf("errore invio del pacchetto IPv6: %s\n", pcap_geterr(pd));
+                } else {
+                  printf("[%s] inviato a [%s]\n",dev2,device);
+                }
+              } else {
+                printf("[%s]:[eth_type=0x%04X]\n",dev2, type);
+                if(pcap_sendpacket(pd, packet, header->caplen) != 0){
+                  printf("errore invio del pacchetto IPv6: %s\n", pcap_geterr(pd));
+                } else {
+                  printf("[%s] inviato a [%s]\n",dev2,device);
+                  pcap_sendpacket(pd, packet, header->caplen);
+                }
               }
-
-
               
             }
         }

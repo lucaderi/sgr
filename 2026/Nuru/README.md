@@ -1,4 +1,4 @@
-﻿# Bandwidth Monitor per-host con RRDtool
+# Bandwidth Monitor per-host con RRDtool
 
 **Nome e Cognome:**  Sourov Nuru 
 **Email:**  s.nuru@studenti.unipi.it
@@ -7,7 +7,7 @@
 
 # 1. Descrizione del progetto
 
-Il progetto consiste nella realizzazione di un sistema di monitoraggio del traffico di rete in tempo reale, sviluppato in Python, in grado di analizzare il traffico generato dalla macchina locale verso host esterni.
+Il progetto consiste nella realizzazione di un sistema di monitoraggio del traffico IPv4 e IPv6 in tempo reale, sviluppato in Python, in grado di analizzare il traffico scambiato dalla macchina locale con host esterni.
 
 L'obiettivo principale è raccogliere statistiche sul traffico di rete aggregandole per indirizzo IP remoto, invece che per singolo flusso di rete. Per ogni host monitorato vengono raccolte informazioni relative al numero di byte trasferiti, al numero di pacchetti, alla direzione del traffico (upload/download) e alla distribuzione del traffico per protocollo.
 
@@ -20,11 +20,13 @@ Il sistema utilizza:
 -   **RRDtool**  per la memorizzazione delle serie temporali e la generazione dei grafici.
     
 
-Il monitor è organizzato in due componenti principali:
+Il monitor è organizzato in tre componenti principali:
 
 1.  Un thread di acquisizione che cattura i pacchetti tramite Scapy.
     
-2.  Un thread periodico che calcola la banda corrente per ogni host e aggiorna i database RRD.
+2.  Un thread periodico che invia a RRDtool i contatori cumulativi per ogni host e per la macchina locale. RRDtool calcola nativamente il throughput.
+
+3.  Una dashboard web locale opzionale che genera e mostra i grafici aggiornati.
     
 
 Il traffico analizzato riguarda esclusivamente le comunicazioni:
@@ -35,6 +37,37 @@ Il traffico analizzato riguarda esclusivamente le comunicazioni:
     
 
 I pacchetti tra due host esterni o tra due host locali vengono ignorati per ridurre il numero di elementi monitorati.
+
+## Caso d'uso pratico
+
+Lo strumento e' pensato per l'analisi locale di un piccolo server.
+Aiuta a capire con quali host remoti comunica la macchina, quali host
+consumano piu' traffico, quanto viene caricato o scaricato e quali protocolli
+sono utilizzati nel tempo.
+
+Un caso concreto e' la diagnosi di una macchina che utilizza banda in modo
+inaspettato: attraverso le statistiche raccolte e la dashboard, l'amministratore
+puo' osservare quali host remoti generano piu' traffico e analizzarne direzione,
+volume e protocollo prevalente. Lo storico RRD consente di osservare anche
+eventi gia' terminati e picchi di traffico verificatisi quando il sistema non
+era controllato direttamente.
+
+Per esempio, un picco anomalo di upload durante la notte verso un singolo
+indirizzo IP remoto potrebbe indicare un backup programmato, un servizio
+configurato in modo errato oppure un'attivita' che richiede ulteriori verifiche.
+Il monitor non determina automaticamente la causa o la pericolosita' del
+trasferimento, ma fornisce indirizzo remoto, volume, direzione, protocollo e
+andamento temporale utili all'analisi.
+
+Il monitor e' quindi utile per:
+
+- individuare servizi o comunicazioni che generano traffico inatteso;
+- confrontare upload e download della macchina locale;
+- identificare gli host remoti con maggiore volume di traffico;
+- osservare picchi di banda e stabilire quando si sono verificati;
+- rilevare trasferimenti in upload avvenuti durante periodi insoliti, come le
+  ore notturne;
+- fornire informazioni iniziali per approfondire possibili anomalie di rete.
 
 ----------
 
@@ -55,19 +88,27 @@ Pacchetti di rete
  Aggregazione statistiche per IP
         |
         v
- Calcolo banda
+ Invio contatori cumulativi
         |
         v
  Aggiornamento database RRD
         |
         v
  Generazione grafici PNG
+        |
+        v
+ Dashboard web locale
 
 ```
 
 Le statistiche vengono mantenute tramite una struttura dati associata a ogni host remoto.
 
-Per ogni host vengono memorizzati:
+Il codice e' separato in due moduli:
+
+- `bandwidth_monitor.py` contiene cattura, aggregazione, database RRD, grafici e CLI;
+- `web_dashboard.py` contiene esclusivamente server HTTP, pagina HTML e stile della dashboard.
+
+Per ogni host remoto e, separatamente, per la macchina locale vengono memorizzati:
 
 -   indirizzo IP;
     
@@ -185,13 +226,13 @@ proto_bytes = [
 
 ```
 
-Questo permette di ottenere statistiche sul tipo di traffico generato da ciascun host.
+Questo permette di ottenere statistiche correnti e serie storiche sul tipo di traffico generato da ciascun host. ICMP comprende sia ICMP per IPv4 sia ICMPv6.
 
 ----------
 
 # 6. Memorizzazione tramite RRDtool
 
-Per ogni host viene creato un database RRD dedicato.
+Per ogni host remoto viene creato un database RRD dedicato. Il file `local_host.rrd` contiene invece le statistiche complessive della macchina sulla quale gira il monitor.
 
 Esempio:
 
@@ -200,21 +241,29 @@ host_8_8_8_8.rrd
 
 ```
 
-Ogni database contiene due Data Source:
+Ogni database contiene sei Data Source:
 
--   `bytes_in`: banda ricevuta dall'host;
+-   `bytes_in`: byte cumulativi ricevuti dall'host;
     
--   `bytes_out`: banda inviata verso l'host.
+-   `bytes_out`: byte cumulativi inviati verso l'host;
+
+-   `proto_tcp`: byte TCP cumulativi;
+
+-   `proto_udp`: byte UDP cumulativi;
+
+-   `proto_icmp`: byte ICMP e ICMPv6 cumulativi;
+
+-   `proto_other`: byte degli altri protocolli cumulativi.
     
 
-I valori salvati rappresentano direttamente una velocità in byte/sec, quindi viene utilizzato il tipo:
+I valori inviati sono contatori cumulativi di byte. Viene utilizzato il tipo:
 
 ```
-GAUGE
+DERIVE
 
 ```
 
-La frequenza di aggiornamento è definita tramite  `STATS_INTERVAL`.
+RRDtool calcola nativamente la variazione del contatore nel tempo, producendo il throughput in byte/sec. Il limite minimo pari a zero evita valori negativi quando il programma viene riavviato. La frequenza di aggiornamento è definita tramite `STATS_INTERVAL`.
 
 ----------
 
@@ -269,7 +318,7 @@ Questa tecnica permette di mantenere dimensioni del database costanti evitando u
 
 Il programma permette di generare grafici PNG tramite RRDtool.
 
-Per ogni host viene creato un grafico contenente:
+Per ogni host remoto e per l'host locale vengono creati due grafici. Il grafico del traffico contiene:
 
 -   traffico in ingresso;
     
@@ -278,6 +327,8 @@ Per ogni host viene creato un grafico contenente:
 -   valore medio;
     
 -   valore massimo.
+
+Il download è rappresentato sotto l'asse Y in blu, mentre l'upload è rappresentato sopra l'asse Y in arancione. Il secondo grafico mostra le serie storiche TCP, UDP, ICMP/ICMPv6 e altri protocolli con colori distinti.
     
 
 Esempio:
@@ -311,7 +362,7 @@ Mostra le interfacce di rete disponibili.
 Esempio:
 
 ```bash
-sudo python3 bandwidth_monitor.py -i en0
+python3 bandwidth_monitor.py -i en0
 
 ```
 
@@ -324,11 +375,16 @@ Avvia la cattura sulla interfaccia  `en0`.
 Esempio:
 
 ```bash
-sudo python3 bandwidth_monitor.py -i en0 -f "tcp port 443"
+python3 bandwidth_monitor.py -i en0 -f "tcp port 443"
 
 ```
 
 Analizza solamente traffico HTTPS.
+
+Se il sistema non concede all'utente l'accesso alla cattura dei pacchetti, il
+comando puo' essere eseguito con `sudo`. In questo caso il programma assegna i
+file prodotti all'utente che ha invocato `sudo`, evitando database di proprieta'
+di `root`.
 
 ----------
 
@@ -349,6 +405,35 @@ Per un periodo specifico:
 python3 bandwidth_monitor.py --graph --period 6h
 
 ```
+
+## Dashboard web
+
+Per consultare tramite browser i database e i grafici gia' presenti:
+
+```bash
+python3 bandwidth_monitor.py --web --period 5min
+```
+
+La pagina e' disponibile all'indirizzo:
+
+```text
+http://localhost:8080
+```
+
+Per avviare contemporaneamente cattura e dashboard:
+
+```bash
+python3 bandwidth_monitor.py -i en0 --web --period 5min
+```
+
+La dashboard si aggiorna automaticamente ogni 15 secondi e permette di scegliere
+fra 5 minuti, 30 minuti, 1 ora, 6 ore e 24 ore. Mostra prima il riepilogo della
+macchina locale e poi, per ciascun host remoto IPv4 o IPv6, il grafico di
+upload/download e quello dei protocolli.
+
+Per impostazione predefinita il server ascolta soltanto su `127.0.0.1` ed e'
+quindi accessibile esclusivamente dalla macchina locale. Le opzioni `--web-host`
+e `--web-port` permettono di modificare indirizzo e porta quando necessario.
 
 ----------
 
@@ -400,12 +485,13 @@ Per verificare il corretto funzionamento del progetto sono stati eseguiti i segu
 -   verifica della creazione automatica dei database RRD;
 -   verifica dell'aggiornamento periodico dei valori memorizzati nei database;
 -   verifica della generazione dei grafici PNG tramite RRDtool.
+-   verifica della dashboard web e della corretta pubblicazione dei grafici;
+-   verifica della selezione del periodo e dell'aggiornamento automatico.
 
 ## Cartella `rrd_data`
 
-Nel repository è presente la cartella `rrd_data`, che contiene due database RRD di esempio e i rispettivi grafici PNG generati dal programma.
+La cartella `rrd_data` viene popolata durante la cattura con i database RRD e i grafici PNG generati dal programma.
 
-Questi file hanno lo scopo di mostrare il formato dei dati prodotti dal monitor e permettono di verificare il corretto funzionamento della fase di generazione dei grafici senza dover necessariamente eseguire una nuova cattura del traffico.
 
 I file possono essere utilizzati, ad esempio, eseguendo il comando:
 
@@ -416,7 +502,18 @@ python3 bandwidth_monitor.py --graph
 oppure
 
 ```
-python3 bandwidth_monitor.py --graph --period 30m
+python3 bandwidth_monitor.py --graph --period 30min
 ```
 
 che rigenera i grafici utilizzando i database RRD presenti nella cartella.
+
+Le unita' accettate per `--period` sono:
+
+- `s` per secondi (es. `30s`);
+- `min` per minuti (es. `5min` o `30min`);
+- `h` per ore (es. `6h`);
+- `d` per giorni (es. `7d`);
+- `w` per settimane (es. `2w`).
+
+L'abbreviazione `m` non viene accettata perche' RRDtool la interpreta in modo
+ambiguo; per indicare i minuti bisogna usare esplicitamente `min`.

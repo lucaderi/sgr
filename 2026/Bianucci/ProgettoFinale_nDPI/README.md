@@ -44,6 +44,29 @@ Dall'elaborazione del file di cattura iniziale `ndpi_output.txt`, l'algoritmo ha
 * **Impronte JA4 Distinte:** 20 impronte crittografiche
 * **Protocolli Dominanti:** QUIC (Instagram, YouTube, WhatsApp, Facebook), TLS (Spotify, Apple)
 
+### 5. Validazione Visiva tramite ntopng
+
+Al fine di validare i risultati estratti dal parser Python e offrire una panoramica grafica della baseline, il file di cattura pcapng è stato processato e analizzato anche tramite l'interfaccia web di **ntopng** (strumento di riferimento sviluppato dal docente del corso).
+
+Questa analisi di supporto ha permesso di confermare visivamente i dati processati dall'Intelligenza Artificiale, evidenziando le metriche chiave:
+
+*   **Riconoscimento Host:** L'IP target `192.168.2.2` è stato correttamente individuato dal motore di ntopng e profilato tramite DHCP/MDNS come dispositivo *iPhone*.
+*   **Top Talkers:** La dashboard di flusso conferma la topologia del traffico verso i principali nodi CDN e server esterni.
+*   **Analisi L7:** La tabella dei flussi attivi rispecchia la classificazione estratta dal nostro script, mostrando l'uso massiccio di protocolli cifrati (`QUIC.WhatsApp`, `TLS.GoogleServices`, `TLS.Apple`) affiancati da traffico di servizio in chiaro (`DNS`, `MDNS`).
+
+#### 5.1 Galleria Screenshot ntopng
+
+**1. Grafico dei Top Talkers per Flusso**
+![Top Talkers](ntopng_top_talkers.png)
+
+**2. Dettagli Profilazione Host (192.168.2.2 - iPhone)**
+![Dettagli Host](ntopng_host_details.png)
+
+**3. Tabella dei Flussi Attivi e Applicazioni L7**
+![Flussi Attivi](ntopng_active_flows.png)
+
+---
+
 ---
 
 ## Manuale Utente: Come eseguire il progetto in locale

@@ -1,0 +1,11 @@
+# Python cache.
+__pycache__
+
+# Binary files.
+bin/*
+
+# macOS metadata files.
+.DS_Store
+
+# Log files.
+tests/results/*

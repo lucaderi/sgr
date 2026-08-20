@@ -1,0 +1,89 @@
+module dhcp-whitelist {
+  yang-version 1.1;
+  namespace "urn:dhcp-starvation-detector";
+  prefix dwl;
+
+  description
+    "DHCP whitelist and lease-pool control contract for the starvation detector.";
+
+  container dhcp-defense {
+
+    leaf whitelist-only {
+      type boolean;
+      default false;
+      description
+        "When true, the DHCP backend replies only to trusted-host MACs.";
+    }
+
+    list trusted-host {
+      key "mac";
+
+      leaf mac {
+        type string {
+          pattern '[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}';
+        }
+        description "MAC address in xx:xx:xx:xx:xx:xx format.";
+      }
+    }
+
+    container pool {
+      config false;
+      description "Runtime DHCP pool usage exported by the DHCP backend.";
+
+      leaf used {
+        type uint32;
+        description "Current number of active DHCP leases.";
+      }
+
+      leaf total {
+        type uint32;
+        description "Configured DHCP pool size.";
+      }
+
+      leaf lease-file {
+        type string;
+        description "Lease database or file used by the DHCP backend.";
+      }
+
+      list lease {
+        key "mac";
+        description "Active DHCP leases currently known by the DHCP backend.";
+
+        leaf mac {
+          type string {
+            pattern '[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}';
+          }
+          description "Client MAC address.";
+        }
+
+        leaf ip {
+          type string;
+          description "Assigned IPv4 address.";
+        }
+      }
+    }
+  }
+
+  rpc release-lease {
+    description "Remove a DHCP lease from the DHCP backend.";
+
+    input {
+      leaf mac {
+        type string {
+          pattern '[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}';
+        }
+        description "Client MAC address.";
+      }
+
+      leaf ip {
+        type string;
+        description "Assigned IPv4 address. Empty if unknown.";
+      }
+    }
+  }
+
+  rpc reset-pool {
+    description
+      "Clear DHCP lease state and restore normal non-whitelist server mode.";
+  }
+}

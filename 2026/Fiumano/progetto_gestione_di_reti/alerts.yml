@@ -1,0 +1,67 @@
+groups:
+  - name: availability
+    rules:
+      - alert: NodeExporterDown
+        expr: up{job="node"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "node_exporter non raggiungibile"
+          description: "Prometheus non riesce a raccogliere metriche dal target node_exporter."
+
+  - name: missing-series
+    rules:
+      - alert: CounterPacchettiReteMancante
+        expr: absent_over_time(node_network_receive_packets_total{job="node", device="wlp1s0f0"}[30s])
+        labels:
+          severity: warning
+        annotations:
+          summary: "Counter dei pacchetti di rete mancante"
+          description: "La serie node_network_receive_packets_total non ha prodotto campioni negli ultimi 30 secondi."
+
+  - name: intense-traffic-dynamic
+    rules:
+      - alert: PacchettiIngressoElevati
+        expr: >
+          rate(node_network_receive_packets_total{job="node", device="wlp1s0f0"}[30s]) 
+          > 
+          (avg_over_time(rate(node_network_receive_packets_total{job="node", device="wlp1s0f0"}[30s])[5m:15s]) * 3 + 100)
+        labels:
+          severity: warning
+        annotations:
+          summary: "Picco anomalo pacchetti in ingresso"
+          description: "Il volume di pacchetti in ingresso (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti."
+
+      - alert: PacchettiUscitaElevati
+        expr: >
+          rate(node_network_transmit_packets_total{job="node", device="wlp1s0f0"}[30s]) 
+          > 
+          (avg_over_time(rate(node_network_transmit_packets_total{job="node", device="wlp1s0f0"}[30s])[5m:15s]) * 3 + 50)
+        labels:
+          severity: warning
+        annotations:
+          summary: "Picco anomalo pacchetti in uscita"
+          description: "Il volume di pacchetti in uscita (rate 30s) è più che triplicato rispetto alla media degli ultimi 5 minuti."
+
+      - alert: ByteIngressoElevati
+        expr: >
+          rate(node_network_receive_bytes_total{job="node", device="wlp1s0f0"}[30s]) 
+          > 
+          (avg_over_time(rate(node_network_receive_bytes_total{job="node", device="wlp1s0f0"}[30s])[5m:15s]) * 3 + 20000)
+        labels:
+          severity: warning
+        annotations:
+          summary: "Picco anomalo byte in ingresso"
+          description: "La banda in ingresso (rate 30s) è più che triplicata rispetto alla media degli ultimi 5 minuti."
+
+      - alert: ByteUscitaElevati
+        expr: >
+          rate(node_network_transmit_bytes_total{job="node", device="wlp1s0f0"}[30s]) 
+          > 
+          (avg_over_time(rate(node_network_transmit_bytes_total{job="node", device="wlp1s0f0"}[30s])[5m:15s]) * 3 + 20000)
+        labels:
+          severity: warning
+        annotations:
+          summary: "Picco anomalo byte in uscita"
+          description: "La banda in uscita (rate 30s) è più che triplicata rispetto alla media degli ultimi 5 minuti."

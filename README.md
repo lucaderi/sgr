@@ -6,7 +6,8 @@ Questa cartella contiene i progetti studenti del corso di [Gestione di Rete](htt
 - Indentificare un argomento per il progetto provando a fare qualcosa di originale e non fatto negli anni passati da altri studenti. 
 - Discutere con il docente il contenuto del progetto in modo che soddisfi i requisiti per questo esame.
 - Creare l'account github (se non creato per altri progetti precedenti).
-- Aprire una [issue](https://github.com/lucaderi/sgr/issues) con titolo e descrizione del progetto. Questo serve per tenre trccia di quanto discusso, in particolare per prgetti asssegnati con molto anticipo rispetto al loro completamento.
+- Aprire una [issue](https://github.com/lucaderi/sgr/issues) con titolo e descrizione del progetto. Questo serve per tenre traccia di quanto discusso, in particolare per progetti asssegnati con molto anticipo rispetto al loro completamento.
+- Il docente approva il progetto mettendo il tag corrispondente al ticket GitHub.
 - Svolgere il progetto in modo che sia conforme alle specifiche concordate.
 - Una volta realizzato il progetto, creare una [pull request](https://opensource.com/article/19/7/create-pull-request-github) e (opzionale) notificate il docente.
 - La pull request verrà verificata e provata dal docente. Nel caso vengano trovati dei problemi, il docente commenterà il progetto nella pull request e richiederà delle modifiche per essere approvato.

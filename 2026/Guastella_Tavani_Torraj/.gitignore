@@ -1,0 +1,6 @@
+firewall
+*.out
+*.o
+.vscode/
+build/
+firewall.log

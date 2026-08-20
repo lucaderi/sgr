@@ -1,0 +1,2 @@
+POLLING_INTERVAL = 60 
+CSV_PATH = "metrics.csv"

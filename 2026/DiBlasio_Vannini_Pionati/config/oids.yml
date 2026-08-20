@@ -1,0 +1,26 @@
+# oids.yml
+# Mappa nome leggibile → OID numerico MIB-II
+# Questo file viene letto da config.py con carica_oids()
+# e passato alle funzioni del poller.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Gruppo system (1.3.6.1.2.1.1)
+# OID scalari: finiscono con .0 perché hanno una sola istanza per dispositivo
+# ──────────────────────────────────────────────────────────────────────────────
+system:
+  sysDescr:    "1.3.6.1.2.1.1.1.0"   # descrizione testuale del dispositivo
+  sysUpTime:   "1.3.6.1.2.1.1.3.0"   # tempo di attività (in centesimi di secondo)
+  sysName:     "1.3.6.1.2.1.1.5.0"   # hostname del dispositivo
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ifTable (1.3.6.1.2.1.2.2.1)
+# OID di colonna: NON finiscono con .0 perché hanno una riga per interfaccia.
+# Il poller aggiunge automaticamente l'indice di riga (es. .1 per eth0, .2 per lo).
+# ──────────────────────────────────────────────────────────────────────────────
+interfaces:
+  ifDescr:       "1.3.6.1.2.1.2.2.1.2"    # nome interfaccia (es. "eth0", "lo")
+  ifOperStatus:  "1.3.6.1.2.1.2.2.1.8"    # stato operativo: 1=up, 2=down, ...
+  ifInOctets:    "1.3.6.1.2.1.2.2.1.10"   # byte ricevuti (contatore cumulativo)
+  ifOutOctets:   "1.3.6.1.2.1.2.2.1.16"   # byte trasmessi (contatore cumulativo)
+  ifInErrors:    "1.3.6.1.2.1.2.2.1.14"   # pacchetti in ingresso scartati per errore
+  ifOutErrors:   "1.3.6.1.2.1.2.2.1.20"   # pacchetti in uscita scartati per errore

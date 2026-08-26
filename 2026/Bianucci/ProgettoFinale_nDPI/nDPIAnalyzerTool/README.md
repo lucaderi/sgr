@@ -169,19 +169,19 @@ python3 main_app.py
 
 Appena viene lanciato lo script, l'interfaccia mostrata è la seguente:
 
-<img src="interfaccia_iniziale.png" alt="Interfaccia_iniziale" width="30%">
+<img src="interfaccia_iniziale.png" alt="Interfaccia_iniziale" width="40%">
 
 Questo indice segnala se il modello è correttamente raggiungibile su localhost:1234, oppure no:
 
-<img src="modello_caricato.png" alt="modello_caricato" width="30%">
+<img src="modello_caricato.png" alt="modello_caricato" width="40%">
 
 Per analizzare il traffico, il tool consente sia di caricare un file .txt di output precedentemente generato, sia di generarlo direttamente a partire dal file .pcapng della cattura. In quest’ultimo caso, ndpiReader viene invocato automaticamente a runtime tramite l’apposita sezione nella sidebar del tool, consentendo di selezionare successivamente il file .txt generato come input per l’analisi:
 
-<img src="caricamento_file.png" alt="caricamento_file" width="30%">
+<img src="caricamento_file.png" alt="caricamento_file" width="40%">
 
-<img src="utilizzo_file1.png" alt="utilizzo_file1" width="25%">
+<img src="utilizzo_file1.png" alt="utilizzo_file1" width="35%">
 
-<img src="utilizzo_file2.png" alt="utilizzo_file2" width="25%">
+<img src="utilizzo_file2.png" alt="utilizzo_file2" width="35%">
 
 
 ## Interrogazione modello
@@ -190,7 +190,7 @@ L'interrogazione del modello avviene tramite l'apposita chat posizionata nella f
 
 Sulla barra laterale a sinistra, si possono trovare alcune domande esempio da poter sottomettere all'AI.
 
-<img src="chat_pronta.png" alt="chat_pronta" width="30%">
+<img src="chat_pronta.png" alt="chat_pronta" width="40%">
 
-<img src="esempio_chat.png" alt="esempio_chat" width="25%">
+<img src="esempio_chat.png" alt="esempio_chat" width="35%">
 

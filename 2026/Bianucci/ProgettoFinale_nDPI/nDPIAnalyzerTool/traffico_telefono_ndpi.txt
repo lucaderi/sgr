@@ -6,17 +6,18 @@
 * free to extend it and send us the patches for inclusion
 ------------------------------------------------------------
 
-Using nDPI (5.1.0-5843-7f637cf) [1 thread(s)]
+Using nDPI (5.1.0-5867-0041f29) [1 thread(s)]
+nDPI license: Non-commercial LGPL (0)
 Using libgcrypt version 1.8.6internal
-Reading packets from pcap file /home/andrea/Scrivania/traffico_telefono.pcapng...
+Reading packets from pcap file /Users/andreabianucci/Desktop/progetto_GR/nDPIAnalyzerTool/traffico_telefono.pcapng...
 Running thread 0...
 
 nDPI Memory statistics:
-	nDPI Memory (once):      3.55 KB      
-	Flow Memory (per flow):  1.29 KB      
-	Total memory allocated:  83.53 MB     
-	Setup Time:              33 msec
-	Packet Processing Time:  47 msec
+	nDPI Memory (once):      3.56 KB      
+	Flow Memory (per flow):  1.30 KB      
+	Total memory allocated:  83.54 MB     
+	Setup Time:              21 msec
+	Packet Processing Time:  44 msec
 
 Traffic statistics:
 	Ethernet bytes:        71331593      (includes ethernet CRC/IFC/trailer)
@@ -37,7 +38,7 @@ Traffic statistics:
 	Packet Len 256-1024:   2029         
 	Packet Len 1024-1500:  51640        
 	Packet Len > 1500:     0            
-	nDPI throughput:       1.46 M pps / 11.15 Gb/sec
+	nDPI throughput:       1.55 M pps / 11.87 Gb/sec
 	Analysis begin:        18/Aug/2026 20:11:45
 	Analysis end:          18/Aug/2026 20:23:15
 	Traffic throughput:    100.69 pps / 807.76 Kb/sec

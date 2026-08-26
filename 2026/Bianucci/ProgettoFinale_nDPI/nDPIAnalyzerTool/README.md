@@ -2,11 +2,11 @@
   <strong>Analisi del Traffico di Rete, Fingerprinting Crittografico (JA4/nDPI) e Interrogazione della Baseline tramite AI Locale</strong>
 </h2>
 
-Relazione tecnica e documentazione del progetto per il corso di **Gestione di Reti**.
-
 **Docente:** Prof. Luca Deri <br>
 **Studente:** Andrea Bianucci <br>
 **Data:** 11 Settembre 2026
+
+Relazione tecnica e documentazione del progetto per il corso di **Gestione di Reti**.
 
 ---
 

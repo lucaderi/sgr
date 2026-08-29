@@ -31,7 +31,8 @@
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
 
-#include "include/ndpi_api.h"
+/* Referenzazione nDPI dall'installazione di sistema */
+#include <ndpi_api.h>
 
 /* Portato a 1518 per permettere a nDPI l'ispezione completa di certificati e handshake voluminosi */
 #define DEFAULT_SNAPLEN 1518
@@ -78,12 +79,12 @@ struct ndpi_detection_module_struct *ndpi_struct = NULL;
 
 typedef struct {
     uint32_t ip;
-    int current_flows;
-    int prev_flows;
-    int non_local;
+    int current_flows;              /* flussi correnti visti nell'intervallo */
+    int prev_flows;                 /* flussi visti nell'intervallo precedente */
+    int non_local;                  /* flussi verso IP pubblici visti nell'intervallo */
     int zero_intervals;             /* intervalli consecutivi con curr=0 e prev=0 */
-    float score;
-    char last_detected_vpn[64];
+    float score;                    /* punteggio di sospetto */
+    char last_detected_vpn[64];     /* nome VPN rilevata (da DB o nDPI) */
     int vpn_from_db;                /* 1 se la detection proviene dal DB statico */
     int vpn_confirmed_ndpi;         /* 1 se nDPI ha confermato una detection del DB */
     time_t last_vpn_seen;           /* Ultimo momento in cui è stato visto traffico VPN da questo host */
@@ -93,11 +94,11 @@ typedef struct {
 
 /* Chiave del flusso come 5-tupla in forma canonica. */
 typedef struct FlowKey {
-    uint32_t ip_a;
-    uint32_t ip_b;
-    uint16_t port_a;
-    uint16_t port_b;
-    uint8_t protocol;
+    uint32_t ip_a;                  /* Indirizzo IP A (ordinato) */
+    uint32_t ip_b;                  /* Indirizzo IP B (ordinato) */
+    uint16_t port_a;                /* Porta A */
+    uint16_t port_b;                /* Porta B */
+    uint8_t protocol;               /* Protocollo */
 } FlowKey;
 
 typedef struct FlowEntry {
@@ -108,17 +109,16 @@ typedef struct FlowEntry {
      * owner_ip è l'host locale (o il src del primo pacchetto se entrambi i lati
      * sono pubblici o entrambi privati), peer_ip/peer_port il lato remoto.
      */
-    uint32_t owner_ip;
-    uint32_t peer_ip;
-    uint16_t peer_port;
+    uint32_t owner_ip;                  /* Host locale o src del primo pacchetto se entrambi i lati sono pubblici o entrambi privati */
+    uint32_t peer_ip;                   /* Host remoto */
+    uint16_t peer_port;                 /* Porta remota */
 
     uint64_t packets;                   /* pacchetti visti (entrambe le direzioni) */
     uint64_t bytes;                     /* byte visti (entrambe le direzioni) */
-    time_t last_seen;
+    time_t last_seen;                   /* timestamp dell'ultimo pacchetto visto */
 
     struct ndpi_flow_struct *ndpi_flow; /* Contesto di tracking nDPI per questo flusso */
     uint8_t detection_done;             /* 1 dopo classificazione o giveup */
-
     struct FlowEntry *next;             /* catena di collisione */
 } FlowEntry;
 
@@ -218,11 +218,18 @@ int drop_privileges_capabilities(void) {
 }
 
 void init_ndpi(void) {
-    ndpi_struct = ndpi_init_detection_module(NULL);
+    /* API nDPI 4.x: ndpi_init_detection_module() riceve un ndpi_init_prefs (bitmask di preferenze), non un puntatore. */
+    ndpi_struct = ndpi_init_detection_module(ndpi_no_prefs);
     if (ndpi_struct == NULL) {
         fprintf(stderr, "Errore fatale: impossibile inizializzare nDPI.\n");
         exit(-1);
     }
+
+    /* Senza l'abilitazione esplicita della bitmask i dissector restano spenti e ogni flusso verrebbe classificato come Unknown. */
+    NDPI_PROTOCOL_BITMASK all_protocols;
+    /* NDPI_BITMASK_SET_ALL prende già l'indirizzo internamente: va passata la variabile, non &variabile. */
+    NDPI_BITMASK_SET_ALL(all_protocols);
+    ndpi_set_protocol_detection_bitmask2(ndpi_struct, &all_protocols);
 
     ndpi_finalize_initialization(ndpi_struct);
     printf("[+] Motore nDPI configurato e inizializzato correttamente.\n");
@@ -434,8 +441,8 @@ void mark_flow(uint32_t ip, long tsec, const char *detection_source, const char 
 
 /* Applica il risultato nDPI (da process_packet o da giveup) al flusso. */
 static void apply_ndpi_result(FlowEntry *f, ndpi_protocol ndpi_proto, long tsec) {
-    char *app_name = ndpi_get_proto_by_id(ndpi_struct, ndpi_proto.proto.app_protocol);
-    char *master_name = ndpi_get_proto_by_id(ndpi_struct, ndpi_proto.proto.master_protocol);
+    char *app_name = ndpi_get_proto_by_id(ndpi_struct, ndpi_proto.app_protocol);
+    char *master_name = ndpi_get_proto_by_id(ndpi_struct, ndpi_proto.master_protocol);
 
     /* I protocolli vanno sull'owner del flusso, non sul src del pacchetto. */
     host_t *h_proto = find_host(f->owner_ip);
@@ -496,9 +503,9 @@ void discover_and_mark_flow(uint32_t srcIp, uint32_t dstIp, uint16_t srcPort, ui
     uint64_t time_ms = ((uint64_t)tsec * 1000) + (tusec / 1000);
 
     /* l3_ptr/l3_len arrivano già posizionati sul livello 3 in base al datalink reale (Ethernet, VLAN, Linux cooked, raw IP, loopback). */
-    ndpi_protocol ndpi_proto = ndpi_detection_process_packet(ndpi_struct, f->ndpi_flow, (uint8_t *)l3_ptr, l3_len, time_ms, NULL);
+    ndpi_protocol ndpi_proto = ndpi_detection_process_packet(ndpi_struct, f->ndpi_flow, (const unsigned char *)l3_ptr, (unsigned short)l3_len, time_ms);
 
-    if (ndpi_proto.proto.app_protocol != NDPI_PROTOCOL_UNKNOWN || ndpi_proto.proto.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
+    if (ndpi_proto.app_protocol != NDPI_PROTOCOL_UNKNOWN || ndpi_proto.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
         f->detection_done = 1;
         apply_ndpi_result(f, ndpi_proto, tsec);
         return;
@@ -507,7 +514,8 @@ void discover_and_mark_flow(uint32_t srcIp, uint32_t dstIp, uint16_t srcPort, ui
     /* Giveup dopo N pacchetti, altrimenti il flusso resta Unknown per sempre. */
     uint64_t limit = (proto == IPPROTO_TCP) ? NDPI_MAX_PKTS_TCP : NDPI_MAX_PKTS_UDP;
     if (f->packets >= limit) {
-        ndpi_protocol guess = ndpi_detection_giveup(ndpi_struct, f->ndpi_flow);
+        u_int8_t was_guessed = 0;
+        ndpi_protocol guess = ndpi_detection_giveup(ndpi_struct, f->ndpi_flow, 1, &was_guessed);
         f->detection_done = 1;
         apply_ndpi_result(f, guess, tsec);
     }
@@ -636,7 +644,8 @@ void maybe_tick(time_t now) {
             FlowEntry *entry = *pp;
             if (now - entry->last_seen > FLOW_IDLE_SEC) {
                 if (!entry->detection_done && entry->ndpi_flow) {
-                    ndpi_protocol g = ndpi_detection_giveup(ndpi_struct, entry->ndpi_flow);
+                    u_int8_t was_guessed = 0;
+                    ndpi_protocol g = ndpi_detection_giveup(ndpi_struct, entry->ndpi_flow, 1, &was_guessed);
                     entry->detection_done = 1;
                     apply_ndpi_result(entry, g, (long)entry->last_seen);
                 }
@@ -770,14 +779,21 @@ int main(int argc, char *argv[]) {
         snaplen = DEFAULT_SNAPLEN;
     }
 
-    if (geteuid() != 0) {
-        fprintf(stderr, "Please run this tool as superuser.\n");
-        return -1;
-    }
-
     if (device == NULL) {
         printf("ERROR: Missing -i\n");
         printHelp();
+        return -1;
+    }
+
+    is_offline = (stat(device, &s) == 0 && S_ISREG(s.st_mode));
+
+    if (is_offline) {
+        if (access(device, R_OK) != 0) {
+            fprintf(stderr, "Impossibile leggere il file di cattura '%s': %s\n", device, strerror(errno));
+            return -1;
+        }
+    } else if (geteuid() != 0) {
+        fprintf(stderr, "La cattura live sull'interfaccia '%s' richiede privilegi sudo.\n", device);
         return -1;
     }
 
@@ -785,15 +801,13 @@ int main(int argc, char *argv[]) {
     init_ndpi();
     init_flow_table();
 
-    if (stat(device, &s) == 0) {
-        is_offline = 1;
+    if (is_offline) {
         if ((pd = pcap_open_offline(device, errbuf)) == NULL) {
             fprintf(stderr, "pcap_open_offline: %s\n", errbuf);
             cleanup_ndpi();
             return -1;
         }
     } else {
-        is_offline = 0;
         if ((pd = pcap_open_live(device, snaplen, 1, 500, errbuf)) == NULL) {
             fprintf(stderr, "pcap_open_live: %s\n", errbuf);
             cleanup_ndpi();
@@ -840,8 +854,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (drop_privileges_capabilities() < 0) {
-        fprintf(stderr, "Warning: Failed to drop privileges\n");
+    if (!is_offline && geteuid() == 0) {
+        if (drop_privileges_capabilities() < 0) {
+            fprintf(stderr, "Warning: Failed to drop privileges\n");
+        }
     }
 
     signal(SIGINT, sigproc);

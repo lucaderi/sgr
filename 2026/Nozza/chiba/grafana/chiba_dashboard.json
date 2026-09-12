@@ -1,0 +1,2545 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "adlf2mx",
+    "generation": 77,
+    "creationTimestamp": "2026-08-26T13:13:37Z",
+    "labels": {},
+    "annotations": {}
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "spec": {},
+            "labels": {
+              "grafana.app/export-label": "grafana-1"
+            }
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Packets per second (PPS)",
+          "description": "Packets per second received by a specific target host.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 0,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "timeseries",
+                        "rawSql": "SELECT\n  TIME_BUCKET AS time,\n  DSTADDR AS metric,\n  TOTAL_DPKTS / (greatest(1, EXACT_END - EXACT_START) / 1000) AS value\nFROM chiba.host_dst_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND DSTADDR IN (\n    SELECT DSTADDR\n    FROM chiba.host_dst_view\n    WHERE $__timeFilter(TIME_BUCKET)\n    GROUP BY DSTADDR\n    ORDER BY sum(TOTAL_DPKTS) DESC\n    LIMIT 10\n  )\nORDER BY time;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "renameByRegex",
+                  "spec": {
+                    "options": {
+                      "regex": "value(.*)",
+                      "renamePattern": "$1"
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "enableFacetedFilter": true,
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "pps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic",
+                    "seriesBy": "last"
+                  },
+                  "custom": {
+                    "axisBorderShow": true,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "opacity",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 1,
+                    "pointSize": 4,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "DDoS Targets ",
+          "description": "Count of destination hosts receiving traffic concurrently from an abnormal number of distinct sources.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT count(DISTINCT DSTADDR) AS active_ddos_targets\nFROM chiba.host_dst_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND UNIQUE_SRCADDR >= 50;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 5,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Network Scanners ",
+          "description": "Count of source hosts transmitting traffic to an abnormal number of distinct destinations.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT count(DISTINCT SRCADDR) AS active_scanners\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND UNIQUE_DSTADDR >= 50;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 5,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-12": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Port Scanners",
+          "description": "Count of originating source hosts probing an abnormal number of distinct destination ports.\n",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT count(DISTINCT SRCADDR) AS active_port_scanners\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND UNIQUE_DSTPORT >= 20;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 5,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-13": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "High Egress Anomalies",
+          "description": "Count of source hosts emitting cumulative data volume exceeding the defined threshold.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT count(DISTINCT SRCADDR) AS exfil_candidates\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND TOTAL_DOCTETS >= 20971520;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 5,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Real-Time Incidents (1m)",
+          "description": "Detection of rapid DDoS floods, network and port scans, data exfiltration occurring within a minute.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT\n    max(TIME_BUCKET) AS \"Last Seen\",\n    DSTADDR AS \"Host IP\",\n    'Target (Inbound)' AS \"Entity Role\",\n    'Distributed Flood' AS \"Anomaly Type\",\n    multiIf(max(UNIQUE_SRCADDR) >= 200, 'CRITICAL', 'WARNING') AS \"Severity\",\n    concat(toString(max(UNIQUE_SRCADDR)), ' Peak Sources (', toString(count()), ' min active)') AS \"Observed Metric\"\nFROM chiba.host_dst_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND UNIQUE_SRCADDR >= 50\nGROUP BY DSTADDR\n  \nUNION ALL\n\nSELECT\n  max(TIME_BUCKET) AS \"Last Seen\",\n  SRCADDR AS \"Host IP\",\n  'Originator (Outbound)' AS \"Entity Role\",\n  'Horizontal Network Sweep' AS \"Anomaly Type\",\n  multiIf(max(UNIQUE_DSTADDR) >= 200, 'CRITICAL', 'WARNING') AS \"Severity\",\n  concat(toString(max(UNIQUE_DSTADDR)), ' Peak Targets (', toString(count()), ' min active)') AS \"Observed Metric\"\n  FROM chiba.host_src_view\n  WHERE $__timeFilter(TIME_BUCKET)\n    AND UNIQUE_DSTADDR >= 50\n  GROUP BY SRCADDR\n  UNION ALL\n\nSELECT\n  max(TIME_BUCKET) AS \"Last Seen\",\n  SRCADDR AS \"Host IP\",\n  'Originator (Outbound)' AS \"Entity Role\",\n  'Vertical Port Scan' AS \"Anomaly Type\",\n  multiIf(max(UNIQUE_DSTPORT) >= 100, 'CRITICAL', 'WARNING') AS \"Severity\",\n  concat(toString(max(UNIQUE_DSTPORT)), ' Peak Ports (', toString(count()), ' min active)') AS \"Observed Metric\"\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND UNIQUE_DSTPORT >= 20\nGROUP BY SRCADDR\n  \nUNION ALL\n  \nSELECT\n  max(TIME_BUCKET) AS \"Last Seen\",\n  SRCADDR AS \"Host IP\",\n  'Originator (Outbound)' AS \"Entity Role\",\n  'Excessive Outbound Volume' AS \"Anomaly Type\",\n  multiIf(max(TOTAL_DOCTETS) >= 52428800, 'CRITICAL', 'WARNING') AS \"Severity\",\n  concat(formatReadableSize(max(TOTAL_DOCTETS)), ' Peak/min (', toString(count()), ' min active)') AS \"Observed Metric\"\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND TOTAL_DOCTETS >= 20971520\nGROUP BY SRCADDR\nORDER BY \"Last Seen\" DESC\nLIMIT 50;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": true,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": false,
+                    "displayName": "Last Seen"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "CRITICAL": {
+                          "color": "red",
+                          "index": 1
+                        },
+                        "WARNING": {
+                          "color": "orange",
+                          "index": 0
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Severity"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 97
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Observed Metric"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 217
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Host IP"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 129
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Last Seen"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 166
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Entity Role"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 177
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Anomaly Type"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 162
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-15": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Slow Scanners ",
+          "description": "Detection of slow port scanners within a 24-hour window.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT\n  SRCADDR AS \"Source Host\",\n  UNIQUE_DSTPORT AS \"Probed Ports (24h)\",\n  UNIQUE_DSTADDR AS \"Probed Targets (24h)\",\n  PORTS_PER_HOUR AS \"Rate (Ports/h)\",\n  ACTIVE_SPAN_MINUTES AS \"Duration (min)\",\n  TOTAL_DOCTETS AS \"Total Volume\",\n  toDateTime(EXACT_START) AS \"First Seen\",\n  toDateTime(EXACT_END) AS \"Last Seen\"\nFROM chiba.slow_scanners_view\nORDER BY \"Probed Ports (24h)\" DESC\nLIMIT 15;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": true,
+                "showHeader": true,
+                "sortBy": []
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Probed Ports (24h)"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 148
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Total Volume"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 93
+                      },
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Source Host"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 101
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Rate (Ports/h)"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 117
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Duration (min)"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 109
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "First Seen"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 93
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Probed Targets (24h)"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 178
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Packets per second (PPS)",
+          "description": "Packets per second emitted by a specific source host.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 0,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "timeseries",
+                        "rawSql": "SELECT\n  TIME_BUCKET AS time,\n  SRCADDR AS metric,\n  TOTAL_DPKTS / (greatest(1, EXACT_END - EXACT_START) / 1000) AS value\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND SRCADDR IN (\n    SELECT SRCADDR\n    FROM chiba.host_src_view\n    WHERE $__timeFilter(TIME_BUCKET)\n    GROUP BY SRCADDR\n    ORDER BY sum(TOTAL_DPKTS) DESC\n    LIMIT 10\n  )\nORDER BY time;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "renameByRegex",
+                  "spec": {
+                    "options": {
+                      "regex": "value(.*)",
+                      "renamePattern": "$1"
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "enableFacetedFilter": true,
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineStyle": {
+                      "fill": "solid"
+                    },
+                    "lineWidth": 1,
+                    "pointSize": 6,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Bits per second (BPS)",
+          "description": "Bits per second received by a specific target host.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 0,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "timeseries",
+                        "rawSql": "SELECT\n  TIME_BUCKET AS time,\n  DSTADDR AS metric,\n  (sum(TOTAL_DOCTETS) * 8) / $__interval_s AS value\nFROM chiba.host_dst_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND DSTADDR IN (\n    SELECT DSTADDR\n    FROM chiba.host_dst_view\n    WHERE $__timeFilter(TIME_BUCKET)\n    GROUP BY DSTADDR\n    ORDER BY sum(TOTAL_DOCTETS) DESC\n    LIMIT 10\n  )\nGROUP BY time, metric\nORDER BY time;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "renameByRegex",
+                  "spec": {
+                    "options": {
+                      "regex": "value(.*)",
+                      "renamePattern": "$1"
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "binbps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Top Target Hosts",
+          "description": "Top destination IPs receiving volume.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT\n  DSTADDR AS \"Target Host\",\n  sum(TOTAL_DOCTETS) AS \"Total Volume\",\n  sum(TOTAL_DPKTS) AS \"Total Packets\",\n  max(UNIQUE_SRCADDR) AS \"Peak Attackers\"\nFROM chiba.host_dst_view\nWHERE $__timeFilter(TIME_BUCKET)\nGROUP BY \"Target Host\"\nORDER BY \"Total Volume\" DESC\nLIMIT 10;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "enablePagination": false,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Total Volume"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 5242880,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 20971520,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false,
+                    "styleField": "Target Host",
+                    "wrapText": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Total Volume"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "basic",
+                          "type": "gauge",
+                          "valueDisplayMode": "text"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Total Packets"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "short"
+                      },
+                      {
+                        "id": "custom.align",
+                        "value": "right"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Peak Attackers"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "short"
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "green",
+                              "value": 0
+                            },
+                            {
+                              "color": "#EAB839",
+                              "value": 50
+                            },
+                            {
+                              "color": "red",
+                              "value": 200
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Bits per second (BPS)",
+          "description": "Bits per second emitted by a specific source host.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 0,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "timeseries",
+                        "rawSql": "SELECT\n  TIME_BUCKET AS time,\n  SRCADDR AS metric,\n  (sum(TOTAL_DOCTETS) * 8) / $__interval_s AS value\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\n  AND SRCADDR IN (\n    SELECT SRCADDR\n    FROM chiba.host_src_view\n    WHERE $__timeFilter(TIME_BUCKET)\n    GROUP BY SRCADDR \n    ORDER BY sum(TOTAL_DOCTETS) DESC\n    LIMIT 10\n  )\nGROUP BY time, metric\nORDER BY time;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "renameByRegex",
+                  "spec": {
+                    "options": {
+                      "regex": "value(.*)",
+                      "renamePattern": "$1"
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "binBps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Top Source Hosts",
+          "description": "Top source IPs emitting volume.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT\n  SRCADDR AS \"Source Host\",\n  sum(TOTAL_DOCTETS) AS \"Total Volume\",\n  sum(TOTAL_DPKTS) AS \"Total Packets\",\n  max(UNIQUE_DSTADDR) AS \"Unique Destinations\",\n  max(UNIQUE_DSTPORT) AS \"Targeted Ports\"\nFROM chiba.host_src_view\nWHERE $__timeFilter(TIME_BUCKET)\nGROUP BY \"Source Host\"\nORDER BY \"Total Volume\" DESC\nLIMIT 10;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 5242880,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 20971520,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Total Volume"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "mode": "basic",
+                          "type": "gauge"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Total Packets"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "short"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Unique Destinations"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "green",
+                              "value": 0
+                            },
+                            {
+                              "color": "orange",
+                              "value": 50
+                            },
+                            {
+                              "color": "red",
+                              "value": 200
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "Targeted Ports"
+                    },
+                    "properties": [
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "green",
+                              "value": 0
+                            },
+                            {
+                              "color": "#EAB839",
+                              "value": 20
+                            },
+                            {
+                              "color": "red",
+                              "value": 100
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-text"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "L4 Protocol Share",
+          "description": "Shows the overall network traffic by IP Protocol.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT\n  toString(PROT) as protocol,\n  sum(TOTAL_DOCTETS) AS volume\nFROM chiba.service_view\nWHERE $__timeFilter(TIME_BUCKET)\nGROUP BY PROT\nORDER BY volume DESC;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "piechart",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "displayLabels": [
+                  "percent"
+                ],
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "pieType": "pie",
+                "reduceOptions": {
+                  "calcs": [],
+                  "fields": "",
+                  "values": true
+                },
+                "sort": "desc",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "1": {
+                          "text": "ICMP",
+                          "index": 2
+                        },
+                        "2": {
+                          "text": "IGMP",
+                          "index": 4
+                        },
+                        "6": {
+                          "text": "TCP",
+                          "index": 0
+                        },
+                        "17": {
+                          "text": "UDP",
+                          "index": 1
+                        },
+                        "58": {
+                          "text": "ICMPv6 ",
+                          "index": 3
+                        }
+                      }
+                    }
+                  ],
+                  "color": {
+                    "mode": "palette-classic",
+                    "fixedColor": "#73BF69"
+                  },
+                  "custom": {
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  },
+                  "fieldMinMax": false
+                },
+                "overrides": [
+                  {
+                    "__systemRef": "hideSeriesFrom",
+                    "matcher": {
+                      "id": "byNames",
+                      "options": {
+                        "mode": "exclude",
+                        "names": [
+                          "volume",
+                          "2"
+                        ],
+                        "prefix": "All except:",
+                        "readOnly": true
+                      }
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.hideFrom",
+                        "value": {
+                          "legend": false,
+                          "tooltip": true,
+                          "viz": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Top Active Services / Ports",
+          "description": "Visualizes which destination ports/services are consuming the most traffic.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 1,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT\n  toString(DSTPORT) AS port,\n  sum(TOTAL_DOCTETS) AS volume\nFROM chiba.service_view\nWHERE $__timeFilter(TIME_BUCKET)\n AND DSTPORT > 0\nGROUP BY port\nORDER BY volume DESC\nLIMIT 10;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "displayMode": "basic",
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false
+                },
+                "maxVizHeight": 300,
+                "minVizHeight": 16,
+                "minVizWidth": 8,
+                "namePlacement": "auto",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": true
+                },
+                "showUnfilled": true,
+                "sizing": "auto",
+                "valueMode": "color"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "none",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 5242880,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 20971520,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "volume"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Protocol Volume Over Time",
+          "description": "Evolution of network volume across IP protocols over the selected time interval.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 0,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.20.0",
+                        "queryType": "timeseries",
+                        "rawSql": "SELECT\n  TIME_BUCKET AS time,\n  toString(PROT) AS metric,\n  sum(TOTAL_DOCTETS) AS value\nFROM chiba.service_view\nWHERE $__timeFilter(TIME_BUCKET)\nGROUP BY time, metric\nORDER BY time;"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "grafana-clickhouse-datasource-1",
+                        "grafana.app/export-datasource-name": "grafana-clickhouse-datasource"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "renameByRegex",
+                  "spec": {
+                    "options": {
+                      "regex": "value(.*)",
+                      "renamePattern": "$1"
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "normal"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": " 1"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "ICMP"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": " 6"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "TCP"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": " 17"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "UDP"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": " 58"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "ICMPv6"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": " 2"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "IGMP"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "transparent": true
+        }
+      }
+    },
+    "layout": {
+      "kind": "TabsLayout",
+      "spec": {
+        "tabs": [
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Security Alerts",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 5,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-10"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 5,
+                        "y": 0,
+                        "width": 6,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-11"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 11,
+                        "y": 0,
+                        "width": 7,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-12"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 18,
+                        "y": 0,
+                        "width": 6,
+                        "height": 7,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-13"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 7,
+                        "width": 24,
+                        "height": 9,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-14"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 16,
+                        "width": 24,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-15"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Inbound Traffic",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 24,
+                        "height": 12,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-4"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 12,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-1"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 12,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-3"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Outbound Traffic",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 24,
+                        "height": 12,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-6"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 12,
+                        "width": 12,
+                        "height": 11,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-2"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 12,
+                        "width": 12,
+                        "height": 11,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-5"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Protocol Distribution",
+              "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                  "items": [
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-7"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 12,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-8"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 10,
+                        "width": 24,
+                        "height": 13,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-9"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-7d",
+      "to": "now",
+      "autoRefresh": "auto",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "CHIBA Hub",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}

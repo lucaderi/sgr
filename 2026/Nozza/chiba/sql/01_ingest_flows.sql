@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS chiba.ingest_flows
+(
+    START_TIME UInt32,
+    END_TIME   UInt32,
+    SRCADDR    IPv6,
+    DSTADDR    IPv6,
+    DPKTS      UInt32,
+    DOCTETS    UInt32,
+    SRCPORT    UInt16,
+    DSTPORT    UInt16,
+    PROT       UInt8
+) ENGINE = MergeTree() PARTITION BY toYYYYMMDD(toDateTime(START_TIME)) ORDER BY (START_TIME, SRCADDR, DSTADDR);

@@ -110,17 +110,23 @@ Una metrica viene considerata anomala quando:
 z-score > threshold
 ```
 
+Nel test effettuato è stata utilizzata una soglia:
+
+```
+threshold = 3.0
+```
+
 Una finestra temporale viene classificata come anomala solamente quando **almeno due metriche** risultano contemporaneamente anomale.
 
-Questa scelta riduce il numero di falsi positivi dovuti a singole variazioni statistiche.
+Questa scelta ha lo scopo di ridurre il numero di segnalazioni dovute alla variazione di una singola metrica. Le metriche utilizzate rimangono tuttavia semplici indicatori statistici e la presenza di più anomalie contemporanee non implica necessariamente la presenza di un attacco.
 
 ---
 
 ## plotting.py
 
-Genera automaticamente un grafico per ogni metrica.
+Genera automaticamente un grafico per le metriche selezionate.
 
-Le finestre identificate come anomale vengono evidenziate mediante una **X**.
+Le finestre nelle quali una determinata metrica supera la soglia dello Z-score vengono evidenziate mediante una **X**.
 
 ---
 
@@ -135,6 +141,30 @@ Le finestre identificate come anomale vengono evidenziate mediante una **X**.
 | Average Packets per Flow | Individuazione di trasferimenti anomali |
 | Average Bytes per Flow | Individuazione di elevati volumi di traffico |
 | Average Flow Duration | Individuazione di comunicazioni particolarmente lunghe |
+
+---
+
+# Esecuzione
+
+Installare le dipendenze:
+
+```bash
+pip install -r requirements.txt
+```
+
+Il programma può essere eseguito specificando il file PCAP da analizzare:
+
+```bash
+python3 main.py <file.pcapng>
+```
+
+Ad esempio:
+
+```bash
+python3 main.py cattura_progetto.pcapng
+```
+
+Al termine dell'esecuzione vengono prodotti i file CSV e i grafici nella directory `output/`.
 
 ---
 
@@ -159,6 +189,183 @@ output/
     └── average_flow_duration.png
 ```
 
+`flows.csv` contiene i flow ricostruiti a partire dalla cattura.
+
+`window_metrics.csv` contiene le metriche aggregate per ogni finestra temporale.
+
+`anomalies.csv` contiene, oltre alle metriche, gli Z-score calcolati e le relative segnalazioni di anomalia.
+
+I grafici presenti in `output/plots/` sono stati generati utilizzando il test descritto nella sezione seguente.
+
+---
+
+# Test e riproduzione dell'esperimento
+
+## Ambiente di test
+
+Il test è stato effettuato utilizzando due host collegati alla stessa rete locale:
+
+- **MacBook Pro:** generazione del traffico di test e cattura dei pacchetti tramite Wireshark;
+- **Raspberry Pi:** host di destinazione del traffico generato.
+
+La cattura è stata effettuata sul MacBook tramite **Wireshark**, sull'interfaccia di rete utilizzata per la comunicazione con il Raspberry Pi.
+
+Durante la cattura era presente anche il normale traffico di background generato dalla rete e dal sistema.
+
+---
+
+## PCAP utilizzato
+
+Per il test è stata generata una singola cattura denominata:
+
+```text
+cattura_progetto.pcapng
+```
+
+La cattura ha una dimensione di circa **300 MB**.
+
+A causa delle dimensioni, il file PCAP non viene incluso direttamente nel repository. Per rendere comunque riproducibile il test, di seguito vengono riportati l'ambiente, i comandi e la sequenza utilizzati per generare una cattura equivalente.
+
+Gli output presenti nella directory `output/` sono stati ottenuti analizzando questa cattura.
+
+---
+
+## Generazione del traffico
+
+L'esperimento è stato realizzato alternando traffico ordinario e due differenti tipologie di traffico di test: un port scan tramite **Nmap** e un trasferimento ad alto volume tramite **iperf3**.
+
+La sequenza utilizzata è stata:
+
+1. circa 35 secondi di traffico ICMP tramite `ping`;
+2. port scan del Raspberry Pi tramite Nmap;
+3. circa 30 secondi di traffico ICMP tramite `ping`;
+4. 30 secondi di traffico generato tramite iperf3;
+5. circa 30 secondi finali di traffico ICMP tramite `ping`.
+
+### Traffico ICMP
+
+Dal MacBook è stato eseguito:
+
+```bash
+ping <IP_RASPBERRY>
+```
+
+### Port scanning
+
+Il port scan è stato effettuato dal MacBook verso il Raspberry Pi sulle porte da 1 a 500:
+
+```bash
+nmap -Pn -p 1-500 <IP_RASPBERRY>
+```
+
+L'opzione `-Pn` evita la fase di host discovery e considera direttamente l'host di destinazione attivo.
+
+### Traffico iperf3
+
+Sul Raspberry Pi è stato avviato iperf3 in modalità server:
+
+```bash
+iperf3 -s
+```
+
+Sul MacBook è stato successivamente avviato il client per 30 secondi:
+
+```bash
+iperf3 -c <IP_RASPBERRY> -t 30
+```
+
+---
+
+## Costruzione della baseline
+
+Le metriche vengono calcolate su finestre temporali di **5 secondi**.
+
+Per il test sono state utilizzate come baseline le prime:
+
+```text
+6 finestre temporali
+```
+
+corrispondenti ai primi **30 secondi della cattura**.
+
+Questa parte della cattura precede l'esecuzione del port scan ed è stata utilizzata per stimare, per ciascuna metrica:
+
+- media;
+- deviazione standard.
+
+Gli Z-score delle finestre successive vengono quindi calcolati rispetto a questi valori.
+
+La baseline utilizzata in questo esperimento rappresenta una semplificazione dovuta alla disponibilità di una singola cattura controllata. In un sistema reale sarebbe preferibile costruire la baseline utilizzando un periodo storico di traffico normale sufficientemente rappresentativo della rete monitorata.
+
+---
+
+## Riproduzione del test
+
+Per riprodurre l'esperimento:
+
+1. collegare due host alla stessa rete;
+2. avviare `iperf3 -s` sull'host utilizzato come destinazione;
+3. avviare Wireshark sull'host utilizzato per generare il traffico;
+4. iniziare la cattura sull'interfaccia di rete corretta;
+5. generare circa 35 secondi di traffico tramite `ping`;
+6. interrompere il ping ed eseguire:
+
+```bash
+nmap -Pn -p 1-500 <IP_DESTINAZIONE>
+```
+
+7. al termine dello scan, generare nuovamente circa 30 secondi di traffico tramite `ping`;
+8. eseguire per 30 secondi:
+
+```bash
+iperf3 -c <IP_DESTINAZIONE> -t 30
+```
+
+9. generare circa 30 secondi finali di traffico tramite `ping`;
+10. interrompere la cattura e salvarla in formato PCAP/PCAPNG;
+11. analizzare il file ottenuto tramite:
+
+```bash
+python3 main.py <file.pcapng>
+```
+
+Gli output verranno generati automaticamente nella directory `output/`.
+
+---
+
+# Analisi dei risultati del test
+
+Il test permette di osservare due differenti comportamenti anomali.
+
+## Port scanning tramite Nmap
+
+Durante il port scan si osserva un forte aumento di:
+
+- **New Flow Count**
+- **Distinct Destination Ports**
+- **Port Entropy**
+
+Nella cattura utilizzata, il fenomeno è particolarmente evidente approssimativamente tra **50 e 75 secondi** dall'inizio.
+
+Questo comportamento è coerente con lo scan effettuato: vengono generati numerosi flow verso un elevato numero di porte di destinazione.
+
+La metrica `Distinct Destination Hosts` non presenta invece un incremento significativo, poiché il test viene effettuato verso un singolo host.
+
+## Traffico iperf3
+
+Durante il test iperf3 si osserva invece un forte incremento di:
+
+- **Average Packets per Flow**
+- **Average Bytes per Flow**
+
+Nella cattura utilizzata il picco principale viene associato alla finestra che inizia approssimativamente a **110 secondi**.
+
+Questo comportamento è differente dal port scanning: iperf3 utilizza un numero limitato di flow, ma trasferisce attraverso questi una quantità molto elevata di pacchetti e byte.
+
+Poiché almeno due metriche superano contemporaneamente la soglia dello Z-score, la relativa finestra viene classificata come anomala.
+
+È importante osservare che i flow vengono associati alle finestre temporali sulla base del loro **timestamp di inizio**. Di conseguenza, un flow iniziato in una determinata finestra può continuare a trasportare traffico anche nelle finestre temporali successive.
+
 ---
 
 # Tecnologie utilizzate
@@ -168,18 +375,9 @@ output/
 - Pandas
 - NumPy
 - Matplotlib
-
----
-
-# Caso di studio
-
-Per la validazione del progetto è stata realizzata una cattura PCAP comprendente differenti tipologie di traffico:
-
-- traffico ICMP normale
-- attività di Port Scanning tramite Nmap
-- trasferimento dati mediante iperf3
-
-L'algoritmo è stato in grado di individuare automaticamente le principali variazioni statistiche introdotte durante l'esperimento.
+- Wireshark
+- Nmap
+- iperf3
 
 ---
 
@@ -189,8 +387,10 @@ Il progetto implementa un semplice sistema di **Network Traffic Anomaly Detectio
 
 Le anomalie individuate rappresentano esclusivamente indicatori statistici di comportamenti non ordinari e **non costituiscono una prova certa della presenza di un attacco**.
 
+L'utilizzo congiunto di più metriche permette di osservare differenti caratteristiche del traffico. Nel test effettuato, ad esempio, il port scanning determina principalmente un aumento del numero di nuovi flow, delle porte di destinazione e della relativa entropia, mentre il traffico generato da iperf3 determina principalmente un aumento del numero medio di pacchetti e byte per flow.
+
 L'interpretazione finale degli eventi rimane demandata all'analista di rete, che può approfondire le finestre segnalate esaminando i flow corrispondenti.
 
-Questo approccio è coerente con la filosofia dei moderni sistemi di monitoraggio di rete e con quanto discusso durante il corso.
+In un'applicazione reale sarebbe inoltre necessario costruire la baseline a partire da un periodo storico di traffico normale sufficientemente rappresentativo, anziché utilizzare solamente le prime finestre di una singola cattura controllata.
 
 ---

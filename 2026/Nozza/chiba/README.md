@@ -122,6 +122,11 @@ typedef struct flow_data {
 ```
 L'uso dell'attributo `__attribute__((packed))` impedisce al compilatore di inserire byte di allineamento alla fine della struttura dati. La struct ha una dimensione netta corrispondente all'esatta sequenza binaria attesa da ClickHouse per l'inserimento diretto via HTTP, consentendo il trasferimento dell'intero blocco di memoria in formato `RowBinary` senza passaggi intermedi di serializzazione. 
 
+### 1.2.3.1 Correzione del parsing NF9 e requisiti per le tracce PCAP
+* **Scansione completa dei FlowSet:** nello standard NetFlow v9 `header->count` indica il numero totale di record e non di FlowSet. Per evitare interruzioni premature che causavano lo scarto di template e dati su datagrammi multi-flowset (come in `DHCPv6.pcap`), la scansione è guidata dalla lunghezza complessiva del buffer (`while (offset + sizeof(...) <= length)`).
+* **Requisito incapsulamento per softflowd (Endianness DLT_NULL):** `softflowd` su architettura x86_64 richiede che i pacchetti abbiano incapsulamento standard Ethernet (`DLT_EN10MB`). In dump catturati su loopback BSD in Big-Endian (`DLT_NULL`, es. `snmp_usm.pcap`), i 4 byte dell'Address Family non vengono invertiti da `libpcap`, inducendo `softflowd` a scartare l'intero traffico come `non-IP`. Per consentire a `softflowd` di elaborare questi dump, è necessario normalizzarli a Ethernet tramite `tcprewrite --dlt=enet`; poiché il dump originario è privo di frame Ethernet, è obbligatorio specificare indirizzi MAC fittizi per sorgente e destinazione (es. `tcprewrite --dlt=enet --enet-dmac=00:11:22:33:44:55 --enet-smac=aa:bb:cc:dd:ee:ff -i ./pcap/snmp_usm.pcap -o ./pcap/snmp_usm_enet.pcap`).
+* **Allineamento temporale a oggi:** in modalità PCAP, CHIBA associa ai flussi il timestamp attuale (`time(NULL)`). Questo evita la creazione di partizioni storiche remote in ClickHouse e consente l'immediata visualizzazione dei plot nei cruscotti odierni di Grafana.
+
 ### 1.2.4 Pattern produttore-consumatore, double buffering
 Il disaccoppiamento tra la ricezione ad alta frequenza dei pacchetti UDP e la persistenza dei dati sul database è affidato al pattern produttore-consumatore, implementato tramite una coda circolare condivisa (`ring_buffer`). Il thread ausiliario opera come produttore inserendo i record decodificati, mentre il thread principale agisce da consumatore estraendo i dati da inviare a ClickHouse.
 
@@ -454,7 +459,7 @@ sudo systemctl start grafana-server
 Per eseguire i test di sicurezza e le simulazioni di traffico descritte nella sezione 3:
 
 ```bash
-sudo apt install nmap hping3 netcat-openbsd
+sudo apt install nmap hping3 netcat-openbsd tcpreplay
 ```
 
 ### 2.2 Compilazione del demone CHIBA
@@ -654,13 +659,18 @@ Il comando avvia il demone in modalità offline sul dump IPv6 di test:
 ./bin/chiba -r ./pcap/DHCPv6.pcap
 ```
 
+In modalità PCAP i flussi vengono registrati con timestamp corrente (`time(NULL)`), rendendoli subito visibili nella dashboard di Grafana senza dover reimpostare il time picker su date storiche.
+
 L'interrogazione della tabella `chiba.ingest_flows` verifica la presenza di indirizzi IPv6 nativi privi del prefisso di mapping IPv4 (`::ffff:`):
 
 ```bash
 clickhouse-client --query "
 SELECT
+    toDateTime(START_TIME) AS time,
     IPv6NumToString(SRCADDR) AS src,
     IPv6NumToString(DSTADDR) AS dst,
+    SRCPORT,
+    DSTPORT,
     PROT
 FROM chiba.ingest_flows
 WHERE notLike(IPv6NumToString(SRCADDR), '::ffff:%')
@@ -670,9 +680,11 @@ LIMIT 5;
 
 Output:
 ```text
-fe80::a00:27ff:fed4:10bb    ff02::16    58
-fe80::a00:27ff:fefe:8f95    ff02::1:2    17
-fe80::a00:27ff:fed4:10bb    fe80::a00:27ff:fefe:8f95    58
+2026-09-20 16:50:00    fe80::a00:27ff:fed4:10bb    fe80::a00:27ff:fefe:8f95    547    546    17
+2026-09-20 16:50:00    fe80::a00:27ff:fed4:10bb    ff02::16                    0      0      255
+2026-09-20 16:50:00    fe80::a00:27ff:fed4:10bb    ff02::1:fffe:8f95           0      0      58
+2026-09-20 16:50:00    fe80::a00:27ff:fefe:8f95    fe80::a00:27ff:fed4:10bb    0      0      58
+2026-09-20 16:50:00    fe80::a00:27ff:fefe:8f95    ff02::1:2                   546    547    17
 ```
 
 Nella scheda *Protocol Distribution*, i flussi IPv6 vengono aggregati con successo:

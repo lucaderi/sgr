@@ -1,3 +1,4 @@
 .env
 /netmon
 /monitoring/
+netmon.prom

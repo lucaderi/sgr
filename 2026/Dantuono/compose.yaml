@@ -1,0 +1,78 @@
+# Requires Docker Compose 2.23.1+
+# Set UID:GID here to match your host user (check with id -u and id -g).
+x-container-user: &container-user "1000:1000"
+
+services:
+  # Collect metrics from node_exporter running on the host.
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    user: *container-user
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    ports:
+      - "127.0.0.1:9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - type: bind
+        source: ./monitoring/prometheus
+        target: /prometheus
+        bind:
+          create_host_path: false
+
+  # Visualize metrics.
+  grafana:
+    image: grafana/grafana:12.1.1
+    user: *container-user
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in your shell or .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    configs:
+      - source: grafana_datasource
+        target: /etc/grafana/provisioning/datasources/prometheus.yaml
+    volumes:
+      - type: bind
+        source: ./monitoring/grafana
+        target: /var/lib/grafana
+        bind:
+          create_host_path: false
+
+# Compose supplies these inline documents as configuration files in containers.
+configs:
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 5s
+        evaluation_interval: 5s
+
+      scrape_configs:
+        - job_name: netmon
+          static_configs:
+            - targets:
+                - host.docker.internal:9100
+# Automatically connect grafana to prometheus
+  grafana_datasource:
+    content: |
+      apiVersion: 1
+
+      datasources:
+        - name: Prometheus
+          uid: prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090
+          isDefault: true
+          editable: false
+          jsonData:
+            httpMethod: POST
+            timeInterval: 5s

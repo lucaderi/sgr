@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h> 
+#include <time.h>
+#include <signal.h>
+
+extern volatile sig_atomic_t is_pcap_mode;
 
 #define MAX_TEMPLATES 128
 
@@ -99,13 +103,12 @@ void parse_nf9_packet(const u_int8_t *buffer, int length, rbuffer *rb) {
     struct nf9_header *header = (struct nf9_header *)buffer;
     if (ntohs(header->version) != 9) return; 
 
-    u_int16_t count = ntohs(header->count);
     u_int32_t unix_secs = ntohl(header->unix_secs);
     u_int32_t source_id = ntohl(header->source_id);
 
     int offset = sizeof(struct nf9_header); 
 
-    for (int i = 0; i < count && offset + (int)sizeof(struct nf9_flowset_header) <= length; i++) {
+    while (offset + (int)sizeof(struct nf9_flowset_header) <= length) {
         struct nf9_flowset_header *fs_hdr = (struct nf9_flowset_header *)(buffer + offset);
         u_int16_t flowset_id = ntohs(fs_hdr->flowset_id);
         u_int16_t flowset_len = ntohs(fs_hdr->length);
@@ -165,8 +168,9 @@ void parse_nf9_packet(const u_int8_t *buffer, int length, rbuffer *rb) {
                     flow_data rbd;
                     memset(&rbd, 0, sizeof(rbd));
                     
-                    rbd.start_time = unix_secs; 
-                    rbd.end_time = unix_secs;
+                    u_int32_t flow_time = is_pcap_mode ? (u_int32_t)time(NULL) : unix_secs;
+                    rbd.start_time = flow_time; 
+                    rbd.end_time = flow_time;
 
                     if (tmpl->off_ipv4_src >= 0) {
                         u_int32_t ip = *(u_int32_t*)(buffer + d_offset + tmpl->off_ipv4_src);

@@ -15,7 +15,7 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/types.h>
-#include "common.h"
+#include "rrd_reporter.h"
 #include "discretizer.h"
 #include "ndpi_api.h"
 #include "ndpi_protocol_ids.h"
@@ -178,6 +178,15 @@ static inline bool check_and_promote_if_target_proto(ndpi_protocol proto, flow_t
 void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr *pkthdr, const u_char *packet) {
     // Casto il pointer user a CaptureContext
     CaptureContext *ctx = (CaptureContext *)user;
+    ctx->total_packets++;
+
+    uint64_t pkt_sec = pkthdr->ts.tv_sec;
+    if (ctx->pcap_start_time == 0 || pkt_sec < ctx->pcap_start_time) {
+        ctx->pcap_start_time = pkt_sec;
+    }
+    if (pkt_sec > ctx->pcap_end_time) {
+        ctx->pcap_end_time = pkt_sec;
+    }
 
     // Estraggo lunghezza e timestamp del pacchetto
     uint16_t caplen = pkthdr->caplen;
@@ -196,12 +205,13 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
     // is flow already identified?
     flow_table_t *flow_entry = find_flow(flow);
     if (flow_entry != NULL) {
+        ctx->monitored_packets++;
         // Identified flow — feed packet into existing NDPI detector
         ndpi_detection_process_packet(ctx->ndpi_struct, flow_entry->ndpi_flow, packet+l3offset, caplen-l3offset, time_ms, NULL);
 
         uint8_t state = get_packet_state(&flow_nn, ctx, caplen);
 
-        // Se il flusso ha completato il training, verifichiamo la probabilità di transizione (rilevamento anomalie)
+        // Se il flusso ha completato il training, verifichiamo la probabilità di transizione (rilevamento anomalie con soglia -t / -c)
         if (flow_entry->training_done) {
             if (flow_entry->markov.last_state >= 0) {
                 double current_prob[MARKOV_STATE_SPACE][MARKOV_STATE_SPACE];
@@ -211,6 +221,8 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
                 if (trans_prob < ctx->config->threshold) {
                     // Anomalia rilevata: transizione sotto soglia
                     flow_entry->anomaly_detected = true;
+                    ctx->total_anomalies++;
+                    // printf("[ANOMALIA] Flusso identificato -> probabilità di transizione %f < soglia %f\n", trans_prob, ctx->config->threshold);
                 }
             }
             flow_entry->markov.last_state = (int8_t)state;
@@ -221,9 +233,6 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
             }
             flow_entry->markov.last_state = (int8_t)state;
             flow_entry->packets_from_last_norm++;
-
-            flow_entry->packet_count++;
-            flow_entry->last_seen_ms = time_ms;
 
             if (flow_entry->packets_from_last_norm >= ctx->config->norm_interval_check && 
                 infinity_norm(flow_entry->markov.transition_matrix) >= 1) {
@@ -246,6 +255,48 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
 
         flow_entry->packet_count++;
         flow_entry->last_seen_ms = time_ms;
+
+        // Calcolo metriche RRD periodiche (Throttle: aggiorna RRD solo quando cambia il secondo del pacchetto)
+        static uint64_t last_rrd_update_sec = 0;
+        if (ctx->config->rrd_path && pkthdr->ts.tv_sec != last_rrd_update_sec) {
+            last_rrd_update_sec = pkthdr->ts.tv_sec;
+
+            flow_table_t *curr_f, *tmp_f;
+            flow_table_t *head_f = get_flow_table_head();
+            uint32_t active_flows = 0;
+            double sum_prob = 0.0;
+            int prob_count = 0;
+
+            HASH_ITER(hh, head_f, curr_f, tmp_f) {
+                active_flows++;
+                double p_mat[MARKOV_STATE_SPACE][MARKOV_STATE_SPACE];
+                if (curr_f->has_last_probability_matrix) {
+                    memcpy(p_mat, curr_f->last_probability_matrix, sizeof(p_mat));
+                } else {
+                    normalize_markov_matrix(curr_f->markov.transition_matrix, p_mat);
+                }
+
+                double row_sum = 0.0;
+                int non_zero = 0;
+                for(int i=0; i<MARKOV_STATE_SPACE; i++) {
+                    for(int j=0; j<MARKOV_STATE_SPACE; j++) {
+                        if (p_mat[i][j] > 0.0) {
+                            row_sum += p_mat[i][j];
+                            non_zero++;
+                        }
+                    }
+                }
+                if (non_zero > 0) {
+                    sum_prob += (row_sum / non_zero);
+                    prob_count++;
+                }
+            }
+            double avg_prob = (prob_count > 0) ? (sum_prob / prob_count) : 0.0;
+            double mon_ratio = (ctx->total_packets > 0) ? ((double)ctx->monitored_packets / ctx->total_packets) : 0.0;
+
+            rrd_init_database(ctx->config->rrd_path, pkthdr->ts.tv_sec);
+            rrd_update_metrics(ctx->config->rrd_path, pkthdr->ts.tv_sec, ctx->total_anomalies, avg_prob, active_flows, mon_ratio);
+        }
     }
     else {
    		// Handles Unknown Flows (Lookup or Create)

@@ -57,6 +57,11 @@ typedef struct{
     struct ndpi_detection_module_struct *ndpi_struct;   // ndpi?
     // altri dati da mettere nel detector vanno qui
     bool training_done;
+    uint32_t total_packets;
+    uint32_t monitored_packets;
+    uint32_t total_anomalies;
+    uint64_t pcap_start_time;
+    uint64_t pcap_end_time;
 } CaptureContext;
 
 // Struct per identificare univocamente un flusso (only IPV4)

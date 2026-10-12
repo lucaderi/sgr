@@ -7,6 +7,7 @@
 #include "ingester.h"
 #include "discretizer.h"
 #include "common.h"
+#include "rrd_reporter.h"
 
 static void print_usage() {
     printf("Usage: [OPTIONS]\n");
@@ -14,15 +15,16 @@ static void print_usage() {
     printf("  -i IFACE                 Network interface for live capture   WIP \n");
     printf("  -r FILE                  Read packets from pcap file\n");
     printf("  -l IP                    Inbound IP address for pcap file\n");
-    printf("  -o PATH                  RRD database path (default: /tmp/netflow_metrics.rrd)   WIP\n");
+    printf("  -o PATH                  RRD database path (default: test/out/netflow_metrics.rrd)\n");
     printf("  -t VAL                   Anomaly probability threshold (default: 0.01)\n");
-    printf("  -c VAL                   Markov Matrix convergence threshold (default: 0.0001 => 0.01%%)\n");
+    printf("  -c VAL                   Markov Matrix convergence threshold (default: 0.001)\n");
+    printf("  -n NUM                   Norm check interval packets (default: 1000)\n");
     printf("  -m NUM                   Maximum concurrent flows (default: 100000)\n");
     printf("  -f EXPR                  BPF filter expression\n");
     printf("  -h                       Show this help\n");
     printf("\nExample:\n");
     printf("    -i eth0 -o /var/lib/netflow.rrd\n");
-    printf("    -r capture.pcap -l 192.168.1.100 -t 0.005\n");
+    printf("    -r capture.pcap -l 192.168.1.100 -t 0.005 -n 500\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -34,7 +36,7 @@ int main(int argc, char *argv[]) {
     }
     else {
         int opt;
-        while ((opt = getopt(argc, argv, "i:r:l:o:t:c:m:f:h")) != -1) {
+        while ((opt = getopt(argc, argv, "i:r:l:o:t:c:n:m:f:h")) != -1) {
             switch (opt) {
                 case 'i':
                     config.interface = strdup(optarg);
@@ -60,6 +62,9 @@ int main(int argc, char *argv[]) {
                     break;
                 case 'c':
                     config.convergence = atof(optarg);
+                    break;
+                case 'n':
+                    config.norm_interval_check = atoi(optarg);
                     break;
                 case 'm':
                     config.max_flows = atoi(optarg);
@@ -102,7 +107,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    config.norm_interval_check = 1000;
+    config.norm_interval_check = config.norm_interval_check; // Configured via CLI or default
     char errbuf[PCAP_ERRBUF_SIZE];
     if (!config.live_capture && config.pcap_file != NULL) {
         pcap_t *handle = pcap_open_offline(config.pcap_file, errbuf);
@@ -115,6 +120,11 @@ int main(int argc, char *argv[]) {
 
         CaptureContext ctx;
         ctx.training_done = false;
+        ctx.total_packets = 0;
+        ctx.monitored_packets = 0;
+        ctx.total_anomalies = 0;
+        ctx.pcap_start_time = 0;
+        ctx.pcap_end_time = 0;
         ctx.handle = handle;
         ctx.config = &config;
 
@@ -125,6 +135,11 @@ int main(int argc, char *argv[]) {
         }
 
         pcap_loop(handle, -1, offline_packet_callback,(u_char *) &ctx);
+
+        // Genera automaticamente i grafici RRD alla fine dell'elaborazione offline
+        if (config.rrd_path != NULL) {
+            generate_rrd_graphs(config.rrd_path, ctx.pcap_start_time, ctx.pcap_end_time);
+        }
 
         // Post-processing: iterate over all identified flows and print their Markov transition probability matrices
         printf("\n=== Per-Flow Markov Transition Probability Matrices ===\n\n");

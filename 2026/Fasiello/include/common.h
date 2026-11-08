@@ -32,11 +32,9 @@ struct ndpi_flow_struct;
  *
  */
 typedef struct {
-    char *interface;
     char *pcap_file;
     uint32_t local_ip;
     char *rrd_path;
-    bool live_capture;
     double threshold;
     double convergence;
     uint32_t max_flows;

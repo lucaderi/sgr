@@ -28,11 +28,9 @@ void cleanup_context(CaptureContext *ctx) {
 }
 
 void init_config(Config *config) {
-    config->interface = NULL;
     config->pcap_file = NULL;
     config->local_ip = 0;
     config->rrd_path = strdup("test/out/netflow_metrics.rrd");
-    config->live_capture = false;
     config->threshold = 0.01;
     config->convergence = 0.001;
     config->max_flows = 100000;
@@ -40,7 +38,6 @@ void init_config(Config *config) {
     config->norm_interval_check = 1000;
 }
 void free_config(Config *config) {
-    free(config->interface);
     free(config->pcap_file);
     free(config->rrd_path);
     free(config->filter);

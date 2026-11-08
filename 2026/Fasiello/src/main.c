@@ -12,9 +12,8 @@
 static void print_usage() {
     printf("Usage: [OPTIONS]\n");
     printf("\nOptions:\n");
-    printf("  -i IFACE                 Network interface for live capture   WIP \n");
-    printf("  -r FILE                  Read packets from pcap file\n");
-    printf("  -l IP                    Inbound IP address for pcap file\n");
+    printf("  -r FILE                  Read packets from pcap file (required)\n");
+    printf("  -l IP                    Inbound IP address for pcap file (required)\n");
     printf("  -o PATH                  RRD database path (default: test/out/netflow_metrics.rrd)\n");
     printf("  -t VAL                   Anomaly probability threshold (default: 0.01)\n");
     printf("  -c VAL                   Markov Matrix convergence threshold (default: 0.001)\n");
@@ -23,7 +22,6 @@ static void print_usage() {
     printf("  -f EXPR                  BPF filter expression\n");
     printf("  -h                       Show this help\n");
     printf("\nExample:\n");
-    printf("    -i eth0 -o /var/lib/netflow.rrd\n");
     printf("    -r capture.pcap -l 192.168.1.100 -t 0.005 -n 500\n");
 }
 
@@ -36,15 +34,10 @@ int main(int argc, char *argv[]) {
     }
     else {
         int opt;
-        while ((opt = getopt(argc, argv, "i:r:l:o:t:c:n:m:f:h")) != -1) {
+        while ((opt = getopt(argc, argv, "r:l:o:t:c:n:m:f:h")) != -1) {
             switch (opt) {
-                case 'i':
-                    config.interface = strdup(optarg);
-                    config.live_capture = true;
-                    break;
                 case 'r':
                     config.pcap_file = strdup(optarg);
-                    config.live_capture = false;
                     break;
                 case 'l':
                     if (inet_pton(AF_INET, optarg, &config.local_ip) <= 0) {
@@ -81,26 +74,14 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if (config.pcap_file == NULL && config.interface == NULL) {
-            fprintf(stderr, "Error: Must specify either -i (interface) or -r (pcap file)\n");
+        if (config.pcap_file == NULL) {
+            fprintf(stderr, "Error: Must specify -r (pcap file)\n");
             print_usage();
             free_config(&config);
             return -1;
         }
-        if (config.pcap_file != NULL && config.interface != NULL) {
-            fprintf(stderr, "Error: Cannot specify both -i and -r\n");
-            print_usage();
-            free_config(&config);
-            return -1;
-        }
-        if (config.pcap_file == NULL && config.local_ip != 0) {
-            fprintf(stderr, "Error: Must specify -r (pcap file) when using -l (local IP)\n");
-            print_usage();
-            free_config(&config);
-            return -1;
-        }
-        if (config.pcap_file != NULL && config.local_ip == 0) {
-            fprintf(stderr, "Error: Must specify -l (local IP) when using -r (pcap file)\n");
+        if (config.local_ip == 0) {
+            fprintf(stderr, "Error: Must specify -l (local IP)\n");
             print_usage();
             free_config(&config);
             return -1;
@@ -109,14 +90,13 @@ int main(int argc, char *argv[]) {
 
     config.norm_interval_check = config.norm_interval_check; // Configured via CLI or default
     char errbuf[PCAP_ERRBUF_SIZE];
-    if (!config.live_capture && config.pcap_file != NULL) {
-        pcap_t *handle = pcap_open_offline(config.pcap_file, errbuf);
-        printf("Poc Test");
+    pcap_t *handle = pcap_open_offline(config.pcap_file, errbuf);
+    printf("Poc Test");
 
-        if (handle == NULL) {
-            fprintf(stderr, "Error: %s\n", errbuf);
-            return 1;
-        }
+    if (handle == NULL) {
+        fprintf(stderr, "Error: %s\n", errbuf);
+        return 1;
+    }
 
         CaptureContext ctx;
         ctx.training_done = false;
@@ -184,7 +164,7 @@ int main(int argc, char *argv[]) {
         }
 
         pcap_close(handle);
+        free_config(&config);
         return 0;
     }
 
-}

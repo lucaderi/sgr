@@ -150,10 +150,7 @@ flow_t normalize_num_flow(flow_t flow) {
     return flow;
 }
 
-// online mode THIS IS VERY IMPORTANT
-uint32_t get_local_ip_from_interface(CaptureContext *ctx) {
-    return 0;
-}
+
 
 // Computes direction and Markov state
 static inline uint8_t get_packet_state(const flow_nn_t *flow_nn, const CaptureContext *ctx, uint32_t caplen) {

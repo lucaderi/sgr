@@ -222,7 +222,6 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
                     // Anomalia rilevata: transizione sotto soglia
                     flow_entry->anomaly_detected = true;
                     ctx->total_anomalies++;
-                    // printf("[ANOMALIA] Flusso identificato -> probabilità di transizione %f < soglia %f\n", trans_prob, ctx->config->threshold);
                 }
             }
             flow_entry->markov.last_state = (int8_t)state;

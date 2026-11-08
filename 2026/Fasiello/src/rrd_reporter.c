@@ -81,6 +81,10 @@ void rrd_update_metrics(const char *rrd_path, uint64_t timestamp_sec, uint32_t t
 }
 
 void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t end_time_sec) {
+    char tmp_rrd[512];
+    strncpy(tmp_rrd, rrd_path, sizeof(tmp_rrd));
+    char *dir = dirname(tmp_rrd);
+
     uint64_t duration = (end_time_sec > start_time_sec) ? (end_time_sec - start_time_sec) : 60;
     uint64_t graph_end = start_time_sec + duration + 5;
     uint64_t graph_start = (start_time_sec > 5) ? (start_time_sec - 5) : 0;
@@ -89,31 +93,31 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
 
     // 1. Monitored Traffic Ratio Graph
     snprintf(cmd, sizeof(cmd),
-        "/usr/bin/rrdtool graph test/out/monitored_traffic.png "
+        "/usr/bin/rrdtool graph %s/monitored_traffic.png "
         "--title 'Monitored Traffic Ratio' "
         "--vertical-label 'Percentage (%%)' "
         "--start %lu --end %lu "
         "--width 600 --height 200 "
         "DEF:ratio=%s:mon_ratio:AVERAGE "
         "LINE2:ratio#00FF00:'Monitored Ratio (%%)'",
-        (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
+        dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
     int r1 = system(cmd);
 
     // 2. Active Flows Count Graph
     snprintf(cmd, sizeof(cmd),
-        "/usr/bin/rrdtool graph test/out/active_flows.png "
+        "/usr/bin/rrdtool graph %s/active_flows.png "
         "--title 'Active Monitored Flows' "
         "--vertical-label 'Flow Count' "
         "--start %lu --end %lu "
         "--width 600 --height 200 "
         "DEF:flows=%s:active_flows:AVERAGE "
         "LINE2:flows#0000FF:'Active Flows Count'",
-        (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
+        dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
     int r2 = system(cmd);
 
-    // 3. Average Transition Probability Graph (Y-axis rigid 0 to 100)
+    // 3. Average Transition Probability Graph
     snprintf(cmd, sizeof(cmd),
-        "/usr/bin/rrdtool graph test/out/average_probability.png "
+        "/usr/bin/rrdtool graph %s/average_probability.png "
         "--title 'Markov Average Transition Probability' "
         "--vertical-label 'Probability (%%)' "
         "--start %lu --end %lu "
@@ -121,12 +125,12 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
         "--lower-limit 0 --upper-limit 100 --rigid "
         "DEF:prob=%s:avg_prob:AVERAGE "
         "LINE2:prob#FF6600:'Avg Transition Probability (%%)'",
-        (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
+        dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
     int r3 = system(cmd);
 
     // 4. Anomalous Transitions Graph
     snprintf(cmd, sizeof(cmd),
-        "/usr/bin/rrdtool graph test/out/anomalies.png "
+        "/usr/bin/rrdtool graph %s/anomalies.png "
         "--title 'Detected Anomalous State Transitions' "
         "--vertical-label 'Anomalies Count' "
         "--start %lu --end %lu "
@@ -134,9 +138,9 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
         "DEF:anom=%s:anomalies:AVERAGE "
         "AREA:anom#FF000033:'Anomalies Area' "
         "LINE2:anom#FF0000:'Cumulative Anomalies'",
-        (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
+        dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
     int r4 = system(cmd);
 
-    printf("[RRD] Grafici PNG separati generati in test/out/ [start: %lu, end: %lu] (status: %d, %d, %d, %d)\n", 
-           (unsigned long)graph_start, (unsigned long)graph_end, r1, r2, r3, r4);
+    printf("[RRD] Grafici PNG separati generati in %s/ [start: %lu, end: %lu] (status: %d, %d, %d, %d)\n", 
+           dir, (unsigned long)graph_start, (unsigned long)graph_end, r1, r2, r3, r4);
 }

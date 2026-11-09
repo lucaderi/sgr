@@ -163,7 +163,8 @@ int main(int argc, char *argv[]) {
             printf("\n--------------------------------------------------\n\n");
         }
 
-        pcap_close(handle);
+        cleanup_flows();
+        cleanup_context(&ctx);
         free_config(&config);
         return 0;
     }

@@ -215,3 +215,25 @@ flow_table_t *promote_ukw_to_identified(flow_t key, ukw_flow_table_t *ukw_entry,
 
     return flow_entry;
 }
+
+void cleanup_flows(void) {
+    flow_table_t *current_flow, *tmp_flow;
+    HASH_ITER(hh, flow_table, current_flow, tmp_flow) {
+        HASH_DEL(flow_table, current_flow);
+        if (current_flow->ndpi_flow != NULL) {
+            ndpi_free_flow(current_flow->ndpi_flow);
+        }
+        free(current_flow);
+    }
+    flow_table = NULL;
+
+    ukw_flow_table_t *current_ukw, *tmp_ukw;
+    HASH_ITER(hh, ukw_flow_table, current_ukw, tmp_ukw) {
+        HASH_DEL(ukw_flow_table, current_ukw);
+        if (current_ukw->ndpi_flow != NULL) {
+            ndpi_free_flow(current_ukw->ndpi_flow);
+        }
+        free(current_ukw);
+    }
+    ukw_flow_table = NULL;
+}

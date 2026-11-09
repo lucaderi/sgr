@@ -12,7 +12,7 @@ Questo progetto realizza un sistema di rilevamento anomalie per flussi di rete c
 
 ### 1. Ingestione e Identificazione dei Flussi (nDPI)
 
-- Cattura dei pacchetti da file `.pcap` o in tempo reale tramite **libpcap**
+- Cattura dei pacchetti da file `.pcap` tramite **libpcap**
 - Classificazione dei protocolli tramite **nDPI** per isolare i flussi target: **HTTPS**, **QUIC**, **TLS**
 
 ### 2. Discretizzazione dei Pacchetti
@@ -47,21 +47,13 @@ Le metriche vengono raccolte e graficate tramite **RRDtool**:
 
 ---
 
-## Costruzione della Matrice di Transizione
+## Costruzione e Training della Matrice di Transizione
 
-La matrice di transizione viene costruita e mantenuta attraverso **due fasi** distinte:
+La matrice di transizione di ciascun flusso viene costruita attraverso la **Fase di Training**:
 
-### Fase di Training
-
-- La matrice viene popolata osservando il traffico di rete
-- Ad ogni iterazione si calcola la **norma della differenza** tra la matrice corrente e quella precedente
-- Quando il delta scende al di sotto di una **soglia di convergenza**, la matrice viene considerata **"congelata"** e pronta per l'uso in produzione
-
-### Fase di Adattamento
-
-- La matrice congelata viene aggiornata **online** per adattarsi alle variazioni graduali del traffico
-- L'aggiornamento segue una tecnica di **Single Exponential Smoothing** con un fattore `α` basso, in modo da preservare la stabilità del modello
-- Le transizioni classificate come **anomalie** vengono **escluse** dall'aggiornamento, evitando che comportamenti malevoli influenzino il modello di baseline
+- La matrice viene popolata osservando i pacchetti iniziali del flusso.
+- A intervalli regolari (configurabili tramite `-n`), si calcola la **norma infinito della differenza** tra la matrice di probabilità corrente e quella precedente (`delta_prob_norm`).
+- Quando il delta scende al di sotto della **soglia di convergenza** (`-c`), la matrice viene considerata **"congelata"** (training completato), ed entra nella fase operativa di rilevamento anomalie.
 
 ---
 
@@ -76,9 +68,9 @@ La matrice di transizione viene costruita e mantenuta attraverso **due fasi** di
                                                     ▼
                                           ┌───────────────────┐
                                           │  matrice di       │
-                                          │  transizione     │
-                                          │  (training +     │
-                                          │   adattamento)   │
+                                          │  transizione      │
+                                          │  (training +      │
+                                          │   convergenza)    │
                                           └────────┬──────────┘
                                                    │
                                     ┌──────────────┼──────────────┐
@@ -96,27 +88,28 @@ La matrice di transizione viene costruita e mantenuta attraverso **due fasi** di
 | Strumento   | Ruolo                                          |
 |-------------|------------------------------------------------|
 | **nDPI**    | Classificazione dei protocolli di rete         |
-| **libpcap** | Cattura e lettura dei pacchetti                 |
+| **libpcap** | Cattura e lettura dei pacchetti `.pcap`         |
 | **RRDtool** | Raccolta e visualizzazione delle metriche      |
 
 ---
 
 ## Configurazione
 
-I parametri principali del sistema:
+I parametri principali del sistema (configurabili da CLI):
 
-| Parametro                  | Descrizione                                      | Valore di default |
-|----------------------------|--------------------------------------------------|--------------------|
-| `threshold_probability`    | Soglia di probabilità per il rilevamento anomalie | *da definire*     |
-| `convergence_delta`        | Soglia di convergenza per il congelamento della matrice | *da definire* |
-| `smoothing_alpha`          | Fattore di smoothing per l'adattamento online    | *da definire*     |
-| `size_bins`                | Bin di discretizzazione della dimensione payload | Vedi sezione 2    |
+| Parametro                  | Opzione CLI | Descrizione                                             | Valore di default |
+|----------------------------|-------------|---------------------------------------------------------|-------------------|
+| `threshold_probability`    | `-t`        | Soglia di probabilità per il rilevamento anomalie       | `0.01`            |
+| `convergence_delta`        | `-c`        | Soglia di convergenza per il congelamento della matrice | `0.001`           |
+| `norm_interval_check`      | `-n`        | Intervallo in pacchetti per il controllo di convergenza | `1000`            |
+| `max_flows`                | `-m`        | Numero massimo di flussi concorrenti                    | `100000`          |
+| `size_bins`                | —           | Bin di discretizzazione della dimensione payload        | Vedi sezione 2    |
 
 ---
 
 ## Stato del Progetto
 
-> 🚧 Progetto in fase di sviluppo
+> ✅ Progetto completo e funzionante (Training, Convergenza, Anomaly Detection e Reportistica RRD).
 
 ---
 

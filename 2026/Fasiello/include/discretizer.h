@@ -35,3 +35,6 @@ uint64_t infinity_norm(uint32_t count_matrix[MARKOV_STATE_SPACE][MARKOV_STATE_SP
 
 // Compute the norm of the delta between 2 probability matrices
 double delta_prob_norm(double a[MARKOV_STATE_SPACE][MARKOV_STATE_SPACE], double b[MARKOV_STATE_SPACE][MARKOV_STATE_SPACE]);
+
+// Cleanup all flow tables (identified and unknown)
+void cleanup_flows(void);

@@ -53,7 +53,7 @@ Per compilare il progetto, posizionarsi nella cartella principale ed eseguire:
 ```bash
 make
 ```
-Questo generare l'eseguibile binario in `bin/netflow_analyzer`.
+Questo per generare l'eseguibile binario in `bin/netflow_analyzer`.
 
 ### Esecuzione
 Il progetto richiede un file di cattura `.pcap` e l'indirizzo IP locale (inbound) associato:
@@ -95,9 +95,8 @@ Per validare il corretto funzionamento del sistema e la conformità agli obietti
 
 ## 4. File di Test e Generazione tramite `generate_pcaps.py`
 
-I file `.pcap` di test utilizzati per validare il comportamento del sistema vengono generati programmaticamente tramite lo script Python **`generate_pcaps.py`** (basato sulla libreria **Scapy**). Questo permette di simulare flussi di rete TLS/QUIC con sequenze controllate di pacchetti (in termini di direzione e dimensioni del payload) sia per la fase di training che per l'introduzione di anomalie comportamentali mirate.
+I file `.pcap` di test utilizzati per validare il comportamento del sistema vengono generati tramite lo script Python **`generate_pcaps.py`** (basato sulla libreria **Scapy**). Questo permette di simulare flussi di rete TLS/QUIC con sequenze controllate di pacchetti (in termini di direzione e dimensioni del payload) sia per la fase di training che per l'introduzione di anomalie comportamentali mirate.
 
-- **File `.pcap` generati da `generate_pcaps.py`**: Dataset di traffico sintetico riproducibile contenente flussi target identificabili da nDPI con sequenze note di stati Markoviani, impiegati per testare la convergenza, il training e il rilevamento delle anomalie.
 - **`test/out/`**: Directory di output in cui vengono salvati automaticamente il database RRD (`netflow_metrics.rrd`) e i grafici PNG generati al termine dell'esecuzione:
   - `monitored_traffic.png`
   - `active_flows.png`
@@ -107,6 +106,7 @@ I file `.pcap` di test utilizzati per validare il comportamento del sistema veng
 **Comando di riproduzione dei test:**
 ```bash
 python3 generate_pcaps.py
-./bin/netflow_analyzer -r test/generated_flow.pcap -l 192.168.1.100 -t 0.01 -c 0.001 -o test/out/netflow_metrics.rrd
+./bin/netflow_analyzer -r normal_flow.pcap -l 192.168.1.100 -t 0.01 -c 0.001 -o test/out/normal/netflow_metrics.rrd
+./bin/netflow_analyzer -r anomalous_flow.pcap -l 192.168.1.100 -t 0.01 -c 0.001 -o test/out/anomalous/netflow_metrics.rrd
 ```
 Al termine dell'esecuzione, verranno stampate a schermo le matrici di probabilità di transizione Markoviane per ciascun flusso identificato e verranno generati i grafici in `test/out/`.

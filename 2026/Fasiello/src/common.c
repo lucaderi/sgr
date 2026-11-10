@@ -34,11 +34,9 @@ void init_config(Config *config) {
     config->threshold = 0.01;
     config->convergence = 0.001;
     config->max_flows = 100000;
-    config->filter = NULL;
     config->norm_interval_check = 1000;
 }
 void free_config(Config *config) {
     free(config->pcap_file);
     free(config->rrd_path);
-    free(config->filter);
 }

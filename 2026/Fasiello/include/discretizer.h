@@ -21,7 +21,7 @@ void remove_ukw_flow(flow_t key);
  * Seeds the global Markov model from the buffer before promoting.
  * Returns pointer to the newly promoted flow_table_t, or NULL on failure
  */
-flow_table_t *promote_ukw_to_identified(flow_t key, ukw_flow_table_t *ukw_entry, CaptureContext *ctx);
+flow_table_t *promote_ukw_to_identified(flow_t key, ukw_flow_table_t *ukw_entry);
 
 // Compute the Markov state from packet direction and caplen
 uint8_t compute_markov_state(int direction, uint16_t caplen);

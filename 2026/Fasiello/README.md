@@ -90,6 +90,7 @@ La matrice di transizione di ciascun flusso viene costruita attraverso la **Fase
 | **nDPI**    | Classificazione dei protocolli di rete         |
 | **libpcap** | Cattura e lettura dei pacchetti `.pcap`         |
 | **RRDtool** | Raccolta e visualizzazione delle metriche      |
+| **uthash**  | Libreria open-source C per tabelle hash in-memory|
 
 ---
 

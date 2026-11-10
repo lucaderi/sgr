@@ -41,28 +41,28 @@ flow_nn_t create_flow(uint16_t caplen, const u_char *packet) {
 
     // Verifico se il pacchetto è abbastanza lungo
     if (caplen < min_len) {
-        fprintf(stderr, "Pacchetto troppo corto: caplen=%u, min_len=%zu\n", caplen, min_len);
+        // fprintf(stderr, "Pacchetto troppo corto: caplen=%u, min_len=%zu\n", caplen, min_len);
         return flow;
     }
 
     struct ether_header *eth = (struct ether_header *)packet;
     // Verifico che il pacchetto sia un Ethernet frame
     if (eth->ether_type != htons(ETHERTYPE_IP)) {
-        fprintf(stderr, "Pacchetto non Ethernet: ether_type=%u\n", eth->ether_type);
+        // fprintf(stderr, "Pacchetto non Ethernet: ether_type=%u\n", eth->ether_type);
         return flow;
     }
 
     struct iphdr *ip = (struct iphdr *)(packet + sizeof(struct ether_header));
     // Verifico che il pacchetto sia un IPv4 frame
     if (ip->version != 4) {
-        fprintf(stderr, "Pacchetto non IPv4: version=%u\n", ip->version);
+        // fprintf(stderr, "Pacchetto non IPv4: version=%u\n", ip->version);
         return flow;
     }
 
     uint8_t l4_proto = ip->protocol;
     // verifico che il pacchetto sia TCP o UDP
     if (l4_proto != IPPROTO_TCP && l4_proto != IPPROTO_UDP) {
-        fprintf(stderr, "Pacchetto non TCP/UDP: protocol=%u\n", l4_proto);
+        // fprintf(stderr, "Pacchetto non TCP/UDP: protocol=%u\n", l4_proto);
         return flow;
     }
 
@@ -75,7 +75,7 @@ flow_nn_t create_flow(uint16_t caplen, const u_char *packet) {
     uint16_t dst_port = 0;
     // Supporta IPv4 con header length variabile (ihl) (IP con Opzioni)
     if (caplen < sizeof(struct ether_header) + ip->ihl * 4) {
-        fprintf(stderr, "Pacchetto troppo corto (failed at ihl): caplen=%u < min_len=%zu\n", caplen, sizeof(struct ether_header) + ip->ihl * 4);
+        // fprintf(stderr, "Pacchetto troppo corto (failed at ihl): caplen=%u < min_len=%zu\n", caplen, sizeof(struct ether_header) + ip->ihl * 4);
         return flow;
     }
 
@@ -84,7 +84,7 @@ flow_nn_t create_flow(uint16_t caplen, const u_char *packet) {
 
     if (l4_proto == IPPROTO_TCP) {
         if (caplen < sizeof(struct ether_header) + (ip->ihl * 4) + sizeof(struct tcphdr)) {
-            fprintf(stderr, "Pacchetto TCP troppo corto: caplen=%u < min_len=%zu\n", caplen, sizeof(struct ether_header) + ip->ihl * 4 + sizeof(struct tcphdr));
+            // fprintf(stderr, "Pacchetto TCP troppo corto: caplen=%u < min_len=%zu\n", caplen, sizeof(struct ether_header) + ip->ihl * 4 + sizeof(struct tcphdr));
             return flow;
         }
         struct tcphdr *tcp = (struct tcphdr *)(l4_header);
@@ -92,7 +92,7 @@ flow_nn_t create_flow(uint16_t caplen, const u_char *packet) {
         dst_port = tcp->dest;
     } else if (l4_proto == IPPROTO_UDP) {
         if (caplen < sizeof(struct ether_header) + (ip->ihl * 4) + sizeof(struct udphdr)) {
-            fprintf(stderr, "Pacchetto UDP troppo corto: caplen=%u < min_len=%zu\n", caplen, sizeof(struct ether_header) + ip->ihl * 4 + sizeof(struct udphdr));
+            // fprintf(stderr, "Pacchetto UDP troppo corto: caplen=%u < min_len=%zu\n", caplen, sizeof(struct ether_header) + ip->ihl * 4 + sizeof(struct udphdr));
             return flow;
         }
         struct udphdr *udp = (struct udphdr *)(l4_header);
@@ -159,11 +159,10 @@ static inline uint8_t get_packet_state(const flow_nn_t *flow_nn, const CaptureCo
 }
 
 // Handles TLS/QUIC check and promotion logic
-static inline bool check_and_promote_if_target_proto(ndpi_protocol proto, flow_t flow, ukw_flow_table_t *ukw_entry, CaptureContext *ctx) {
+static inline bool check_and_promote_if_target_proto(ndpi_protocol proto, flow_t flow, ukw_flow_table_t *ukw_entry) {
     if (ndpi_is_proto(proto.proto, NDPI_PROTOCOL_TLS) ||
         ndpi_is_proto(proto.proto, NDPI_PROTOCOL_QUIC)) {
-        printf("[detected] flow -> TLS/QUIC\n");
-        promote_ukw_to_identified(flow, ukw_entry, ctx);
+        promote_ukw_to_identified(flow, ukw_entry);
         return true;
     }
     return false;
@@ -230,9 +229,9 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
             flow_entry->markov.last_state = (int8_t)state;
             flow_entry->packets_from_last_norm++;
 
-            if (flow_entry->packets_from_last_norm >= ctx->config->norm_interval_check && 
+            if (flow_entry->packets_from_last_norm >= ctx->config->norm_interval_check &&
                 infinity_norm(flow_entry->markov.transition_matrix) >= 1) {
-                
+
                 double current_probability[MARKOV_STATE_SPACE][MARKOV_STATE_SPACE];
                 normalize_markov_matrix(flow_entry->markov.transition_matrix, current_probability);
 
@@ -240,7 +239,6 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
                     double delta = delta_prob_norm(flow_entry->last_probability_matrix, current_probability);
                     if (delta <= ctx->config->convergence) {
                         flow_entry->training_done = true;
-                        printf("[training] Flow converged and frozen!\n");
                     }
                 }
                 memcpy(flow_entry->last_probability_matrix, current_probability, sizeof(current_probability));
@@ -254,8 +252,8 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
 
         // Calcolo metriche RRD periodiche (Throttle: aggiorna RRD solo quando cambia il secondo del pacchetto)
         static uint64_t last_rrd_update_sec = 0;
-        if (ctx->config->rrd_path && pkthdr->ts.tv_sec != last_rrd_update_sec) {
-            last_rrd_update_sec = pkthdr->ts.tv_sec;
+        if (ctx->config->rrd_path && (uint64_t)pkthdr->ts.tv_sec != last_rrd_update_sec) {
+            last_rrd_update_sec = (uint64_t)pkthdr->ts.tv_sec;
 
             flow_table_t *curr_f, *tmp_f;
             flow_table_t *head_f = get_flow_table_head();
@@ -325,11 +323,10 @@ void train_matrix_offline_packet_callback(u_char *user, const struct pcap_pkthdr
         ndpi_protocol proto = ndpi_detection_process_packet(ctx->ndpi_struct, ukw_entry->ndpi_flow, packet+l3offset, caplen-l3offset, time_ms, NULL);
 
         // Checks for promotions of give-up
-        bool promoted = check_and_promote_if_target_proto(proto, flow, ukw_entry, ctx);
+        bool promoted = check_and_promote_if_target_proto(proto, flow, ukw_entry);
 
         if (!promoted && !is_new_flow && ukw_entry->packet_count >= NDPI_GIVEUP_THRESHOLD){
         	if(!ndpi_is_protocol_detected(proto)){
-         		printf("[giveup] flow not identified, removing\n");
            		remove_ukw_flow(flow);
          	}
         }

@@ -38,7 +38,6 @@ typedef struct {
     double threshold;
     double convergence;
     uint32_t max_flows;
-    char *filter;
     uint32_t norm_interval_check;
 } Config;
 

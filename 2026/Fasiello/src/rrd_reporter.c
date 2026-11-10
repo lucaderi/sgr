@@ -99,9 +99,9 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
         "--start %lu --end %lu "
         "--width 600 --height 200 "
         "DEF:ratio=%s:mon_ratio:AVERAGE "
-        "LINE2:ratio#00FF00:'Monitored Ratio (%%)'",
+        "LINE2:ratio#00FF00:'Monitored Ratio (%%)' > /dev/null 2>&1",
         dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
-    int r1 = system(cmd);
+    int r1 __attribute__((unused)) = system(cmd);
 
     // 2. Active Flows Count Graph
     snprintf(cmd, sizeof(cmd),
@@ -111,9 +111,9 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
         "--start %lu --end %lu "
         "--width 600 --height 200 "
         "DEF:flows=%s:active_flows:AVERAGE "
-        "LINE2:flows#0000FF:'Active Flows Count'",
+        "LINE2:flows#0000FF:'Active Flows Count' > /dev/null 2>&1",
         dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
-    int r2 = system(cmd);
+    int r2 __attribute__((unused)) = system(cmd);
 
     // 3. Average Transition Probability Graph
     snprintf(cmd, sizeof(cmd),
@@ -124,9 +124,9 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
         "--width 600 --height 200 "
         "--lower-limit 0 --upper-limit 100 --rigid "
         "DEF:prob=%s:avg_prob:AVERAGE "
-        "LINE2:prob#FF6600:'Avg Transition Probability (%%)'",
+        "LINE2:prob#FF6600:'Avg Transition Probability (%%)' > /dev/null 2>&1",
         dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
-    int r3 = system(cmd);
+    int r3 __attribute__((unused)) = system(cmd);
 
     // 4. Anomalous Transitions Graph
     snprintf(cmd, sizeof(cmd),
@@ -137,10 +137,7 @@ void generate_rrd_graphs(const char *rrd_path, uint64_t start_time_sec, uint64_t
         "--width 600 --height 200 "
         "DEF:anom=%s:anomalies:AVERAGE "
         "AREA:anom#FF000033:'Anomalies Area' "
-        "LINE2:anom#FF0000:'Cumulative Anomalies'",
+        "LINE2:anom#FF0000:'Cumulative Anomalies' > /dev/null 2>&1",
         dir, (unsigned long)graph_start, (unsigned long)graph_end, rrd_path);
-    int r4 = system(cmd);
-
-    printf("[RRD] Grafici PNG separati generati in %s/ [start: %lu, end: %lu] (status: %d, %d, %d, %d)\n", 
-           dir, (unsigned long)graph_start, (unsigned long)graph_end, r1, r2, r3, r4);
+    int r4 __attribute__((unused)) = system(cmd);
 }

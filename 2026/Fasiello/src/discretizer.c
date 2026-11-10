@@ -193,7 +193,7 @@ void remove_ukw_flow(flow_t key) {
     }
 }
 
-flow_table_t *promote_ukw_to_identified(flow_t key, ukw_flow_table_t *ukw_entry, CaptureContext *ctx) {
+flow_table_t *promote_ukw_to_identified(flow_t key, ukw_flow_table_t *ukw_entry) {
     // Remove from unknown table first
     HASH_DEL(ukw_flow_table, ukw_entry);
 

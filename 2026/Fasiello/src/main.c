@@ -19,7 +19,6 @@ static void print_usage() {
     printf("  -c VAL                   Markov Matrix convergence threshold (default: 0.001)\n");
     printf("  -n NUM                   Norm check interval packets (default: 1000)\n");
     printf("  -m NUM                   Maximum concurrent flows (default: 100000)\n");
-    printf("  -f EXPR                  BPF filter expression\n");
     printf("  -h                       Show this help\n");
     printf("\nExample:\n");
     printf("    -r capture.pcap -l 192.168.1.100 -t 0.005 -n 500\n");
@@ -34,7 +33,7 @@ int main(int argc, char *argv[]) {
     }
     else {
         int opt;
-        while ((opt = getopt(argc, argv, "r:l:o:t:c:n:m:f:h")) != -1) {
+        while ((opt = getopt(argc, argv, "r:l:o:t:c:n:m:h")) != -1) {
             switch (opt) {
                 case 'r':
                     config.pcap_file = strdup(optarg);
@@ -62,9 +61,6 @@ int main(int argc, char *argv[]) {
                 case 'm':
                     config.max_flows = atoi(optarg);
                     break;
-                case 'f':
-                    config.filter = strdup(optarg);
-                    break;
                 case 'h':
                     print_usage();
                     return 0;
@@ -91,7 +87,6 @@ int main(int argc, char *argv[]) {
     config.norm_interval_check = config.norm_interval_check; // Configured via CLI or default
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *handle = pcap_open_offline(config.pcap_file, errbuf);
-    printf("Poc Test");
 
     if (handle == NULL) {
         fprintf(stderr, "Error: %s\n", errbuf);
@@ -114,7 +109,9 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        pcap_loop(handle, -1, offline_packet_callback,(u_char *) &ctx);
+        if (pcap_loop(handle, -1, offline_packet_callback, (u_char *)&ctx) < 0) {
+            fprintf(stderr, "Warning: pcap_loop exited with error\n");
+        }
 
         // Genera automaticamente i grafici RRD alla fine dell'elaborazione offline
         if (config.rrd_path != NULL) {

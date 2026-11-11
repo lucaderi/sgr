@@ -1,0 +1,13 @@
+obj/
+bin/
+.venv/
+tests/out/
+*.o
+*.rrd
+*.pcap
+*.png
+test/*
+/tmp/netflow_metrics.rrd
+*.log
+.DS_Store
+compile_flags.txt

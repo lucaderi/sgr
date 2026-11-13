@@ -4,7 +4,12 @@ from pathlib import Path
 from scapy.error import Scapy_Exception
 
 from firewall.engine.policy_engine import PolicyContractError
-from firewall.engine.policy_profile import *
+from firewall.engine.policy_profile import (
+    demo_profile,
+    example_profile,
+    test1_profile,
+    test2_profile,
+)
 from firewall.orchestrator import run_capture
 
 def main(argv: list[str] | None = None) -> int:
@@ -14,15 +19,16 @@ def main(argv: list[str] | None = None) -> int:
 
     parser.add_argument("--json", type=Path, dest="output_path", help="insert path for JSON report")
 
-    parser.add_argument("--profile", choices=("demo", "custom", "test"), default="demo", help="policy profile to apply")
-
-    args = parser.parse_args(argv)
-
     profiles = {
         "demo": demo_profile,
         "custom": example_profile,
-        "test": test_profile,
+        "test1": test1_profile,
+        "test2": test2_profile,
     }
+    legacy_profiles = {"test-policy": "test1", "test": "test2"}
+    parser.add_argument("--profile", type=lambda value: legacy_profiles.get(value, value),
+                        choices=profiles, default="demo", help="policy profile to apply")
+    args = parser.parse_args(argv)
 
     # configured networks and services determine which traffic can be allowed (default: academic profile)
 

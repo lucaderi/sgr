@@ -7,6 +7,7 @@ from pathlib import Path
 
 from firewall.engine.policy_decision import PolicyAction, PolicyDecision
 from firewall.schemas.capture_analysis import CaptureAnalysis
+from firewall.schemas.flow_analysis import PEAK_PACKET_RATE_WINDOW_SECONDS
 from firewall.schemas.packet_analysis import CheckStatus
 
 # --- CONSOLE OUTPUT ---
@@ -129,7 +130,24 @@ def export_report(capture: CaptureAnalysis, decisions: Mapping[int, PolicyDecisi
             } if analysis.network.ip_version in (4, 6) else None,
         })
 
-    report = {"summary": capture_summary(capture, decisions), "decision_semantics": {"flow": "retrospective", "window": "current_event"}, "packets": packets}
+    report = {
+        "summary": capture_summary(capture, decisions),
+        "decision_semantics": {"flow": "retrospective", "window": "current_event"},
+        "flow_packet_rates": {
+            str(flow_id): {
+                "packets_per_second": flow.packets_per_second,
+                "peak_packets_per_second": flow.peak_packets_per_second,
+                "peak_window_seconds": PEAK_PACKET_RATE_WINDOW_SECONDS,
+            }
+            for flow_id, flow in sorted(capture.flows.items())
+        },
+        "tcp_flows": {
+            str(flow_id): flow.tcp_diagnostics()
+            for flow_id, flow in sorted(capture.flows.items())
+            if flow.key.transport_protocol == "TCP"
+        },
+        "packets": packets,
+    }
 
     # serialization
     serialized = json.dumps(json_value(report), ensure_ascii=False, allow_nan=False, indent=2)

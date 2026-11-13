@@ -5,7 +5,11 @@ from typing import Literal
 
 from firewall.analysis.util import is_int, tcp_flag_names, valid_timestamp
 from firewall.schemas.flow import Endpoint, Flow, FlowKey
-from firewall.schemas.flow_analysis import FinalizationReason, FlowAnalysis
+from firewall.schemas.flow_analysis import (
+    PEAK_PACKET_RATE_WINDOW_SECONDS,
+    FinalizationReason,
+    FlowAnalysis,
+)
 from firewall.schemas.flow_process_result import FlowExclusionReason, FlowProcessResult
 from firewall.schemas.packet import IPVersion, Packet
 from firewall.schemas.packet_analysis import CheckResult, CheckStatus
@@ -281,6 +285,13 @@ class FlowAnalyzer:
         flow.packet_count += 1
         flow.byte_count += size
 
+        window = flow.packet_rate_window
+        # Match the policy windows' half-open interval (t - W, t].
+        while window and timestamp - window[0] >= PEAK_PACKET_RATE_WINDOW_SECONDS:
+            window.popleft()
+        window.append(timestamp)
+        flow.peak_window_packets = max(flow.peak_window_packets, len(window))
+
         if direction == "A_TO_B":
             flow.packets_a_to_b += 1
             flow.bytes_a_to_b += size
@@ -382,6 +393,11 @@ class FlowAnalyzer:
                 tcp_state_anomalies=flow.tcp_state_anomalies,
                 handshake_observed=flow.handshake_observed,
                 tcp_reset_observed=flow.tcp_reset_observed,
+                first_tcp_state_anomaly=flow.first_tcp_state_anomaly,
+                peak_packets_per_second=(
+                    flow.peak_window_packets / PEAK_PACKET_RATE_WINDOW_SECONDS
+                    if flow.peak_window_packets else None
+                ),
                 finalization_reason=reason,
                 checks=self.checks(flow, duration),
             )

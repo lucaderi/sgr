@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from collections import deque
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Literal
 
@@ -15,6 +16,18 @@ class TCPState(StrEnum):
     SYN_SENT = "SYN_SENT"
     SYN_ACK_SEEN = "SYN_ACK_SEEN"
     ESTABLISHED = "ESTABLISHED"
+    RESET = "RESET"
+
+
+@dataclass(frozen=True, slots=True)
+class TCPStateAnomaly:
+    anomaly_type: str
+    state_before: TCPState
+    observed_direction: FlowDirection
+    expected_direction: FlowDirection
+    packet_flags: str
+    packet_number_in_flow: int
+
 
 # --- FLOW DATA ---
 
@@ -72,43 +85,67 @@ class Flow:
     tcp_state_anomalies: int = 0
     handshake_observed: bool = False
     tcp_reset_observed: bool = False
+    first_tcp_state_anomaly: TCPStateAnomaly | None = None
+
+    packet_rate_window: deque[float] = field(default_factory=deque)
+    peak_window_packets: int = 0
 
     def update_tcp_state(self, packet: Packet, direction: FlowDirection) -> None:
-        """Track flags and direction only; sequence numbers are not validated."""
-        if self.key.transport_protocol != "TCP":
+        """Track the observed handshake using TCP flags and endpoint direction."""
+        if self.key.transport_protocol != "TCP" or self.tcp_reset_observed:
             return
+
         raw = packet.tcp_flags
         if not isinstance(raw, str) or any(flag not in TCP_FLAGS for flag in raw):
             if not self.handshake_observed:
                 self.tcp_state = TCPState.UNKNOWN
             return
+
         flags = tcp_flag_names(raw)
+        syn = "SYN" in flags
+        ack = "ACK" in flags
+        fin = "FIN" in flags
+
         if "RST" in flags:
-            self.tcp_reset_observed = True
-            self.tcp_state = TCPState.UNKNOWN
+            if not syn and not fin:
+                self.tcp_reset_observed = True
+                self.tcp_state = TCPState.RESET
+            elif self.tcp_state == TCPState.NEW:
+                self.tcp_state = TCPState.UNKNOWN
             return
-        if self.tcp_reset_observed or self.tcp_state == TCPState.UNKNOWN:
+
+        if self.tcp_state in (TCPState.UNKNOWN, TCPState.ESTABLISHED):
             return
         if self.tcp_state == TCPState.NEW:
-            if "SYN" in flags and not flags & {"ACK", "FIN"}:
+            if syn and not ack and not fin and self.key.endpoint_a != self.key.endpoint_b:
                 self.tcp_initiator = direction
                 self.tcp_state = TCPState.SYN_SENT
             else:
                 self.tcp_state = TCPState.UNKNOWN
             return
-        if self.tcp_state == TCPState.ESTABLISHED or "FIN" in flags:
+        if fin:
             return
-        if "SYN" in flags:
-            if "ACK" in flags:
-                if direction == self.tcp_initiator:
-                    self.tcp_state_anomalies += 1
-                else:
-                    self.tcp_state = TCPState.SYN_ACK_SEEN
-            elif direction != self.tcp_initiator:
-                # Simultaneous open is outside this minimal model.
+
+        from_initiator = direction == self.tcp_initiator
+        if syn and not ack:
+            # A SYN from the initiator can be a retransmission in either pending state.
+            if not from_initiator:
+                # Simultaneous open is outside the model.
                 self.tcp_state = TCPState.UNKNOWN
-            return
-        if (self.tcp_state == TCPState.SYN_ACK_SEEN
-                and "ACK" in flags and direction == self.tcp_initiator):
+        elif syn and ack:
+            if from_initiator:
+                self.tcp_state_anomalies += 1
+                if self.first_tcp_state_anomaly is None:
+                    self.first_tcp_state_anomaly = TCPStateAnomaly(
+                        anomaly_type="SYN_ACK_WRONG_DIRECTION",
+                        state_before=self.tcp_state,
+                        observed_direction=direction,
+                        expected_direction="B_TO_A" if direction == "A_TO_B" else "A_TO_B",
+                        packet_flags=raw,
+                        packet_number_in_flow=self.packet_count,
+                    )
+            else:
+                self.tcp_state = TCPState.SYN_ACK_SEEN
+        elif ack and from_initiator and self.tcp_state == TCPState.SYN_ACK_SEEN:
             self.tcp_state = TCPState.ESTABLISHED
             self.handshake_observed = True

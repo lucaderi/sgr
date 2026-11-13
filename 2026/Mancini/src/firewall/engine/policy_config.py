@@ -48,7 +48,7 @@ RESERVED_RULE_IDS = frozenset({
     "TCP_HANDSHAKE_INCOMPLETE", "TCP_STATE_ANOMALY",
     "SOURCE_ADDRESS_RESTRICTION", "BOUNDARY_SOURCE_RESTRICTION", "IP_FRAGMENT",
     "TCP_SYN_FIN", "TCP_SYN_RST", "TCP_NULL_FLAGS", "L3_SIZE_LIMIT",
-    "FLOW_PACKET_RATE", "FLOW_BYTE_RATE", "FLOW_DURATION", "FLOW_BYTE_COUNT",
+    "FLOW_PACKET_RATE", "FLOW_PEAK_PACKET_RATE", "FLOW_BYTE_RATE", "FLOW_DURATION", "FLOW_BYTE_COUNT",
     "WINDOW_PACKET_FLOOD", "WINDOW_SYN_FLOOD", "WINDOW_ECHO_FLOOD",
     "WINDOW_PORT_SCAN", "WINDOW_UDP_PORT_SCAN", "WINDOW_HOST_SCAN", "WINDOW_SMALL_PACKETS",
     "DEFAULT_DENY", "INVALID_TIMESTAMP", "UNSUPPORTED_TUNNEL",
@@ -118,6 +118,7 @@ class FlowLimits:
 
     rate_min_duration: float = 1.0
     rate_min_packets: int = 20
+    max_peak_packets_per_second: float | None = None
 
 
 
@@ -369,6 +370,10 @@ def validate_flow_limits(limits: FlowLimits) -> None:
 
     if limits.max_bytes_per_second is not None:
         validate_finite(limits.max_bytes_per_second, "flow_limits.max_bytes_per_second", minimum=0.0)
+
+    if limits.max_peak_packets_per_second is not None:
+        validate_finite(limits.max_peak_packets_per_second,
+                        "flow_limits.max_peak_packets_per_second", minimum=0.0)
 
     if limits.max_duration is not None:
         validate_finite(limits.max_duration, "flow_limits.max_duration", minimum=0.0)

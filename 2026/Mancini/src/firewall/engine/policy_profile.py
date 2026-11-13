@@ -194,9 +194,75 @@ def example_profile() -> PolicyConfig:
         ),
     )
 
-# --- SYNTHETIC TEST PROFILE ---
 
-def test_profile() -> PolicyConfig:
+def test2_profile() -> PolicyConfig:
+    base = demo_profile()
+
+    services = (
+        ServiceRule(
+            rule_id="TEST_TCP_IPV4",
+            protocol="TCP",
+            source_networks=("198.51.100.10/32",),
+            destination_networks=("198.51.100.20/32",),
+            destination_ports=(443,),
+            icmp_selectors=(),
+            allow_replies=True,
+        ),
+        ServiceRule(
+            rule_id="TEST_UDP_IPV4",
+            protocol="UDP",
+            source_networks=("198.51.100.10/32",),
+            destination_networks=("198.51.100.20/32",),
+            destination_ports=(9000,),
+            icmp_selectors=(),
+            allow_replies=True,
+        ),
+        ServiceRule(
+            rule_id="TEST_TCP_IPV6",
+            protocol="TCP",
+            source_networks=("2001:db8:1::10/128",),
+            destination_networks=("2001:db8:1::20/128",),
+            destination_ports=(443,),
+            icmp_selectors=(),
+            allow_replies=True,
+        ),
+        ServiceRule(
+            rule_id="TEST_UDP_IPV6",
+            protocol="UDP",
+            source_networks=("2001:db8:1::10/128",),
+            destination_networks=("2001:db8:1::20/128",),
+            destination_ports=(9000,),
+            icmp_selectors=(),
+            allow_replies=True,
+        ),
+    )
+
+    flows = replace(
+        base.flow_limits,
+        max_packets_per_second=150.0,
+        max_peak_packets_per_second=150.0,
+        max_bytes_per_second=20_000.0,
+        max_duration=300.0,
+        max_flow_bytes=2_000_000,
+        rate_min_duration=1.0,
+        rate_min_packets=20,
+    )
+
+    return replace(
+        base,
+        service_rules=services,
+        local_subnets=(
+            "198.51.100.0/24",
+            "2001:db8:1::/64",
+        ),
+        capture_context=CaptureContext.LAN,
+        flow_limits=flows,
+        # Keep flow-rate and duration scenarios independent of window findings.
+        window_limits=WindowLimits(),
+    )
+
+
+def test1_profile() -> PolicyConfig:
 
     test_network = "192.168.10.0/24"
 
@@ -270,3 +336,8 @@ def test_profile() -> PolicyConfig:
             small_packet_max_size=80,
         ),
     )
+
+
+# Preserve the previous Python entry points for existing callers.
+policy_test_profile = test1_profile
+test_profile = test2_profile

@@ -14,8 +14,11 @@ from firewall.engine.policy_config import (
 )
 
 from firewall.schemas.capture_analysis import CaptureAnalysis
-from firewall.schemas.flow_analysis import FlowAnalysis
-from firewall.schemas.flow import TCPState
+from firewall.schemas.flow_analysis import (
+    PEAK_PACKET_RATE_WINDOW_SECONDS,
+    FlowAnalysis,
+    TCPHandshakeStatus,
+)
 from firewall.schemas.indexed_packet import IndexedPacket
 from firewall.schemas.packet import Packet
 from firewall.schemas.packet_analysis import (
@@ -82,6 +85,7 @@ TCP_STATE_ANOMALY = "TCP_STATE_ANOMALY"
 L3_SIZE_LIMIT = "L3_SIZE_LIMIT"
 
 FLOW_PACKET_RATE = "FLOW_PACKET_RATE"
+FLOW_PEAK_PACKET_RATE = "FLOW_PEAK_PACKET_RATE"
 FLOW_BYTE_RATE = "FLOW_BYTE_RATE"
 FLOW_DURATION = "FLOW_DURATION"
 FLOW_BYTE_COUNT = "FLOW_BYTE_COUNT"
@@ -409,20 +413,19 @@ class PolicyEngine:
         self.apply_flow_limits(flow, self.config.flow_limits, findings, unevaluated)
 
         if flow.key.transport_protocol == "TCP":
-            evidence = {"tcp_state": flow.tcp_state.value,
-                        "handshake_observed": flow.handshake_observed,
-                        "tcp_reset_observed": flow.tcp_reset_observed,
-                        "tcp_state_anomalies": flow.tcp_state_anomalies}
-            if (flow.tcp_state in (TCPState.SYN_SENT, TCPState.SYN_ACK_SEEN)
-                    and not flow.handshake_observed and not flow.tcp_reset_observed):
+            status = flow.tcp_handshake_status
+            if status == TCPHandshakeStatus.INCOMPLETE:
                 findings.append(_Finding(TCP_HANDSHAKE_INCOMPLETE,
-                    "tcp_handshake_not_fully_observed", PolicyScope.FLOW, evidence, blocking=False))
-            elif flow.tcp_state in (TCPState.NEW, TCPState.UNKNOWN):
+                    "tcp_handshake_not_fully_observed", PolicyScope.FLOW,
+                    flow.tcp_diagnostics(), blocking=False))
+            elif status == TCPHandshakeStatus.NOT_EVALUABLE:
                 unevaluated.append(TCP_HANDSHAKE_INCOMPLETE)
+
             if flow.tcp_state_anomalies:
                 findings.append(_Finding(TCP_STATE_ANOMALY,
-                    "tcp_syn_ack_in_initiator_direction", PolicyScope.FLOW, evidence, blocking=False))
-            elif flow.tcp_state in (TCPState.NEW, TCPState.UNKNOWN):
+                    "tcp_syn_ack_in_initiator_direction", PolicyScope.FLOW,
+                    flow.tcp_diagnostics(), blocking=False))
+            elif status in (TCPHandshakeStatus.NOT_EVALUABLE, TCPHandshakeStatus.RESET_OBSERVED):
                 unevaluated.append(TCP_STATE_ANOMALY)
 
         for rule in self.config.flow_limit_rules:
@@ -456,6 +459,18 @@ class PolicyEngine:
     def apply_flow_limits(self, flow: FlowAnalysis, limits: FlowLimits, findings: list[_Finding], unevaluated: list[str]) -> None:
         self.flow_rate_rules(flow, limits, findings, unevaluated)
         self.flow_volume_rules(flow, limits, findings, unevaluated)
+
+        peak_limit = limits.max_peak_packets_per_second
+        if peak_limit is not None:
+            peak_rate = flow.peak_packets_per_second
+            if peak_rate is None:
+                unevaluated.append(FLOW_PEAK_PACKET_RATE)
+            elif peak_rate > peak_limit:
+                findings.append(_Finding(
+                    FLOW_PEAK_PACKET_RATE, "flow_peak_packet_rate_exceeded", PolicyScope.FLOW,
+                    {"flow_id": flow.flow_id, "peak_packets_per_second": peak_rate,
+                     "window_seconds": PEAK_PACKET_RATE_WINDOW_SECONDS, "limit": peak_limit},
+                ))
 
     def flow_service_match(self, flow: FlowAnalysis, packets: list[tuple[int, Packet, PacketAnalysis]], compiled: _CompiledServiceRule) -> bool | None:
         # match in either direction selects bidirectional flow

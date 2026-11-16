@@ -1,0 +1,23 @@
+file,packets,scenario,atteso
+01_rate_basso.pcap,15,"UDP lento, stesso flow",ALLOW salvo altre regole
+02_rate_alto.pcap,900,UDP stesso flow: 300 pacchetti/s per 3 s,DROP solo se la soglia media configurata viene superata
+03_byte_rate_alto.pcap,60,UDP 20 pacchetti/s con molti byte,Dipende dalla soglia byte/s
+04_rate_multi_flow.pcap,300,Burst UDP su più flow separati,Non bloccare per rate di un singolo flow; possibili regole a finestra
+05_duration_long.pcap,305,Handshake + traffico TCP continuo per oltre 300 s,DROP se durata massima inferiore a durata osservata; handshake valido
+06_duration_short.pcap,10,Handshake completo + TCP breve,ALLOW salvo altre regole; non errore handshake
+07_inactivity_vs_duration.pcap,6,Due handshake sulla stessa 5-tupla separati da lungo silenzio,Due flow se inactivity timeout/sweep configurati; non durata continua
+08_ipv6_regular.pcap,4,Handshake TCP IPv6 + UDP IPv6,Handshake e campi IPv6 corretti
+09_ipv6_extension.pcap,1,IPv6 con header Hop-by-Hop e UDP,Nessun falso mismatch nella catena Next Header
+10_ipv4_fragments_valid.pcap,4,Frammenti IPv4 UDP validi,INCOMPLETE dove previsto; non INVALID ingiustificato
+11_ipv4_fragment_inconsistent.pcap,1,Lunghezza dichiarata IPv4 incoerente,INVALID/DROP se la relativa regola è implementata
+12_ipv6_fragments.pcap,2,IPv6 primo e successivo frammento,Secondo frammento non interpretato come UDP completo
+13_tunnel_ipv4_in_ipv4.pcap,1,Tunnel IP-in-IP con UDP interno,Nessun crash; separazione tra IP esterno e interno
+14_tunnel_ipv6_in_ipv4.pcap,1,Tunnel IPv6-in-IPv4 con UDP interno,Nessun crash; gestione outer/inner coerente
+15_capture_truncated_header.pcap,1,Taglio nell'intestazione IP,"INCOMPLETE, nessun crash"
+16_capture_truncated_payload.pcap,1,Payload acquisito solo in parte,"INCOMPLETE, non payload vuoto"
+18_tcp_handshake_valid.pcap,4,SYN -> SYN+ACK -> ACK -> dati,Handshake riconosciuto come valido; dati dopo instaurazione
+19_tcp_handshake_missing_synack.pcap,3,ACK e dati senza SYN+ACK,Handshake non completato; regola di anomalia se prevista
+20_tcp_handshake_wrong_order.pcap,3,ACK prima di SYN e SYN+ACK,"Sequenza non valida, non considerare il primo ACK conclusivo"
+21_tcp_handshake_syn_only.pcap,2,Due SYN senza risposta del server,Handshake incompleto; non confondere con flusso stabilito
+22_tcp_high_rate_after_handshake.pcap,903,Handshake regolare + 300 segmenti/s per 3 secondi,Eventuale DROP per rate e non per errore handshake
+17_timestamp_unit_cases.py,4,"Timestamp NaN, +inf, -inf e negativo",Scarto prima di flow analysis
